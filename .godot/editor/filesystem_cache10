@@ -3,13 +3,13 @@
 README.md::TextFile::-1::1790255421::0::1::::<><><>0<>0<><>::
 ::res://assets/::1790257280
 README.md::TextFile::-1::1790255797::0::1::::<><><>0<>0<><>::
-::res://assets/backgrounds/::1790258783
+::res://assets/backgrounds/::1790258787
 README.md::TextFile::-1::1790230632::0::1::::<><><>0<>0<><>::
 title_city.png::CompressedTexture2D::367120978566480611::1790257475::1790258787::1::::<><><>0<>0<>8e82cf5c4235b7cad1241fc6ee049b12<>res://.godot/imported/title_city.png-2e2d383a0a4452b5de1fb28199c13265.ctex::
-::res://assets/characters/::1790248502
+::res://assets/characters/::1790259711
 README.md::TextFile::-1::1790230632::0::1::::<><><>0<>0<><>::
-sili_kid.png::CompressedTexture2D::175458603820651043::1790248345::1790248502::1::::<><><>0<>0<>525189b976f973d52b1698705e232a11<>res://.godot/imported/sili_kid.png-86e97c42d1188ca49c5d7463e3c73b0a.ctex::
-tubig_kid.png::CompressedTexture2D::1717384361183131692::1790248345::1790248502::1::::<><><>0<>0<>99c7e6670c317d0d51a23f8b255f42e2<>res://.godot/imported/tubig_kid.png-367f6c1ac4f541eb7c9034a29e8a636d.ctex::
+sili_kid.png::CompressedTexture2D::175458603820651043::1790259711::1790259790::1::::<><><>0<>0<>525189b976f973d52b1698705e232a11<>res://.godot/imported/sili_kid.png-86e97c42d1188ca49c5d7463e3c73b0a.ctex::
+tubig_kid.png::CompressedTexture2D::1717384361183131692::1790259711::1790259790::1::::<><><>0<>0<>99c7e6670c317d0d51a23f8b255f42e2<>res://.godot/imported/tubig_kid.png-367f6c1ac4f541eb7c9034a29e8a636d.ctex::
 ::res://assets/props/::1790248361
 electric_post.png::CompressedTexture2D::8544875437910389981::1790248345::1790248361::1::::<><><>0<>0<>7d8de67bd89ba5280fc581a0afd0311f<>res://.godot/imported/electric_post.png-8ec8943b61a0155dbe5f047dac0b6891.ctex::
 jeepney.png::CompressedTexture2D::3319220194679706267::1790248345::1790248361::1::::<><><>0<>0<>407272eaa90be965873c38325c1e2434<>res://.godot/imported/jeepney.png-22306a450caee396208e115adc2b36ac.ctex::
@@ -45,8 +45,8 @@ HOW_TO_DRAW_THE_STORE.png::CompressedTexture2D::6946891996794892570::1790255760:
 store_body_template.png::CompressedTexture2D::8582041760042780312::1790255760::1790255779::1::::<><><>0<>0<>d2e2c5ced0b5e3a19452a4d522c957df<>res://.godot/imported/store_body_template.png-23a3112be56a3ec58a9e51ba4b2bca2b.ctex::
 store_counter_template.png::CompressedTexture2D::8873216934694015962::1790255760::1790255779::1::::<><><>0<>0<>5b2690799d857c224a1db25d1a66fa71<>res://.godot/imported/store_counter_template.png-34257e7386f53ad2ba2899ed75c1499c.ctex::
 store_top_template.png::CompressedTexture2D::395169263147259451::1790255760::1790255779::1::::<><><>0<>0<>e29427288e37d6404139c7ee529ca9d0<>res://.godot/imported/store_top_template.png-52132f6da80200965a859a80de89e338.ctex::
-::res://assets/walls/::1790255549
-city_tileset.tres::TileSet::8036558323504633897::1790255549::0::1::::<><><>0<>0<><>::uid://dhmefxfmdyr53::::res://assets/walls/road.png<>uid://bpjd8eekris8l::::res://assets/walls/road_lines_h.png<>uid://c6h0373m5rix1::::res://assets/walls/store_front.png<>uid://t0bl5t8jl63i::::res://assets/walls/tree_lot.png<>uid://b06v41wtbcsec::::res://assets/walls/road_lines_v.png<>uid://b1y7wlj1yioel::::res://assets/walls/road_crossing.png<>uid://c1j22unjfmifq::::res://assets/walls/roof_red.png<>uid://dtfplbt45nlep::::res://assets/walls/roof_blue.png<>uid://cugtminybb1c8::::res://assets/walls/roof_green.png<>uid://b30yssil13oav::::res://assets/walls/roof_gray.png<>uid://dg4io74ujuit3::::res://assets/walls/house_front.png<>uid://6lvw5rhmibg6::::res://assets/walls/house_front_pink.png
+::res://assets/walls/::1790258869
+city_tileset.tres::TileSet::8036558323504633897::1790258869::0::1::::<><><>0<>0<><>::uid://dhmefxfmdyr53::::res://assets/walls/road.png<>uid://bpjd8eekris8l::::res://assets/walls/road_lines_h.png<>uid://c6h0373m5rix1::::res://assets/walls/store_front.png<>uid://t0bl5t8jl63i::::res://assets/walls/tree_lot.png<>uid://b06v41wtbcsec::::res://assets/walls/road_lines_v.png<>uid://b1y7wlj1yioel::::res://assets/walls/road_crossing.png<>uid://c1j22unjfmifq::::res://assets/walls/roof_red.png<>uid://dtfplbt45nlep::::res://assets/walls/roof_blue.png<>uid://cugtminybb1c8::::res://assets/walls/roof_green.png<>uid://b30yssil13oav::::res://assets/walls/roof_gray.png<>uid://dg4io74ujuit3::::res://assets/walls/house_front.png<>uid://6lvw5rhmibg6::::res://assets/walls/house_front_pink.png
 house_front.png::CompressedTexture2D::7640774531300095410::1790248345::1790248502::1::::<><><>0<>0<>d96b6d68dbf5be4024b4cd417ed857b9<>res://.godot/imported/house_front.png-de0cd2a59079771770f1869272c878f9.ctex::
 house_front_pink.png::CompressedTexture2D::2199878254684244111::1790248345::1790248502::1::::<><><>0<>0<>375ca46eab0ff6f3aea770d55a32b87a<>res://.godot/imported/house_front_pink.png-3a5f5f9ba86707448f1345bc2ac20d80.ctex::
 README.md::TextFile::-1::1790230632::0::1::::<><><>0<>0<><>::
@@ -65,7 +65,7 @@ game_state.gd::GDScript::2311413957125613773::1790249357::0::1::::<>Node<><>0<>0
 network.gd::GDScript::413296850221419155::1790249257::0::1::::<>Node<><>0<>0<><>::
 ::res://data/::1790223210
 questions.gd::GDScript::3809210822981956257::1790212530::0::1::::<>RefCounted<><>0<>0<><>::
-::res://scenes/::1790257115
+::res://scenes/::1790259278
 city_map.tscn::PackedScene::2599789304135292814::1790253888::0::1::::<><><>0<>0<><>::uid://dmq77akb2x7qb::::res://assets/walls/city_tileset.tres<>uid://cdc2gt4i5m4cf::::res://assets/props/tricycle.png<>uid://bnj4co3u3bpxj::::res://assets/props/jeepney.png<>uid://dt0g35v8wwju8::::res://assets/props/electric_post.png<>uid://cugtminybb1c8::::res://assets/walls/roof_green.png<>uid://t0bl5t8jl63i::::res://assets/walls/tree_lot.png
 host_modal.gd::GDScript::7332410545579789731::1790255366::0::1::::<>Control<><>0<>0<><>::
 host_modal.tscn::PackedScene::1356062619239856718::1790257097::0::1::::<><><>0<>0<><>::uid://dcp4y3l6k2ehn::::res://scenes/host_modal.gd<>uid://dp261yo0aux57::::res://assets/ui/host_store/store_top.png<>uid://tiw4a2txl8sj::::res://assets/ui/card.png<>uid://c2wxq4j8wv6qy::::res://scenes/png_button.gd<>uid://cxmowardm3p68::::res://assets/ui/button_close.png<>uid://dic03r71rmtbw::::res://assets/ui/button_cancel.png<>uid://ckmo4huacf7tl::::res://assets/ui/button_start.png<>uid://b7qdu1em0p5gp::::res://assets/ui/host_store/store_body.png<>uid://dxqgt8ua7lrs7::::res://assets/ui/host_store/store_counter.png<>uid://8216hfn7sojn::::res://assets/ui/host_store/chalkboard.png
@@ -86,5 +86,5 @@ quiz_panel.gd::GDScript::2704565584447926587::1790230632::0::1::::<>Control<><>0
 quiz_panel.tscn::PackedScene::6520978160517990902::1790229537::0::1::::<><><>0<>0<><>::uid://besd2g3sctf6r::::res://scenes/quiz_panel.gd
 store_modal.gd::GDScript::7775655664791592457::1790255361::0::1::::<>Control<><>0<>0<><>::
 title_screen.gd::GDScript::7972606268645303804::1790255411::0::1::::<>Control<><>0<>0<><>::
-title_screen.tscn::PackedScene::7221977385010186004::1790255411::0::1::::<><><>0<>0<><>::uid://dlt8wppvmuudg::::res://scenes/title_screen.gd<>res://assets/backgrounds/title_city.png<>res://scenes/png_button.gd<>res://assets/ui/title_logo.png<>res://assets/ui/button_host.png<>res://assets/ui/button_join.png<>res://assets/ui/button_how_to_play.png<>res://assets/ui/button_quit.png<>res://assets/ui/button_got_it.png<>res://scenes/lobby_modal.tscn<>res://assets/ui/panel.png
+title_screen.tscn::PackedScene::7221977385010186004::1790259278::0::1::::<><><>0<>0<><>::uid://dlt8wppvmuudg::::res://scenes/title_screen.gd<>uid://fh3ot1xyc7wh::::res://assets/backgrounds/title_city.png<>uid://c2wxq4j8wv6qy::::res://scenes/png_button.gd<>uid://dvsa8rd0k2eiy::::res://assets/ui/title_logo.png<>uid://cwgm40xx44hvl::::res://assets/ui/button_host.png<>uid://cs04hlo4gcpvl::::res://assets/ui/button_join.png<>uid://dfxpvm3fo13tc::::res://assets/ui/button_how_to_play.png<>uid://diet885i5nohn::::res://assets/ui/button_quit.png<>uid://dijubffesogkv::::res://assets/ui/button_got_it.png<>uid://tk5fhd8ueg8u::::res://scenes/host_modal.tscn<>uid://dp4ok37vv8kft::::res://assets/ui/panel.png<>res://scenes/join_modal.tscn
 ui_button_style.gd::GDScript::6170815844105576689::1790230632::0::1::::<>RefCounted<><>0<>0<><>::

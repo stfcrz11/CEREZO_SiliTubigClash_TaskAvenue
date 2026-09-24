@@ -6,6 +6,8 @@ extends Control
 
 signal choice_made(position: int)   # -1 = ran out of time
 
+const ButtonStyle := preload("res://scenes/ui_button_style.gd")
+
 @export var answer_time: float = 15.0
 
 @onready var header_label: Label = $Panel/Margin/VBox/HeaderLabel
@@ -26,6 +28,7 @@ var time_left: float = 0.0
 func _ready() -> void:
 	visible = false
 	for i in choice_buttons.size():
+		ButtonStyle.style_choice(choice_buttons[i], Color(0.23, 0.69, 0.96))
 		choice_buttons[i].pressed.connect(_pick.bind(i))
 
 
@@ -43,7 +46,7 @@ func show_question(q: Dictionary, shown_order: Array, header: String, answerer_i
 	feedback_label.text = "" if answerer_is_me else "%s is answering... help them!" % answerer_name
 	time_left = answer_time
 	waiting = true
-	visible = true
+	visible = answerer_is_me
 
 
 func _process(delta: float) -> void:

@@ -15,8 +15,13 @@ extends Control
 var hosting: bool = false
 
 
+const ButtonStyle := preload("res://scenes/ui_button_style.gd")
+
 func _ready() -> void:
 	hosting = GameState.lobby_mode == "host"
+	ButtonStyle.style_primary(start_button, Color(0.2, 0.72, 0.9))
+	ButtonStyle.style_secondary($VBox/Buttons/BackButton, Color(0.38, 0.38, 0.46))
+	ButtonStyle.style_secondary($VBox/JoinBox/IpRow/ConnectButton, Color(0.15, 0.47, 0.75))
 	$VBox/Buttons/BackButton.pressed.connect(_on_back)
 	start_button.pressed.connect(func(): Network.start_game())
 	$VBox/JoinBox/IpRow/ConnectButton.pressed.connect(func(): _connect_to(ip_edit.text))
@@ -80,6 +85,7 @@ func _refresh_found() -> void:
 		var b := Button.new()
 		b.text = "Join %s   (%d/%d players)" % [ip, Network.found_hosts[ip]["players"], Network.MAX_PLAYERS]
 		b.custom_minimum_size = Vector2(0, 40)
+		ButtonStyle.style_secondary(b, Color(0.18, 0.52, 0.78))
 		b.pressed.connect(_connect_to.bind(ip))
 		found_list.add_child(b)
 

@@ -13,6 +13,7 @@ extends Node2D
 const QuestionBank := preload("res://data/questions.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const SCROLL_SCENE := preload("res://scenes/question_scroll.tscn")
+const ButtonStyle := preload("res://scenes/ui_button_style.gd")
 
 ## Maze layout. # = wall, . = floor, P = Tubig starts (up to 4), S = Sili starts (up to 2).
 ## Edit this to change the maze (keep it 23 x 15 to fit the screen).
@@ -92,6 +93,8 @@ func _ready() -> void:
 	quiz_panel.choice_made.connect(_on_local_choice)
 	play_again_button.pressed.connect(_on_play_again)
 	menu_button.pressed.connect(_on_leave)
+	ButtonStyle.style_primary(play_again_button, Color(0.21, 0.69, 0.9))
+	ButtonStyle.style_secondary(menu_button, Color(0.38, 0.38, 0.46))
 	end_panel.visible = false
 	pause_label.visible = false
 	warning_label.text = ""
@@ -505,10 +508,17 @@ func _sync_time(t: float) -> void:
 	_update_hud()
 
 
+func _format_time(seconds: float) -> String:
+	var total_seconds := int(max(seconds, 0.0))
+	var minutes := total_seconds / 60
+	var secs := total_seconds % 60
+	return "%d:%02d" % [minutes, secs]
+
+
 func _host_end(team_won: bool, title: String) -> void:
 	round_timer.stop()
-	var stats := "Correct answers: %d / %d\nScrolls opened: %d\nTime left: %d s" % \
-		[correct_answers, questions_to_win, questions_asked, int(max(time_left, 0))]
+	var stats := "Correct answers: %d / %d\nScrolls opened: %d\nTime left: %s" % \
+		[correct_answers, questions_to_win, questions_asked, _format_time(time_left)]
 	_end_round.rpc(team_won, title, stats)
 
 
@@ -555,7 +565,7 @@ func _show_message(text: String, seconds: float) -> void:
 
 func _update_hud() -> void:
 	score_label.text = "Questions: %d / %d" % [correct_answers, questions_to_win]
-	timer_label.text = "Time: %d" % int(max(time_left, 0))
+	timer_label.text = "Time: %s" % _format_time(time_left)
 
 
 # ================================================================ pause

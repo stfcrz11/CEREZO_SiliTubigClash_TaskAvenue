@@ -72,6 +72,7 @@ func _label() -> String:
 
 func _physics_process(delta: float) -> void:
 	var playing := GameState.round_state == GameState.RoundState.PLAYING
+	var question_lock := GameState.round_state == GameState.RoundState.QUESTION and is_tubig()
 	if playing:
 		if frozen:
 			frozen_time += delta
@@ -84,7 +85,7 @@ func _physics_process(delta: float) -> void:
 		global_position = global_position.lerp(_net_target, min(1.0, delta * 15.0))
 		return
 
-	if not playing or frozen:
+	if not playing or frozen or question_lock:
 		velocity = Vector2.ZERO
 	else:
 		var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down")

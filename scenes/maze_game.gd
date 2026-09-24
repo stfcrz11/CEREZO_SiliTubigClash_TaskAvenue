@@ -59,6 +59,7 @@ const ORIGIN := Vector2(20, 40)   # the HUD top bar sits above the maze
 @onready var warning_glow: Control = $HUD/WarningGlow
 @onready var message_label: Label = $HUD/MessageLabel
 @onready var pause_label: Label = $HUD/PauseLabel
+@onready var minimap: Control = $HUD/Minimap
 @onready var quiz_panel: Control = $HUD/QuizPanel
 @onready var end_panel: Control = $HUD/EndPanel
 @onready var play_again_button: Button = $HUD/EndPanel/Margin/VBox/Buttons/PlayAgainButton
@@ -95,6 +96,7 @@ func _ready() -> void:
 	pause_label.visible = false
 	warning_label.text = ""
 	warning_glow.modulate.a = 0.0
+	minimap.set_maze(MAZE)
 	mode_label.text = "Host (LAN)" if Network.is_host() else "LAN"
 	_update_hud()
 	_show_message("Waiting for players...", 30.0)
@@ -208,6 +210,7 @@ func _spawn_all(roster: Array) -> void:
 	var me = player_by_id.get(multiplayer.get_unique_id())
 	if me:
 		mode_label.text = "You: %s (P%d)" % ["TUBIG" if me.is_tubig() else "SILI", me.slot + 1]
+		minimap.set_local_player(me)
 
 
 @rpc("authority", "call_local", "reliable")

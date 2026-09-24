@@ -53,6 +53,8 @@ func setup(id: int, player_slot: int, player_role: String, color_index: int, sta
 		body_rect.offset_right = 13; body_rect.offset_bottom = 13
 	name_label.text = _label()
 	alert_label.visible = false
+	body_rect.visible = is_local()
+	name_label.visible = is_local()
 
 
 func is_tubig() -> bool:
@@ -147,5 +149,5 @@ func give_grace(seconds: float) -> void:
 
 func set_alert(level: int) -> void:
 	# 0 = safe, 1 = Sili nearby, 2 = Sili very close
-	alert_label.visible = level > 0 and not frozen
+	alert_label.visible = level > 0 and not frozen and is_local()
 	alert_label.text = "!!" if level == 2 else "!"

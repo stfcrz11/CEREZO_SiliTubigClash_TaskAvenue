@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scenes/maze_game.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/quiz_panel.tscn" id="2"]
+[ext_resource type="Script" path="res://scenes/minimap.gd" id="3"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_e"]
 bg_color = Color(0.1, 0.12, 0.18, 0.97)
@@ -41,6 +42,14 @@ color = Color(0.4, 0.62, 0.34, 1)
 [node name="RoundTimer" type="Timer" parent="."]
 
 [node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Minimap" type="Control" parent="HUD"]
+offset_left = 748.0
+offset_top = 46.0
+offset_right = 940.0
+offset_bottom = 204.0
+mouse_filter = 2
+script = ExtResource("3")
 
 [node name="TopBar" type="ColorRect" parent="HUD"]
 offset_right = 960.0

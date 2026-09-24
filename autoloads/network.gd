@@ -16,6 +16,7 @@ const MIN_PLAYERS := 2
 const BEACON := "SILITUBIG_TASKAVENUE"
 
 var players: Dictionary = {}        # peer_id -> slot (0..3)  => P1..P4
+var player_names: Dictionary = {}   # peer_id -> chosen display name
 var online: bool = false
 var game_started: bool = false
 var last_error: String = ""
@@ -42,6 +43,7 @@ func _ready() -> void:
 func play_solo() -> void:
 	leave()
 	players = {1: 0}
+	player_names = {1: GameState.player_name}
 	online = false
 
 
@@ -54,6 +56,7 @@ func host_game() -> Error:
 		return err
 	multiplayer.multiplayer_peer = peer
 	players = {1: 0}
+	player_names = {1: GameState.player_name}
 	online = true
 	round_number = randi() % MAX_PLAYERS   # random first Sili
 	_start_beacon()
@@ -79,6 +82,7 @@ func leave() -> void:
 		multiplayer.multiplayer_peer.close()
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	players.clear()
+	player_names.clear()
 	online = false
 	game_started = false
 
@@ -98,6 +102,10 @@ func my_id() -> int:
 
 func slot_of(peer_id: int) -> int:
 	return players.get(peer_id, 0)
+
+
+func player_name_of(peer_id: int) -> String:
+	return player_names.get(peer_id, "Player")
 
 
 ## 2-4 players: 1 Sili.  5-6 players: 2 Silis.  Everyone else is Tubig.
@@ -145,8 +153,10 @@ func _on_peer_connected(id: int) -> void:
 	for s in MAX_PLAYERS:
 		if not s in used:
 			players[id] = s
+			player_names[id] = "Player"
 			break
 	_sync_players.rpc(players)
+	_sync_player_names.rpc(player_names)
 	players_changed.emit()
 
 
@@ -154,11 +164,14 @@ func _on_peer_disconnected(id: int) -> void:
 	if not is_host():
 		return
 	players.erase(id)
+	player_names.erase(id)
 	_sync_players.rpc(players)
+	_sync_player_names.rpc(player_names)
 	players_changed.emit()
 
 
 func _on_connected_to_server() -> void:
+	_register_player_name.rpc_id(1, GameState.player_name)
 	connected_to_host.emit()
 
 
@@ -179,6 +192,22 @@ func _on_server_disconnected() -> void:
 @rpc("authority", "call_remote", "reliable")
 func _sync_players(new_players: Dictionary) -> void:
 	players = new_players
+	players_changed.emit()
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _register_player_name(value: String) -> void:
+	if not is_host():
+		return
+	var name := value.strip_edges()
+	player_names[multiplayer.get_remote_sender_id()] = name if not name.is_empty() else "Player"
+	_sync_player_names.rpc(player_names)
+	players_changed.emit()
+
+
+@rpc("authority", "call_remote", "reliable")
+func _sync_player_names(new_names: Dictionary) -> void:
+	player_names = new_names
 	players_changed.emit()
 
 

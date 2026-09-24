@@ -98,7 +98,7 @@ func _refresh_players() -> void:
 			tag += " (Host)"
 		if id == multiplayer.get_unique_id():
 			tag += " (You)"
-		lines.append("P%d%s" % [Network.slot_of(id) + 1, tag])
+		lines.append("%s%s" % [Network.player_name_of(id), tag])
 	var n := Network.players.size()
 	var silis := Network.sili_count_for(max(n, Network.MIN_PLAYERS))
 	players_label.text = "Players (%d/%d):\n%s\n\nRoles: 2-4 players = 1 Sili, 5-6 players = 2 Silis.\nThis game: %d Sili, %d Tubig. The Sili role rotates every round." % \

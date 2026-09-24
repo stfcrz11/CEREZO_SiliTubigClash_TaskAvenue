@@ -212,7 +212,7 @@ func _spawn_all(roster: Array) -> void:
 		player_by_id[id] = p
 	var me = player_by_id.get(multiplayer.get_unique_id())
 	if me:
-		mode_label.text = "You: %s (P%d)" % ["TUBIG" if me.is_tubig() else "SILI", me.slot + 1]
+		mode_label.text = "You: %s (%s)" % ["TUBIG" if me.is_tubig() else "SILI", Network.player_name_of(me.peer_id)]
 		minimap.set_local_player(me)
 
 
@@ -287,7 +287,7 @@ func _open_question(scroll_id: int, picker_id: int, q_index: int, order: Array, 
 		scrolls.erase(scroll_id)
 	questions_asked = asked
 	GameState.round_state = GameState.RoundState.QUESTION
-	var picker_name := "P%d" % (Network.slot_of(picker_id) + 1)
+	var picker_name := Network.player_name_of(picker_id)
 	quiz_panel.show_question(QuestionBank.QUESTIONS[q_index], order,
 		"Scroll #%d  —  picked by %s  —  Correct: %d / %d" % [asked, picker_name, correct_answers, questions_to_win],
 		picker_id == multiplayer.get_unique_id(), picker_name)
@@ -361,7 +361,7 @@ func _tubig_caught(id: int) -> void:
 		return
 	var t = player_by_id[id]
 	t.set_caught()
-	_show_message("P%d was caught! Tubig team, touch them to save them!" % (t.slot + 1), 3.0)
+	_show_message("%s was caught! Tubig team, touch them to save them!" % Network.player_name_of(t.peer_id), 3.0)
 
 
 @rpc("authority", "call_local", "reliable")
@@ -370,7 +370,7 @@ func _tubig_rescued(id: int) -> void:
 		return
 	var t = player_by_id[id]
 	t.set_rescued()
-	_show_message("Tubig! P%d is saved!" % (t.slot + 1), 2.0)
+	_show_message("Tubig! %s is saved!" % Network.player_name_of(t.peer_id), 2.0)
 
 
 func _host_check_team_out() -> void:
@@ -424,7 +424,7 @@ func _remove_player(id: int) -> void:
 		silis.erase(p)
 		player_by_id.erase(id)
 		p.queue_free()
-		_show_message("P%d left the game." % (p.slot + 1), 2.5)
+		_show_message("%s left the game." % Network.player_name_of(p.peer_id), 2.5)
 
 
 # ============================================================ per frame

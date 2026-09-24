@@ -67,7 +67,7 @@ func is_local() -> bool:
 
 func _label() -> String:
 	var you := " (You)" if is_local() else ""
-	return "%s P%d%s" % ["TUBIG" if is_tubig() else "SILI", slot + 1, you]
+	return "%s %s%s" % ["TUBIG" if is_tubig() else "SILI", Network.player_name_of(peer_id), you]
 
 
 func _physics_process(delta: float) -> void:
@@ -131,7 +131,7 @@ func set_caught() -> void:
 	frozen = true
 	frozen_time = 0.0
 	body_rect.color = Color(0.55, 0.55, 0.6)
-	name_label.text = "SAVE P%d!" % (slot + 1)
+	name_label.text = "SAVE %s!" % Network.player_name_of(peer_id)
 	alert_label.visible = false
 
 

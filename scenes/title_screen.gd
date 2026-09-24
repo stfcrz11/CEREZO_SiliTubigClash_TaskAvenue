@@ -10,6 +10,9 @@ func _ready() -> void:
 	ButtonStyle.style_secondary($Menu/HowToButton, Color(0.3, 0.52, 0.3))
 	ButtonStyle.style_secondary($Menu/QuitButton, Color(0.7, 0.22, 0.24))
 	ButtonStyle.style_secondary($HowToPanel/Margin/VBox/CloseButton, Color(0.38, 0.38, 0.46))
+	$Menu/PlayerNameRow/PlayerNameInput.text = GameState.player_name
+	$Menu/PlayerNameRow/PlayerNameInput.text_changed.connect(_on_player_name_changed)
+	$Menu/PlayerNameRow/PlayerNameInput.focus_exited.connect(_normalize_player_name)
 	$Menu/HostButton.pressed.connect(_open_lobby.bind("host"))
 	$Menu/JoinButton.pressed.connect(_open_lobby.bind("join"))
 	$Menu/HowToButton.pressed.connect(func(): $HowToPanel.visible = true)
@@ -20,6 +23,15 @@ func _ready() -> void:
 	# show why we came back here (e.g. the host left)
 	$Menu/ErrorLabel.text = Network.last_error
 	Network.last_error = ""
+
+
+func _on_player_name_changed(value: String) -> void:
+	if not value.strip_edges().is_empty():
+		GameState.set_player_name(value)
+
+
+func _normalize_player_name() -> void:
+	$Menu/PlayerNameRow/PlayerNameInput.text = GameState.player_name
 
 
 func _open_lobby(mode: String) -> void:

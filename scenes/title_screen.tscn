@@ -2,6 +2,8 @@
 
 [ext_resource type="Script" uid="uid://dlt8wppvmuudg" path="res://scenes/title_screen.gd" id="1"]
 
+[sub_resource type="FontVariation" id="FontVariation_fgkus"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBox_h"]
 bg_color = Color(0.08, 0.1, 0.16, 1)
 border_width_left = 2
@@ -28,10 +30,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -2.0
-offset_top = 1.0
-offset_right = 3.0
-offset_bottom = 1.0
+offset_right = 5.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.1, 0.14, 0.22, 1)
@@ -44,8 +43,8 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -190.0
-offset_top = -230.0
-offset_right = 190.0
+offset_top = -274.0
+offset_right = 200.0
 offset_bottom = 230.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -54,7 +53,8 @@ alignment = 1
 
 [node name="TitleLabel" type="Label" parent="Menu" unique_id=713651452]
 layout_mode = 2
-theme_override_font_sizes/font_size = 40
+theme_override_fonts/font = SubResource("FontVariation_fgkus")
+theme_override_font_sizes/font_size = 42
 text = "SILI-TUBIG"
 horizontal_alignment = 1
 
@@ -67,9 +67,26 @@ horizontal_alignment = 1
 [node name="TaglineLabel" type="Label" parent="Menu" unique_id=202387574]
 modulate = Color(1, 0.85, 0.4, 1)
 layout_mode = 2
-text = "LAN party game for 2-6 players. Tubig: answer 10 Filipino-culture questions. Sili: catch them first!"
 horizontal_alignment = 1
 autowrap_mode = 3
+
+[node name="PlayerNameRow" type="HBoxContainer" parent="Menu"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="PlayerNameLabel" type="Label" parent="Menu/PlayerNameRow"]
+layout_mode = 2
+text = "PLAYER NAME:"
+vertical_alignment = 1
+
+[node name="PlayerNameInput" type="LineEdit" parent="Menu/PlayerNameRow"]
+custom_minimum_size = Vector2(220, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Enter your name"
+alignment = 1
+max_length = 24
 
 [node name="HostButton" type="Button" parent="Menu" unique_id=204025598]
 custom_minimum_size = Vector2(0, 46)

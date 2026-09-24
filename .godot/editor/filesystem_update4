@@ -1,1 +1,6 @@
 res://scenes/title_screen.gd
+res://scenes/maze_game.gd
+res://scenes/minimap.gd
+res://scenes/city_map.gd
+res://scenes/player.gd
+res://scenes/player.tscn

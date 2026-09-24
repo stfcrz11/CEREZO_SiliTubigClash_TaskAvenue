@@ -36,6 +36,7 @@ const MAZE := [
 ]
 const TILE := 40
 const ORIGIN := Vector2(20, 40)   # the HUD top bar sits above the maze
+const CAMERA_MARGIN := 3          # tiles of city the camera may show past the maze edge
 
 @export var questions_to_win: int = 10
 @export var round_time: float = 180.0
@@ -48,7 +49,10 @@ const ORIGIN := Vector2(20, 40)   # the HUD top bar sits above the maze
 @export var min_frozen_time: float = 1.0
 @export var grace_after_question: float = 1.0
 @export var feedback_time: float = 2.0
+@export var camera_zoom: float = 2.5          # higher = closer; 2.5 shows about 10 x 6 tiles
 
+@onready var city: Node2D = $City
+@onready var camera: Camera2D = $Camera
 @onready var walls_root: Node2D = $Walls
 @onready var scrolls_root: Node2D = $Scrolls
 @onready var actors_root: Node2D = $Actors
@@ -75,6 +79,7 @@ var correct_answers: int = 0
 var questions_asked: int = 0
 var time_left: float = 0.0
 var message_time: float = 0.0
+var local_player: Node2D             # the camera follows only this device's player
 
 # host-only bookkeeping
 var _begun: bool = false
@@ -99,7 +104,11 @@ func _ready() -> void:
 	pause_label.visible = false
 	warning_label.text = ""
 	warning_glow.modulate.a = 0.0
-	minimap.set_maze(MAZE)
+	city.setup(MAZE, ORIGIN, TILE)
+	minimap.set_maze(MAZE, ORIGIN, TILE)
+	minimap.set_camera(camera)
+	_setup_camera()
+	_add_vignette()
 	mode_label.text = "Host (LAN)" if Network.is_host() else "LAN"
 	_update_hud()
 	_show_message("Waiting for players...", 30.0)
@@ -140,14 +149,50 @@ func _add_wall(cell_x: int, cell_y: int, length: int) -> void:
 	var rect := RectangleShape2D.new()
 	rect.size = size
 	shape.shape = rect
-	var look := ColorRect.new()
-	look.color = Color(0.36, 0.25, 0.16)
-	look.position = -size / 2.0
-	look.size = size
-	look.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	body.add_child(look)
-	body.add_child(shape)
+	body.add_child(shape)   # the buildings on top are drawn by city_map.gd
 	walls_root.add_child(body)
+
+
+# ============================================================== camera
+func _setup_camera() -> void:
+	# A close-up camera: you only see the streets around you, the minimap
+	# shows the whole maze. Every device follows its own player only.
+	camera.zoom = Vector2(camera_zoom, camera_zoom)
+	var top_left := ORIGIN - Vector2.ONE * CAMERA_MARGIN * TILE
+	var bottom_right := ORIGIN + Vector2(MAZE[0].length(), MAZE.size()) * TILE + Vector2.ONE * CAMERA_MARGIN * TILE
+	camera.limit_left = int(top_left.x)
+	camera.limit_top = int(top_left.y)
+	camera.limit_right = int(bottom_right.x)
+	camera.limit_bottom = int(bottom_right.y)
+	camera.global_position = cell_to_world(Vector2i(MAZE[0].length() / 2, MAZE.size() / 2))
+	camera.make_current()
+
+
+func _follow_local_player() -> void:
+	if is_instance_valid(local_player):
+		camera.global_position = local_player.global_position
+
+
+func _add_vignette() -> void:
+	# darker screen edges so the street around you feels closer
+	var gradient := Gradient.new()
+	gradient.set_color(0, Color(0, 0, 0, 0))
+	gradient.set_color(1, Color(0, 0, 0, 0.6))
+	gradient.add_point(0.6, Color(0, 0, 0, 0))
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.fill = GradientTexture2D.FILL_RADIAL
+	texture.fill_from = Vector2(0.5, 0.5)
+	texture.fill_to = Vector2(0.5, 0.0)
+	var vignette := TextureRect.new()
+	vignette.name = "Vignette"
+	vignette.texture = texture
+	vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vignette.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	vignette.stretch_mode = TextureRect.STRETCH_SCALE
+	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$HUD.add_child(vignette)
+	$HUD.move_child(vignette, 0)   # under the minimap and the rest of the HUD
 
 
 func world_to_cell(pos: Vector2) -> Vector2i:
@@ -214,6 +259,9 @@ func _spawn_all(roster: Array) -> void:
 	if me:
 		mode_label.text = "You: %s (%s)" % ["TUBIG" if me.is_tubig() else "SILI", Network.player_name_of(me.peer_id)]
 		minimap.set_local_player(me)
+		local_player = me
+		_follow_local_player()
+		camera.reset_smoothing()   # jump straight to your start spot
 
 
 @rpc("authority", "call_local", "reliable")
@@ -445,6 +493,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(delta: float) -> void:
+	_follow_local_player()
 	if message_time > 0.0:
 		message_time -= delta
 		if message_time <= 0.0:

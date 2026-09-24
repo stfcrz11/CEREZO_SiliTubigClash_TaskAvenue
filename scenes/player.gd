@@ -53,8 +53,6 @@ func setup(id: int, player_slot: int, player_role: String, color_index: int, sta
 		body_rect.offset_right = 13; body_rect.offset_bottom = 13
 	name_label.text = _label()
 	alert_label.visible = false
-	body_rect.visible = is_local()
-	name_label.visible = is_local()
 
 
 func is_tubig() -> bool:

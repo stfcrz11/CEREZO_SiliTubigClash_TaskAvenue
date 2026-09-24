@@ -1,0 +1,57 @@
+[gd_scene load_steps=2 format=3]
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_h"]
+bg_color = Color(0.08, 0.1, 0.16, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.98, 0.82, 0.3, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="HowToPanel" type="PanelContainer"]
+theme_override_styles/panel = SubResource("StyleBox_h")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 18
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "How to Play"
+horizontal_alignment = 1
+
+[node name="Rules" type="Label" parent="Margin/VBox"]
+custom_minimum_size = Vector2(610, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 15
+text = "ROLES: 2-4 players = 1 Sili, 5-6 players = 2 Silis. Everyone else is Tubig. The Sili role rotates every round.
+
+TUBIG TEAM: answer 10 questions about Filipino culture correctly before the 3-minute timer ends.
+• Walk into a yellow ? scroll. Everyone freezes and sees the question; only the Tubig who picked it answers (click, tap, or 1-4). Help your teammate! Wrong = find another scroll.
+• When a Sili comes near you get a warning: \"SILI NEARBY!\" then \"RUN!\".
+• Caught Tubigs freeze. A teammate touches you to save you (1.5 s of safety + speed burst).
+
+SILI: touch Tubigs to freeze them. Freeze every Tubig, or survive until time runs out, to win.
+
+LAN: one player picks Host Game; the others pick Join Game on the same Wi-Fi or hotspot.
+CONTROLS: W A S D or arrow keys to move, Shift or Space to sprint, Esc to pause (host)."
+autowrap_mode = 3
+
+[node name="CloseButton" type="Button" parent="Margin/VBox"]
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Got it!"

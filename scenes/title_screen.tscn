@@ -1,6 +1,6 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://da5m6aypu7p61"]
 
-[ext_resource type="Script" path="res://scenes/title_screen.gd" id="1"]
+[ext_resource type="Script" uid="uid://dlt8wppvmuudg" path="res://scenes/title_screen.gd" id="1"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_h"]
 bg_color = Color(0.08, 0.1, 0.16, 1)
@@ -14,7 +14,7 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[node name="TitleScreen" type="Control"]
+[node name="TitleScreen" type="Control" unique_id=1495704812]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -23,16 +23,20 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=372902622]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -2.0
+offset_top = 1.0
+offset_right = 3.0
+offset_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.1, 0.14, 0.22, 1)
 
-[node name="Menu" type="VBoxContainer" parent="."]
+[node name="Menu" type="VBoxContainer" parent="." unique_id=1753594153]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -48,55 +52,55 @@ grow_vertical = 2
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="TitleLabel" type="Label" parent="Menu"]
+[node name="TitleLabel" type="Label" parent="Menu" unique_id=713651452]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "SILI-TUBIG"
 horizontal_alignment = 1
 
-[node name="SubLabel" type="Label" parent="Menu"]
+[node name="SubLabel" type="Label" parent="Menu" unique_id=979530777]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Task Avenue"
 horizontal_alignment = 1
 
-[node name="TaglineLabel" type="Label" parent="Menu"]
-layout_mode = 2
+[node name="TaglineLabel" type="Label" parent="Menu" unique_id=202387574]
 modulate = Color(1, 0.85, 0.4, 1)
+layout_mode = 2
 text = "LAN party game for 2-6 players. Tubig: answer 10 Filipino-culture questions. Sili: catch them first!"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="HostButton" type="Button" parent="Menu"]
+[node name="HostButton" type="Button" parent="Menu" unique_id=204025598]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Host Game (LAN)"
 
-[node name="JoinButton" type="Button" parent="Menu"]
+[node name="JoinButton" type="Button" parent="Menu" unique_id=2052278970]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Join Game (LAN)"
 
-[node name="HowToButton" type="Button" parent="Menu"]
+[node name="HowToButton" type="Button" parent="Menu" unique_id=1764769969]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 text = "How to Play"
 
-[node name="QuitButton" type="Button" parent="Menu"]
+[node name="QuitButton" type="Button" parent="Menu" unique_id=1136458977]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 text = "Quit"
 
-[node name="ErrorLabel" type="Label" parent="Menu"]
-layout_mode = 2
+[node name="ErrorLabel" type="Label" parent="Menu" unique_id=1732405883]
 modulate = Color(1, 0.5, 0.45, 1)
+layout_mode = 2
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="HowToPanel" type="PanelContainer" parent="."]
-theme_override_styles/panel = SubResource("StyleBox_h")
+[node name="HowToPanel" type="PanelContainer" parent="." unique_id=1320589783]
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -109,25 +113,26 @@ offset_right = 330.0
 offset_bottom = 250.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBox_h")
 
-[node name="Margin" type="MarginContainer" parent="HowToPanel"]
+[node name="Margin" type="MarginContainer" parent="HowToPanel" unique_id=398978775]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 18
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 18
 
-[node name="VBox" type="VBoxContainer" parent="HowToPanel/Margin"]
+[node name="VBox" type="VBoxContainer" parent="HowToPanel/Margin" unique_id=949862973]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Header" type="Label" parent="HowToPanel/Margin/VBox"]
+[node name="Header" type="Label" parent="HowToPanel/Margin/VBox" unique_id=9937575]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "How to Play"
 horizontal_alignment = 1
 
-[node name="Rules" type="Label" parent="HowToPanel/Margin/VBox"]
+[node name="Rules" type="Label" parent="HowToPanel/Margin/VBox" unique_id=1084084316]
 custom_minimum_size = Vector2(610, 0)
 layout_mode = 2
 size_flags_vertical = 3
@@ -145,7 +150,7 @@ LAN: one player picks Host Game; the others pick Join Game on the same Wi-Fi or 
 CONTROLS: W A S D or arrow keys to move, Shift or Space to sprint, Esc to pause (host)."
 autowrap_mode = 3
 
-[node name="CloseButton" type="Button" parent="HowToPanel/Margin/VBox"]
+[node name="CloseButton" type="Button" parent="HowToPanel/Margin/VBox" unique_id=620605177]
 custom_minimum_size = Vector2(160, 40)
 layout_mode = 2
 size_flags_horizontal = 4

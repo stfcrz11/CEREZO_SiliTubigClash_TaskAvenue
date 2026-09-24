@@ -1,0 +1,111 @@
+[gd_resource type="TileSet" format=3 uid="uid://dmq77akb2x7qb"]
+
+[ext_resource type="Texture2D" uid="uid://dhmefxfmdyr53" path="res://assets/walls/road.png" id="1_0lwst"]
+[ext_resource type="Texture2D" uid="uid://bpjd8eekris8l" path="res://assets/walls/road_lines_h.png" id="2_cujgc"]
+[ext_resource type="Texture2D" uid="uid://c6h0373m5rix1" path="res://assets/walls/store_front.png" id="3_3nwpm"]
+[ext_resource type="Texture2D" uid="uid://t0bl5t8jl63i" path="res://assets/walls/tree_lot.png" id="4_as2x6"]
+[ext_resource type="Texture2D" uid="uid://b06v41wtbcsec" path="res://assets/walls/road_lines_v.png" id="5_hoeds"]
+[ext_resource type="Texture2D" uid="uid://b1y7wlj1yioel" path="res://assets/walls/road_crossing.png" id="6_o1trl"]
+[ext_resource type="Texture2D" uid="uid://c1j22unjfmifq" path="res://assets/walls/roof_red.png" id="7_rd27l"]
+[ext_resource type="Texture2D" uid="uid://dtfplbt45nlep" path="res://assets/walls/roof_blue.png" id="8_3g86w"]
+[ext_resource type="Texture2D" uid="uid://cugtminybb1c8" path="res://assets/walls/roof_green.png" id="9_fxyr1"]
+[ext_resource type="Texture2D" uid="uid://b30yssil13oav" path="res://assets/walls/roof_gray.png" id="10_4wrjd"]
+[ext_resource type="Texture2D" uid="uid://dg4io74ujuit3" path="res://assets/walls/house_front.png" id="11_tis3f"]
+[ext_resource type="Texture2D" uid="uid://6lvw5rhmibg6" path="res://assets/walls/house_front_pink.png" id="12_0ciy1"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_83npx"]
+resource_name = "road"
+texture = ExtResource("1_0lwst")
+texture_region_size = Vector2i(40, 40)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_56gw2"]
+resource_name = "road_lines_h"
+texture = ExtResource("2_cujgc")
+texture_region_size = Vector2i(40, 40)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_elwfm"]
+resource_name = "store_front"
+texture = ExtResource("3_3nwpm")
+texture_region_size = Vector2i(40, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tra5v"]
+resource_name = "tree_lot"
+texture = ExtResource("4_as2x6")
+texture_region_size = Vector2i(40, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rpc68"]
+resource_name = "road_lines_v"
+texture = ExtResource("5_hoeds")
+texture_region_size = Vector2i(40, 40)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dggbi"]
+resource_name = "road_crossing"
+texture = ExtResource("6_o1trl")
+texture_region_size = Vector2i(40, 40)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hxiw7"]
+resource_name = "roof_red"
+texture = ExtResource("7_rd27l")
+texture_region_size = Vector2i(40, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7aiqx"]
+resource_name = "roof_blue"
+texture = ExtResource("8_3g86w")
+texture_region_size = Vector2i(40, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ekdgy"]
+resource_name = "roof_green"
+texture = ExtResource("9_fxyr1")
+texture_region_size = Vector2i(40, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0h3ma"]
+resource_name = "roof_gray"
+texture = ExtResource("10_4wrjd")
+texture_region_size = Vector2i(40, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ihs2f"]
+resource_name = "house_front"
+texture = ExtResource("11_tis3f")
+texture_region_size = Vector2i(40, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2no04"]
+resource_name = "house_front_pink"
+texture = ExtResource("12_0ciy1")
+texture_region_size = Vector2i(40, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+
+[resource]
+tile_size = Vector2i(40, 40)
+physics_layer_0/collision_layer = 1
+physics_layer_0/collision_mask = 0
+sources/0 = SubResource("TileSetAtlasSource_83npx")
+sources/1 = SubResource("TileSetAtlasSource_56gw2")
+sources/2 = SubResource("TileSetAtlasSource_rpc68")
+sources/3 = SubResource("TileSetAtlasSource_dggbi")
+sources/4 = SubResource("TileSetAtlasSource_hxiw7")
+sources/5 = SubResource("TileSetAtlasSource_7aiqx")
+sources/6 = SubResource("TileSetAtlasSource_ekdgy")
+sources/7 = SubResource("TileSetAtlasSource_0h3ma")
+sources/8 = SubResource("TileSetAtlasSource_ihs2f")
+sources/9 = SubResource("TileSetAtlasSource_2no04")
+sources/10 = SubResource("TileSetAtlasSource_elwfm")
+sources/11 = SubResource("TileSetAtlasSource_tra5v")

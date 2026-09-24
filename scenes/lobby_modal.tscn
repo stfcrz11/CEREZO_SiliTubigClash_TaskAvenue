@@ -1,0 +1,293 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scenes/lobby_modal.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/ui/panel.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/ui/card.png" id="3"]
+[ext_resource type="Script" path="res://scenes/png_button.gd" id="4"]
+[ext_resource type="Texture2D" path="res://assets/ui/button_close.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/ui/button_connect.png" id="6"]
+[ext_resource type="Texture2D" path="res://assets/ui/button_cancel.png" id="7"]
+[ext_resource type="Texture2D" path="res://assets/ui/button_start.png" id="8"]
+
+[sub_resource type="StyleBoxTexture" id="Panel"]
+texture = ExtResource("2")
+texture_margin_left = 20.0
+texture_margin_top = 20.0
+texture_margin_right = 20.0
+texture_margin_bottom = 20.0
+content_margin_left = 24.0
+content_margin_top = 14.0
+content_margin_right = 24.0
+content_margin_bottom = 16.0
+
+[sub_resource type="StyleBoxTexture" id="Card"]
+texture = ExtResource("3")
+texture_margin_left = 14.0
+texture_margin_top = 14.0
+texture_margin_right = 14.0
+texture_margin_bottom = 14.0
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 9.0
+
+[sub_resource type="StyleBoxFlat" id="Field"]
+bg_color = Color(0.08, 0.1, 0.16, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.4, 0.46, 0.6, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 12.0
+content_margin_right = 12.0
+
+[sub_resource type="StyleBoxFlat" id="FieldFocus"]
+bg_color = Color(0.08, 0.1, 0.16, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.98, 0.82, 0.3, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 12.0
+content_margin_right = 12.0
+
+[node name="LobbyModal" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.02, 0.06, 0.72)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(600, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Panel")
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="Header" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Center/Panel/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.98, 0.82, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.08, 0.12, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 26
+text = "HOST A GAME"
+vertical_alignment = 1
+
+[node name="CloseButton" type="TextureButton" parent="Center/Panel/VBox/Header"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+tooltip_text = "Close (Esc)"
+texture_normal = ExtResource("5")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("4")
+
+[node name="HostCard" type="PanelContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("Card")
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel/VBox/HostCard"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Step" type="Label" parent="Center/Panel/VBox/HostCard/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 14
+text = "STEP 1  ·  Tell your friends to press JOIN GAME"
+
+[node name="IpLabel" type="Label" parent="Center/Panel/VBox/HostCard/VBox"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0.05, 0.06, 0.1, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 30
+text = "192.168.1.5"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="Center/Panel/VBox/HostCard/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.74, 0.82, 1)
+theme_override_font_sizes/font_size = 13
+text = "Everyone must be on the same Wi-Fi or phone hotspot."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="FindCard" type="PanelContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("Card")
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel/VBox/FindCard"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Center/Panel/VBox/FindCard/VBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Center/Panel/VBox/FindCard/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 14
+text = "GAMES NEARBY"
+
+[node name="Searching" type="Label" parent="Center/Panel/VBox/FindCard/VBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.74, 0.82, 1)
+theme_override_font_sizes/font_size = 13
+text = "Searching..."
+
+[node name="FoundList" type="VBoxContainer" parent="Center/Panel/VBox/FindCard/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="IpCard" type="PanelContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("Card")
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel/VBox/IpCard"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="Center/Panel/VBox/IpCard/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 14
+text = "DON'T SEE IT? TYPE THE HOST'S IP"
+
+[node name="IpRow" type="HBoxContainer" parent="Center/Panel/VBox/IpCard/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="IpEdit" type="LineEdit" parent="Center/Panel/VBox/IpCard/VBox/IpRow"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Field")
+theme_override_styles/focus = SubResource("FieldFocus")
+placeholder_text = "e.g. 192.168.43.1"
+
+[node name="ConnectButton" type="TextureButton" parent="Center/Panel/VBox/IpCard/VBox/IpRow"]
+custom_minimum_size = Vector2(150, 44)
+layout_mode = 2
+texture_normal = ExtResource("6")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("4")
+
+[node name="PlayersCard" type="PanelContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("Card")
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel/VBox/PlayersCard"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Center/Panel/VBox/PlayersCard/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="Center/Panel/VBox/PlayersCard/VBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 14
+text = "STEP 2  ·  PLAYERS"
+vertical_alignment = 1
+
+[node name="Count" type="Label" parent="Center/Panel/VBox/PlayersCard/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+text = "1 / 6"
+vertical_alignment = 1
+
+[node name="SiliChip" type="Label" parent="Center/Panel/VBox/PlayersCard/VBox/Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "1 SILI"
+vertical_alignment = 1
+
+[node name="TubigChip" type="Label" parent="Center/Panel/VBox/PlayersCard/VBox/Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "1 TUBIG"
+vertical_alignment = 1
+
+[node name="Slots" type="GridContainer" parent="Center/Panel/VBox/PlayersCard/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="RoleHint" type="Label" parent="Center/Panel/VBox/PlayersCard/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.74, 0.82, 1)
+theme_override_font_sizes/font_size = 12
+text = "Roles are picked when the game starts. The Sili role rotates every round."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Status" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 15
+text = "Waiting for players..."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="CancelButton" type="TextureButton" parent="Center/Panel/VBox/Buttons"]
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+texture_normal = ExtResource("7")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("4")
+
+[node name="StartButton" type="TextureButton" parent="Center/Panel/VBox/Buttons"]
+custom_minimum_size = Vector2(224, 48)
+layout_mode = 2
+texture_normal = ExtResource("8")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("4")

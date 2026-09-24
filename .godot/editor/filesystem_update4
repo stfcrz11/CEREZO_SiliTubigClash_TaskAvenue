@@ -4,3 +4,12 @@ res://scenes/minimap.gd
 res://scenes/city_map.gd
 res://scenes/player.gd
 res://scenes/player.tscn
+res://scenes/question_scroll.gd
+res://scenes/question_scroll.tscn
+res://README.md
+res://scenes/city_map.tscn
+res://assets/walls/city_tileset.tres
+res://autoloads/network.gd
+res://scenes/png_button.gd
+res://autoloads/game_state.gd
+res://scenes/lobby_modal.gd

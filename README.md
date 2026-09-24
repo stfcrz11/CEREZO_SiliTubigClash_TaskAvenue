@@ -38,7 +38,8 @@ rounds and a fun way to learn Filipino culture.
 
 - Godot Engine 4.3, GDScript only, no third-party plugins
 - Godot high-level multiplayer (ENetMultiplayerPeer + RPCs)
-- Placeholder `ColorRect` shapes — no external assets needed
+- Starter PNG art in `assets/` (made for this project), easy to swap —
+  see `assets/README.md`. The maze is a TileMap in `scenes/city_map.tscn`.
 
 ## Project structure
 
@@ -50,7 +51,10 @@ data/
   questions.gd        32 Filipino-culture questions (edit to add more)
 scenes/
   title_screen.*      Host Game / Join Game / How to Play / Quit
-  lobby.*             Host view (IP, players, Start) and Join view
+  lobby_modal.*       Host / Join window over the title screen (IP, player
+                      slots, Start; games found nearby, type-the-IP)
+  png_button.gd       Buttons made from PNG pictures (hover glow, press)
+  city_map.tscn       The maze, painted with tiles (edit it in the editor)
   maze_game.*         The round: maze, scrolls, questions, tags, rescues,
                       timer, win/lose (host decides, all devices show)
   player.*            One character; role = "tubig" or "sili"

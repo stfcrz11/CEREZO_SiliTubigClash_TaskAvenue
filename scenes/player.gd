@@ -6,8 +6,18 @@ extends CharacterBody2D
 ## Catches, rescues and scroll pickups are decided by the host
 ## (maze_game.gd), never by this script.
 
-const TUBIG_COLORS := [Color(0.2, 0.6, 1.0), Color(0.2, 0.9, 0.85), Color(0.75, 0.55, 1.0), Color(1.0, 1.0, 1.0)]
-const SILI_COLORS := [Color(0.9, 0.2, 0.15), Color(1.0, 0.55, 0.1)]
+# light tints so teammates using the same picture still look a bit different
+const TUBIG_TINTS := [Color(1, 1, 1), Color(0.8, 1.0, 1.0), Color(0.9, 0.85, 1.0), Color(1.0, 1.0, 0.8)]
+const SILI_TINTS := [Color(1, 1, 1), Color(1.0, 0.9, 0.75)]
+const CAUGHT_TINT := Color(0.45, 0.45, 0.55)
+
+## Character pictures. Replace the PNG files, or drag new ones here in the
+## Inspector. A picture can be a single image, or a strip of SQUARE walking
+## frames side by side (e.g. 4 frames of 24x24 = a 96x24 PNG).
+@export var tubig_texture: Texture2D = preload("res://assets/characters/tubig_kid.png")
+@export var sili_texture: Texture2D = preload("res://assets/characters/sili_kid.png")
+@export var body_size: float = 24.0             # how tall the kid is in the world (a maze tile is 40)
+@export var walk_fps: float = 8.0               # walking animation speed
 
 @export var tubig_speed: float = 140.0
 @export var sili_speed: float = 150.0          # Sili is a bit faster...
@@ -28,8 +38,10 @@ var immune_time: float = 0.0
 var base_color: Color
 var _net_target: Vector2
 var _send_timer: float = 0.0
+var _last_position: Vector2
+var _walk_time: float = 0.0
 
-@onready var body_rect: ColorRect = $Body
+@onready var body: Sprite2D = $Body
 @onready var name_label: Label = $NameLabel
 @onready var alert_label: Label = $AlertLabel
 
@@ -44,13 +56,15 @@ func setup(id: int, player_slot: int, player_role: String, color_index: int, sta
 	collision_mask = 1
 	global_position = start
 	_net_target = start
-	var palette := TUBIG_COLORS if is_tubig() else SILI_COLORS
-	base_color = palette[color_index % palette.size()]
-	body_rect.color = base_color
-	if not is_tubig():
-		# Sili is drawn slightly bigger so it is easy to spot
-		body_rect.offset_left = -13; body_rect.offset_top = -13
-		body_rect.offset_right = 13; body_rect.offset_bottom = 13
+	_last_position = start
+	body.texture = tubig_texture if is_tubig() else sili_texture
+	var picture := body.texture.get_size()
+	body.hframes = max(1, int(picture.x / picture.y))   # square frames side by side
+	# fit any picture size; the Sili is drawn slightly bigger so it is easy to spot
+	body.scale = Vector2.ONE * body_size * (1.0 if is_tubig() else 1.15) / picture.y
+	var tints := TUBIG_TINTS if is_tubig() else SILI_TINTS
+	base_color = tints[color_index % tints.size()]
+	body.self_modulate = base_color
 	name_label.text = _label()
 	alert_label.visible = false
 
@@ -76,7 +90,7 @@ func _physics_process(delta: float) -> void:
 			frozen_time += delta
 		if immune_time > 0.0:
 			immune_time -= delta
-	body_rect.modulate.a = 0.35 if immune_time > 0.0 and int(immune_time * 10) % 2 == 0 else 1.0
+	body.modulate.a = 0.35 if immune_time > 0.0 and int(immune_time * 10) % 2 == 0 else 1.0
 
 	if not is_multiplayer_authority():
 		# someone else's character: glide toward the last position received
@@ -105,6 +119,21 @@ func _physics_process(delta: float) -> void:
 		_net_position.rpc(global_position)
 
 
+func _process(delta: float) -> void:
+	# walking animation: works for every player, because it only looks at
+	# how far the character moved since the last frame
+	var moved := global_position - _last_position
+	_last_position = global_position
+	if moved.length() > 0.3:
+		_walk_time += delta
+		body.frame = int(_walk_time * walk_fps) % body.hframes
+		if absf(moved.x) > 0.1:
+			body.flip_h = moved.x < 0.0
+	else:
+		_walk_time = 0.0
+		body.frame = 0
+
+
 @rpc("authority", "call_remote", "unreliable_ordered")
 func _net_position(pos: Vector2) -> void:
 	_net_target = pos
@@ -128,14 +157,14 @@ func get_stamina_ratio() -> float:
 func set_caught() -> void:
 	frozen = true
 	frozen_time = 0.0
-	body_rect.color = Color(0.55, 0.55, 0.6)
+	body.self_modulate = CAUGHT_TINT
 	name_label.text = "SAVE %s!" % Network.player_name_of(peer_id)
 	alert_label.visible = false
 
 
 func set_rescued() -> void:
 	frozen = false
-	body_rect.color = base_color
+	body.self_modulate = base_color
 	name_label.text = _label()
 	immune_time = rescue_immunity_time
 

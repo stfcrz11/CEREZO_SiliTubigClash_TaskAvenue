@@ -15,27 +15,12 @@ const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const SCROLL_SCENE := preload("res://scenes/question_scroll.tscn")
 const ButtonStyle := preload("res://scenes/ui_button_style.gd")
 
-## Maze layout. # = wall, . = floor, P = Tubig starts (up to 4), S = Sili starts (up to 2).
-## Edit this to change the maze (keep it 23 x 15 to fit the screen).
-const MAZE := [
-	"#######################",
-	"#S#.............#....S#",
-	"#.###.#.###.###.#.#.#.#",
-	"#.....#.......#...#.#.#",
-	"###...#####.###..##.#.#",
-	"#...#.#...#.......#.#.#",
-	"#.#.#.#.#.#.##..#.#.###",
-	"#.#.........#.....#...#",
-	"#.###..###.##.#######.#",
-	"#...........#...#.....#",
-	"#.##..###.###.#.#.###.#",
-	"#.....#.......#...#...#",
-	"##.##.#.#####.##..#.#.#",
-	"#PPPP.......#.........#",
-	"#######################",
-]
-const TILE := 40
-const ORIGIN := Vector2(20, 40)   # the HUD top bar sits above the maze
+## The maze is NOT written here any more: open scenes/city_map.tscn and
+## paint it on the "Maze" TileMapLayer (tiles come from
+## assets/walls/city_tileset.tres). Any tile with a collision shape is a
+## wall, every other tile is road. Start spots are the Marker2D nodes under
+## "Starts" (TubigStart1-4, SiliStart1-2) — drag them in the editor.
+const TILE := 40                  # must match the TileSet's tile size (40 x 40 px)
 const CAMERA_MARGIN := 3          # tiles of city the camera may show past the maze edge
 
 @export var questions_to_win: int = 10
@@ -51,9 +36,9 @@ const CAMERA_MARGIN := 3          # tiles of city the camera may show past the m
 @export var feedback_time: float = 2.0
 @export var camera_zoom: float = 2.5          # higher = closer; 2.5 shows about 10 x 6 tiles
 
-@onready var city: Node2D = $City
+@onready var maze_layer: TileMapLayer = $Map/Maze
+@onready var starts_root: Node2D = $Map/Starts
 @onready var camera: Camera2D = $Camera
-@onready var walls_root: Node2D = $Walls
 @onready var scrolls_root: Node2D = $Scrolls
 @onready var actors_root: Node2D = $Actors
 @onready var round_timer: Timer = $RoundTimer
@@ -70,6 +55,8 @@ const CAMERA_MARGIN := 3          # tiles of city the camera may show past the m
 @onready var play_again_button: Button = $HUD/EndPanel/Margin/VBox/Buttons/PlayAgainButton
 @onready var menu_button: Button = $HUD/EndPanel/Margin/VBox/Buttons/MenuButton
 
+var maze: Array[String] = []       # read from the Maze TileMapLayer: # wall, . road, P / S start
+var maze_origin := Vector2.ZERO     # world position of the maze's top-left corner
 var floor_cells: Array[Vector2i] = []
 var tubigs: Array = []
 var silis: Array = []
@@ -104,8 +91,7 @@ func _ready() -> void:
 	pause_label.visible = false
 	warning_label.text = ""
 	warning_glow.modulate.a = 0.0
-	city.setup(MAZE, ORIGIN, TILE)
-	minimap.set_maze(MAZE, ORIGIN, TILE)
+	minimap.set_maze(maze, maze_origin, TILE)
 	minimap.set_camera(camera)
 	_setup_camera()
 	_add_vignette()
@@ -125,32 +111,25 @@ func _ready() -> void:
 
 # ================================================================ maze
 func _build_maze() -> void:
-	var w: int = MAZE[0].length()
-	var h: int = MAZE.size()
-	for y in h:
-		var run_start := -1
-		for x in w + 1:
-			var is_wall: bool = x < w and MAZE[y][x] == "#"
-			if x < w and not is_wall:
+	# Turn the painted TileMapLayer into a simple grid the game rules use.
+	var used := maze_layer.get_used_rect()
+	maze_origin = maze_layer.global_position + Vector2(used.position * TILE)
+	for y in used.size.y:
+		var row := ""
+		for x in used.size.x:
+			var data := maze_layer.get_cell_tile_data(used.position + Vector2i(x, y))
+			var is_wall := data != null and data.get_collision_polygons_count(0) > 0
+			row += "#" if is_wall else "."
+		maze.append(row)
+	# start spots come from the Marker2D nodes under Map/Starts
+	for marker in starts_root.get_children():
+		var cell := world_to_cell(marker.global_position)
+		var mark := "P" if marker.name.begins_with("Tubig") else "S"
+		maze[cell.y] = maze[cell.y].substr(0, cell.x) + mark + maze[cell.y].substr(cell.x + 1)
+	for y in maze.size():
+		for x in maze[y].length():
+			if maze[y][x] != "#":
 				floor_cells.append(Vector2i(x, y))
-			# merge each horizontal run of wall tiles into one body
-			if is_wall and run_start < 0:
-				run_start = x
-			elif not is_wall and run_start >= 0:
-				_add_wall(run_start, y, x - run_start)
-				run_start = -1
-
-
-func _add_wall(cell_x: int, cell_y: int, length: int) -> void:
-	var size := Vector2(length * TILE, TILE)
-	var body := StaticBody2D.new()
-	body.position = ORIGIN + Vector2(cell_x * TILE, cell_y * TILE) + size / 2.0
-	var shape := CollisionShape2D.new()
-	var rect := RectangleShape2D.new()
-	rect.size = size
-	shape.shape = rect
-	body.add_child(shape)   # the buildings on top are drawn by city_map.gd
-	walls_root.add_child(body)
 
 
 # ============================================================== camera
@@ -158,13 +137,13 @@ func _setup_camera() -> void:
 	# A close-up camera: you only see the streets around you, the minimap
 	# shows the whole maze. Every device follows its own player only.
 	camera.zoom = Vector2(camera_zoom, camera_zoom)
-	var top_left := ORIGIN - Vector2.ONE * CAMERA_MARGIN * TILE
-	var bottom_right := ORIGIN + Vector2(MAZE[0].length(), MAZE.size()) * TILE + Vector2.ONE * CAMERA_MARGIN * TILE
+	var top_left := maze_origin - Vector2.ONE * CAMERA_MARGIN * TILE
+	var bottom_right := maze_origin + Vector2(maze[0].length(), maze.size()) * TILE + Vector2.ONE * CAMERA_MARGIN * TILE
 	camera.limit_left = int(top_left.x)
 	camera.limit_top = int(top_left.y)
 	camera.limit_right = int(bottom_right.x)
 	camera.limit_bottom = int(bottom_right.y)
-	camera.global_position = cell_to_world(Vector2i(MAZE[0].length() / 2, MAZE.size() / 2))
+	camera.global_position = cell_to_world(Vector2i(maze[0].length() / 2, maze.size() / 2))
 	camera.make_current()
 
 
@@ -196,12 +175,12 @@ func _add_vignette() -> void:
 
 
 func world_to_cell(pos: Vector2) -> Vector2i:
-	var c := Vector2i(((pos - ORIGIN) / TILE).floor())
-	return c.clamp(Vector2i.ZERO, Vector2i(MAZE[0].length() - 1, MAZE.size() - 1))
+	var c := Vector2i(((pos - maze_origin) / TILE).floor())
+	return c.clamp(Vector2i.ZERO, Vector2i(maze[0].length() - 1, maze.size() - 1))
 
 
 func cell_to_world(cell: Vector2i) -> Vector2:
-	return ORIGIN + Vector2(cell) * TILE + Vector2(TILE, TILE) / 2.0
+	return maze_origin + Vector2(cell) * TILE + Vector2(TILE, TILE) / 2.0
 
 
 func random_floor_cell() -> Vector2i:
@@ -210,9 +189,9 @@ func random_floor_cell() -> Vector2i:
 
 func _cells_with(ch: String) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
-	for y in MAZE.size():
-		for x in MAZE[y].length():
-			if MAZE[y][x] == ch:
+	for y in maze.size():
+		for x in maze[y].length():
+			if maze[y][x] == ch:
 				out.append(Vector2i(x, y))
 	return out
 
@@ -287,7 +266,7 @@ func _host_spawn_scroll() -> void:
 		taken.append(world_to_cell(s.position))
 	var candidates: Array[Vector2i] = []
 	for cell in floor_cells:
-		if cell in taken or MAZE[cell.y][cell.x] != ".":
+		if cell in taken or maze[cell.y][cell.x] != ".":
 			continue
 		var far_enough := true
 		for t in tubigs:

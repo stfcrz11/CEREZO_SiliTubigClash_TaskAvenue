@@ -20,7 +20,7 @@ var player_names: Dictionary = {}   # peer_id -> chosen display name
 var online: bool = false
 var game_started: bool = false
 var last_error: String = ""
-var found_hosts: Dictionary = {}    # ip -> {"players": n, "seen": msec}
+var found_hosts: Dictionary = {}    # ip -> {"players": n, "name": host name, "seen": msec}
 var ready_peers: Dictionary = {}    # host: peers whose maze scene has loaded
 var round_number: int = 0           # host: used to rotate the Sili role
 
@@ -292,7 +292,8 @@ func _process(delta: float) -> void:
 		_beacon_timer -= delta
 		if _beacon_timer <= 0.0:
 			_beacon_timer = 1.0
-			var msg := ("%s|%d" % [BEACON, players.size()]).to_utf8_buffer()
+			var host_name := player_name_of(1).replace("|", "/")
+			var msg := ("%s|%d|%s" % [BEACON, players.size(), host_name]).to_utf8_buffer()
 			# global broadcast + each network's x.y.z.255 (covers phone and
 			# Windows hotspots, which use different subnets)
 			var targets := ["255.255.255.255"]
@@ -309,9 +310,11 @@ func _process(delta: float) -> void:
 			var text := _listen_udp.get_packet().get_string_from_utf8()
 			var ip := _listen_udp.get_packet_ip()
 			var parts := text.split("|")
-			if parts.size() == 2 and parts[0] == BEACON:
-				changed = changed or not found_hosts.has(ip)
-				found_hosts[ip] = {"players": int(parts[1]), "seen": Time.get_ticks_msec()}
+			if parts.size() >= 2 and parts[0] == BEACON:
+				var count := int(parts[1])
+				changed = changed or not found_hosts.has(ip) or found_hosts[ip]["players"] != count
+				var host_name := parts[2] if parts.size() >= 3 else ""
+				found_hosts[ip] = {"players": count, "name": host_name, "seen": Time.get_ticks_msec()}
 		for ip in found_hosts.keys():
 			if Time.get_ticks_msec() - found_hosts[ip]["seen"] > 4000:
 				found_hosts.erase(ip)

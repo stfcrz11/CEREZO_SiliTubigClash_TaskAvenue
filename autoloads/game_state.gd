@@ -7,12 +7,10 @@ extends Node
 enum RoundState { READY, PLAYING, QUESTION, PAUSED, ENDED }
 
 const TITLE_SCENE := "res://scenes/title_screen.tscn"
-const LOBBY_SCENE := "res://scenes/lobby.tscn"
 const GAME_SCENE := "res://scenes/maze_game.tscn"
 const SETTINGS_PATH := "user://player_settings.cfg"
 
 var round_state: RoundState = RoundState.READY
-var lobby_mode: String = "host"   # "host" or "join" when opening the lobby
 var player_name: String = "Player"
 
 

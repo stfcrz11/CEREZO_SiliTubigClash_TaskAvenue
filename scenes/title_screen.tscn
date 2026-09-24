@@ -1,0 +1,152 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/title_screen.gd" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_h"]
+bg_color = Color(0.08, 0.1, 0.16, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.98, 0.82, 0.3, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="TitleScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.14, 0.22, 1)
+
+[node name="Menu" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -190.0
+offset_top = -230.0
+offset_right = 190.0
+offset_bottom = 230.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="Menu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "SILI-TUBIG"
+horizontal_alignment = 1
+
+[node name="SubLabel" type="Label" parent="Menu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Task Avenue"
+horizontal_alignment = 1
+
+[node name="TaglineLabel" type="Label" parent="Menu"]
+layout_mode = 2
+modulate = Color(1, 0.85, 0.4, 1)
+text = "LAN party game for 2-6 players. Tubig: answer 10 Filipino-culture questions. Sili: catch them first!"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="HostButton" type="Button" parent="Menu"]
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Host Game (LAN)"
+
+[node name="JoinButton" type="Button" parent="Menu"]
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Join Game (LAN)"
+
+[node name="HowToButton" type="Button" parent="Menu"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "How to Play"
+
+[node name="QuitButton" type="Button" parent="Menu"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Quit"
+
+[node name="ErrorLabel" type="Label" parent="Menu"]
+layout_mode = 2
+modulate = Color(1, 0.5, 0.45, 1)
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="HowToPanel" type="PanelContainer" parent="."]
+theme_override_styles/panel = SubResource("StyleBox_h")
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -250.0
+offset_right = 330.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="HowToPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 18
+
+[node name="VBox" type="VBoxContainer" parent="HowToPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="Label" parent="HowToPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "How to Play"
+horizontal_alignment = 1
+
+[node name="Rules" type="Label" parent="HowToPanel/Margin/VBox"]
+custom_minimum_size = Vector2(610, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 15
+text = "ROLES: 2-4 players = 1 Sili, 5-6 players = 2 Silis. Everyone else is Tubig. The Sili role rotates every round.
+
+TUBIG TEAM: answer 10 questions about Filipino culture correctly before the 3-minute timer ends.
+• Walk into a yellow ? scroll. Everyone freezes and sees the question; only the Tubig who picked it answers (click, tap, or 1-4). Help your teammate! Wrong = find another scroll.
+• When a Sili comes near you get a warning: \"SILI NEARBY!\" then \"RUN!\".
+• Caught Tubigs freeze. A teammate touches you to save you (1.5 s of safety + speed burst).
+
+SILI: touch Tubigs to freeze them. Freeze every Tubig, or survive until time runs out, to win.
+
+LAN: one player picks Host Game; the others pick Join Game on the same Wi-Fi or hotspot.
+CONTROLS: W A S D or arrow keys to move, Shift or Space to sprint, Esc to pause (host)."
+autowrap_mode = 3
+
+[node name="CloseButton" type="Button" parent="HowToPanel/Margin/VBox"]
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Got it!"

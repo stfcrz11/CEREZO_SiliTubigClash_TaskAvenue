@@ -9,7 +9,8 @@
 [ext_resource type="Texture2D" path="res://assets/ui/button_how_to_play.png" id="7"]
 [ext_resource type="Texture2D" path="res://assets/ui/button_quit.png" id="8"]
 [ext_resource type="Texture2D" path="res://assets/ui/button_got_it.png" id="9"]
-[ext_resource type="PackedScene" path="res://scenes/lobby_modal.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/host_modal.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/join_modal.tscn" id="12"]
 [ext_resource type="Texture2D" path="res://assets/ui/panel.png" id="11"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBox_h"]
@@ -207,5 +208,10 @@ ignore_texture_size = true
 stretch_mode = 5
 script = ExtResource("3")
 
-[node name="LobbyModal" parent="." instance=ExtResource("10")]
+[node name="HostModal" parent="." instance=ExtResource("10")]
+visible = false
+layout_mode = 1
+
+[node name="JoinModal" parent="." instance=ExtResource("12")]
+visible = false
 layout_mode = 1

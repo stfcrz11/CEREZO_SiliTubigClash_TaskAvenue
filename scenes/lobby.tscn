@@ -1,0 +1,99 @@
+[gd_scene format=3 uid="uid://dk3rw3w4mfi1x"]
+
+[node name="Lobby" type="Control" unique_id=869828589]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="ColorRect" parent="." unique_id=2099947499]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.14, 0.22, 1)
+
+[node name="VBox" type="VBoxContainer" parent="." unique_id=1281011123]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -290.0
+offset_right = 280.0
+offset_bottom = 290.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="Label" parent="VBox" unique_id=1948068766]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Lobby"
+horizontal_alignment = 1
+
+[node name="InfoLabel" type="Label" parent="VBox" unique_id=188827324]
+custom_minimum_size = Vector2(540, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="JoinBox" type="VBoxContainer" parent="VBox" unique_id=2134246509]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FoundLabel" type="Label" parent="VBox/JoinBox" unique_id=778384273]
+layout_mode = 2
+text = "Games found on this network:"
+
+[node name="FoundList" type="VBoxContainer" parent="VBox/JoinBox" unique_id=1622812081]
+layout_mode = 2
+
+[node name="IpRow" type="HBoxContainer" parent="VBox/JoinBox" unique_id=300897383]
+layout_mode = 2
+
+[node name="IpEdit" type="LineEdit" parent="VBox/JoinBox/IpRow" unique_id=1632744705]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Host IP, e.g. 192.168.43.1"
+
+[node name="ConnectButton" type="Button" parent="VBox/JoinBox/IpRow" unique_id=251470756]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+text = "Connect"
+
+[node name="PlayersLabel" type="Label" parent="VBox" unique_id=923187551]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Players:"
+
+[node name="StatusLabel" type="Label" parent="VBox" unique_id=1454751364]
+modulate = Color(1, 0.85, 0.4, 1)
+custom_minimum_size = Vector2(540, 0)
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="VBox" unique_id=540445408]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="StartButton" type="Button" parent="VBox/Buttons" unique_id=649811860]
+custom_minimum_size = Vector2(170, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Start"
+
+[node name="BackButton" type="Button" parent="VBox/Buttons" unique_id=681276265]
+custom_minimum_size = Vector2(170, 46)
+layout_mode = 2
+text = "Back"

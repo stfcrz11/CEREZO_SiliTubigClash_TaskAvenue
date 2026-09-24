@@ -1,6 +1,7 @@
 extends Control
 ## Title screen: Host Game / Join Game (LAN), How to Play, Quit.
-## Host Game and Join Game open the LobbyModal window on top of this screen.
+## Host Game opens HostModal (host_modal.tscn) and Join Game opens JoinModal
+## (join_modal.tscn) on top of this screen.
 ## The title and the buttons are PNG pictures in assets/ui/ — replace those
 ## files (or drag new ones into the Inspector) to change how they look.
 
@@ -9,8 +10,8 @@ func _ready() -> void:
 	$Menu/PlayerNameRow/PlayerNameInput.text = GameState.player_name
 	$Menu/PlayerNameRow/PlayerNameInput.text_changed.connect(_on_player_name_changed)
 	$Menu/PlayerNameRow/PlayerNameInput.focus_exited.connect(_normalize_player_name)
-	$Menu/HostButton.pressed.connect(func(): $LobbyModal.open_host())
-	$Menu/JoinButton.pressed.connect(func(): $LobbyModal.open_join())
+	$Menu/HostButton.pressed.connect(func(): $HostModal.open())
+	$Menu/JoinButton.pressed.connect(func(): $JoinModal.open())
 	$Menu/HowToButton.pressed.connect(_show_how_to.bind(true))
 	$Menu/QuitButton.pressed.connect(func(): get_tree().quit())
 	$HowToPanel/Margin/VBox/CloseButton.pressed.connect(_show_how_to.bind(false))

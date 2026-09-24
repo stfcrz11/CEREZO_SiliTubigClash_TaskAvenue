@@ -51,8 +51,10 @@ data/
   questions.gd        32 Filipino-culture questions (edit to add more)
 scenes/
   title_screen.*      Host Game / Join Game / How to Play / Quit
-  lobby_modal.*       Host / Join window over the title screen (IP, player
-                      slots, Start; games found nearby, type-the-IP)
+  host_modal.*        "Host a game" window over the title screen (IP,
+                      player slots, Start)
+  join_modal.*        "Join a game" window (games found nearby, type-the-IP)
+  store_modal.gd      Shared parts of both windows (slots, status, close)
   png_button.gd       Buttons made from PNG pictures (hover glow, press)
   city_map.tscn       The maze, painted with tiles (edit it in the editor)
   maze_game.*         The round: maze, scrolls, questions, tags, rescues,

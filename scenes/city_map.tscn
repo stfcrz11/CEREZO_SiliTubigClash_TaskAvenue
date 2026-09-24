@@ -4,6 +4,8 @@
 [ext_resource type="Texture2D" uid="uid://cdc2gt4i5m4cf" path="res://assets/props/tricycle.png" id="2_ufokl"]
 [ext_resource type="Texture2D" uid="uid://bnj4co3u3bpxj" path="res://assets/props/jeepney.png" id="3_dib7t"]
 [ext_resource type="Texture2D" uid="uid://dt0g35v8wwju8" path="res://assets/props/electric_post.png" id="4_m0ahl"]
+[ext_resource type="Texture2D" uid="uid://cugtminybb1c8" path="res://assets/walls/roof_green.png" id="5_ufokl"]
+[ext_resource type="Texture2D" uid="uid://t0bl5t8jl63i" path="res://assets/walls/tree_lot.png" id="6_dib7t"]
 
 [node name="CityMap" type="Node2D" unique_id=2066591932]
 
@@ -240,3 +242,12 @@ gizmo_extents = 14.0
 [node name="TubigStart4" type="Marker2D" parent="Starts" unique_id=1197533466]
 position = Vector2(200, 580)
 gizmo_extents = 14.0
+
+[node name="RoofGreen" type="Sprite2D" parent="." unique_id=2039129944]
+position = Vector2(439, 621)
+texture = ExtResource("5_ufokl")
+
+[node name="TreeLot" type="Sprite2D" parent="." unique_id=1355536553]
+position = Vector2(760, 140)
+scale = Vector2(1, 1.1)
+texture = ExtResource("6_dib7t")

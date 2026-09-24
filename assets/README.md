@@ -12,7 +12,8 @@ using the same file name**, then go back to Godot (it re-imports by itself).
 | Title screen background | `backgrounds/title_city.png` | 960x640 is best (it is stretched to cover the screen) |
 | Game title (logo) | `ui/title_logo.png` | Any size, wide shape (now 900x300); fitted into the top of the menu |
 | Host / Join window buttons | `ui/button_start.png`, `button_cancel.png`, `button_connect.png`, `button_join_small.png`, `button_close.png` | Any size; text drawn into the picture |
-| Window frame and cards | `ui/panel.png` (64x64), `ui/card.png` (48x48) | Keep the same size. Godot stretches only the middle, so draw the border within the outer ~14-20 px |
+| Host / Join window (sari-sari store) | `ui/store_top.png` (roof, sign, awning; 1280x236, shown at 640x118), `ui/store_body.png` (store wall + sachet strips, 128x64), `ui/store_counter.png` (wooden counter, 128x76), `ui/chalkboard.png` (IP board, 48x48) | Keep the same sizes. The sign's text is not in the picture: it is the **Title** label in `scenes/host_modal.tscn` / `scenes/join_modal.tscn`. In store_body.png only the middle stretches; the left/right 36 px (post + sachets) repeat downwards |
+| How to Play frame and cards | `ui/panel.png` (64x64), `ui/card.png` (48x48) | Keep the same size. Godot stretches only the middle, so draw the border within the outer ~14-20 px |
 | Title screen buttons | `ui/button_host.png`, `button_join.png`, `button_how_to_play.png`, `button_quit.png`, `button_got_it.png` | Any size, wide shape (now 720x112). Draw the button text INTO the picture |
 | Maze tiles (roads, roofs, houses, stores, trees) | `walls/*.png` | **Exactly 40x40** |
 | Props (jeepney, tricycle, electric post) | `props/*.png` | Any size |

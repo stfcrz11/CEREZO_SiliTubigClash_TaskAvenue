@@ -1,17 +1,17 @@
 [gd_scene format=3 uid="uid://da5m6aypu7p61"]
 
 [ext_resource type="Script" uid="uid://dlt8wppvmuudg" path="res://scenes/title_screen.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/title_city.png" id="2"]
-[ext_resource type="Script" path="res://scenes/png_button.gd" id="3"]
-[ext_resource type="Texture2D" path="res://assets/ui/title_logo.png" id="4"]
-[ext_resource type="Texture2D" path="res://assets/ui/button_host.png" id="5"]
-[ext_resource type="Texture2D" path="res://assets/ui/button_join.png" id="6"]
-[ext_resource type="Texture2D" path="res://assets/ui/button_how_to_play.png" id="7"]
-[ext_resource type="Texture2D" path="res://assets/ui/button_quit.png" id="8"]
-[ext_resource type="Texture2D" path="res://assets/ui/button_got_it.png" id="9"]
-[ext_resource type="PackedScene" path="res://scenes/host_modal.tscn" id="10"]
+[ext_resource type="Texture2D" uid="uid://fh3ot1xyc7wh" path="res://assets/backgrounds/title_city.png" id="2"]
+[ext_resource type="Script" uid="uid://c2wxq4j8wv6qy" path="res://scenes/png_button.gd" id="3"]
+[ext_resource type="Texture2D" uid="uid://dvsa8rd0k2eiy" path="res://assets/ui/title_logo.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://cwgm40xx44hvl" path="res://assets/ui/button_host.png" id="5"]
+[ext_resource type="Texture2D" uid="uid://cs04hlo4gcpvl" path="res://assets/ui/button_join.png" id="6"]
+[ext_resource type="Texture2D" uid="uid://dfxpvm3fo13tc" path="res://assets/ui/button_how_to_play.png" id="7"]
+[ext_resource type="Texture2D" uid="uid://diet885i5nohn" path="res://assets/ui/button_quit.png" id="8"]
+[ext_resource type="Texture2D" uid="uid://dijubffesogkv" path="res://assets/ui/button_got_it.png" id="9"]
+[ext_resource type="PackedScene" uid="uid://tk5fhd8ueg8u" path="res://scenes/host_modal.tscn" id="10"]
+[ext_resource type="Texture2D" uid="uid://dp4ok37vv8kft" path="res://assets/ui/panel.png" id="11"]
 [ext_resource type="PackedScene" path="res://scenes/join_modal.tscn" id="12"]
-[ext_resource type="Texture2D" path="res://assets/ui/panel.png" id="11"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBox_h"]
 texture = ExtResource("11")
@@ -21,13 +21,13 @@ texture_margin_right = 20.0
 texture_margin_bottom = 20.0
 
 [node name="TitleScreen" type="Control" unique_id=1495704812]
+texture_filter = 2
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture_filter = 2
 script = ExtResource("1")
 
 [node name="Background" type="TextureRect" parent="." unique_id=372902622]
@@ -35,6 +35,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -595.0
+offset_top = -245.0
+offset_right = -1.0
+offset_bottom = 202.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -42,11 +46,14 @@ texture = ExtResource("2")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Dim" type="ColorRect" parent="."]
+[node name="Dim" type="ColorRect" parent="." unique_id=881953272]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 1.0
+offset_top = -1.0
+offset_bottom = 11.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -82,17 +89,17 @@ layout_mode = 2
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="PlayerNameRow" type="HBoxContainer" parent="Menu"]
+[node name="PlayerNameRow" type="HBoxContainer" parent="Menu" unique_id=160485771]
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="PlayerNameLabel" type="Label" parent="Menu/PlayerNameRow"]
+[node name="PlayerNameLabel" type="Label" parent="Menu/PlayerNameRow" unique_id=1696512549]
 layout_mode = 2
 text = "PLAYER NAME:"
 vertical_alignment = 1
 
-[node name="PlayerNameInput" type="LineEdit" parent="Menu/PlayerNameRow"]
+[node name="PlayerNameInput" type="LineEdit" parent="Menu/PlayerNameRow" unique_id=797932786]
 custom_minimum_size = Vector2(220, 42)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -138,7 +145,7 @@ layout_mode = 2
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="HowToDim" type="ColorRect" parent="."]
+[node name="HowToDim" type="ColorRect" parent="." unique_id=513728111]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -208,10 +215,10 @@ ignore_texture_size = true
 stretch_mode = 5
 script = ExtResource("3")
 
-[node name="HostModal" parent="." instance=ExtResource("10")]
+[node name="HostModal" parent="." unique_id=1246166018 instance=ExtResource("10")]
 visible = false
 layout_mode = 1
 
-[node name="JoinModal" parent="." instance=ExtResource("12")]
+[node name="JoinModal" parent="." unique_id=1823260444 instance=ExtResource("12")]
 visible = false
 layout_mode = 1

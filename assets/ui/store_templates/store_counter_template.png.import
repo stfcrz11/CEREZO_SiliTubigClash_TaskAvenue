@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c6irfwnt3jdyx"
-path="res://.godot/imported/chalkboard.png-babacd363fa52d7397929d63aa918333.ctex"
+uid="uid://dyoit7avnbl6y"
+path="res://.godot/imported/store_counter_template.png-34257e7386f53ad2ba2899ed75c1499c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/chalkboard.png"
-dest_files=["res://.godot/imported/chalkboard.png-babacd363fa52d7397929d63aa918333.ctex"]
+source_file="res://assets/ui/store_templates/store_counter_template.png"
+dest_files=["res://.godot/imported/store_counter_template.png-34257e7386f53ad2ba2899ed75c1499c.ctex"]
 
 [params]
 

@@ -1,5 +1,2 @@
-res://scenes/lobby_modal.gd
-res://_tmp_modal.gd
-res://README.md
-res://scenes/title_screen.gd
+res://scenes/title_screen.tscn
 res://assets/walls/city_tileset.tres

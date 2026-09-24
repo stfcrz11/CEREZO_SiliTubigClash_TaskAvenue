@@ -12,7 +12,8 @@ using the same file name**, then go back to Godot (it re-imports by itself).
 | Title screen background | `backgrounds/title_city.png` | 960x640 is best (it is stretched to cover the screen) |
 | Game title (logo) | `ui/title_logo.png` | Any size, wide shape (now 900x300); fitted into the top of the menu |
 | Host / Join window buttons | `ui/button_start.png`, `button_cancel.png`, `button_connect.png`, `button_join_small.png`, `button_close.png` | Any size; text drawn into the picture |
-| Host / Join window (sari-sari store) | `ui/store_top.png` (roof, sign, awning; 1280x236, shown at 640x118), `ui/store_body.png` (store wall + sachet strips, 128x64), `ui/store_counter.png` (wooden counter, 128x76), `ui/chalkboard.png` (IP board, 48x48) | Keep the same sizes. The sign's text is not in the picture: it is the **Title** label in `scenes/host_modal.tscn` / `scenes/join_modal.tscn`. In store_body.png only the middle stretches; the left/right 36 px (post + sachets) repeat downwards |
+| Host a game window (sari-sari store) | `ui/host_store/store_top.png`, `store_body.png`, `store_counter.png`, `chalkboard.png` | Keep the same names and sizes. See the templates below |
+| Join a game window (sari-sari store) | `ui/join_store/store_top.png`, `store_body.png`, `store_counter.png` | Same as above; changing these does not change the Host window |
 | How to Play frame and cards | `ui/panel.png` (64x64), `ui/card.png` (48x48) | Keep the same size. Godot stretches only the middle, so draw the border within the outer ~14-20 px |
 | Title screen buttons | `ui/button_host.png`, `button_join.png`, `button_how_to_play.png`, `button_quit.png`, `button_got_it.png` | Any size, wide shape (now 720x112). Draw the button text INTO the picture |
 | Maze tiles (roads, roofs, houses, stores, trees) | `walls/*.png` | **Exactly 40x40** |
@@ -28,6 +29,16 @@ Buttons: they glow when the mouse is over them and shrink a little when
 clicked. To use your own pictures for those states, open
 `scenes/title_screen.tscn`, click the button, and drag PNGs into
 **Texture Hover** / **Texture Pressed** in the Inspector.
+
+## Drawing your own store (Host / Join windows)
+
+Open `ui/store_templates/HOW_TO_DRAW_THE_STORE.png`: it shows every store
+picture, its size, and which parts stretch, repeat or stay as drawn.
+The `*_template.png` files next to it are blank placeholders at the exact
+size: draw over one, save it with the real name (e.g. `store_top.png`) in
+`ui/host_store/` or `ui/join_store/`, and run the game. The sign's words are
+not in the picture: change them in the **Title** label of
+`scenes/host_modal.tscn` / `scenes/join_modal.tscn`.
 
 ## Editing the maze (in the editor, no code)
 

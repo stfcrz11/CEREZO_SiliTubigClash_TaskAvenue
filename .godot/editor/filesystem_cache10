@@ -1,12 +1,12 @@
 78098b89c88a74ebe8c20117b8754620
-::res://::1790257506
+::res://::1790429473
 README.md::TextFile::-1::1790255421::0::1::::<><><>0<>0<><>::
 ::res://assets/::1790257280
 README.md::TextFile::-1::1790255797::0::1::::<><><>0<>0<><>::
 ::res://assets/backgrounds/::1790258787
 README.md::TextFile::-1::1790230632::0::1::::<><><>0<>0<><>::
 title_city.png::CompressedTexture2D::367120978566480611::1790257475::1790258787::1::::<><><>0<>0<>8e82cf5c4235b7cad1241fc6ee049b12<>res://.godot/imported/title_city.png-2e2d383a0a4452b5de1fb28199c13265.ctex::
-::res://assets/characters/::1790259711
+::res://assets/characters/::1790259790
 README.md::TextFile::-1::1790230632::0::1::::<><><>0<>0<><>::
 sili_kid.png::CompressedTexture2D::175458603820651043::1790259711::1790259790::1::::<><><>0<>0<>525189b976f973d52b1698705e232a11<>res://.godot/imported/sili_kid.png-86e97c42d1188ca49c5d7463e3c73b0a.ctex::
 tubig_kid.png::CompressedTexture2D::1717384361183131692::1790259711::1790259790::1::::<><><>0<>0<>99c7e6670c317d0d51a23f8b255f42e2<>res://.godot/imported/tubig_kid.png-367f6c1ac4f541eb7c9034a29e8a636d.ctex::
@@ -65,7 +65,9 @@ game_state.gd::GDScript::2311413957125613773::1790249357::0::1::::<>Node<><>0<>0
 network.gd::GDScript::413296850221419155::1790249257::0::1::::<>Node<><>0<>0<><>::
 ::res://data/::1790223210
 questions.gd::GDScript::3809210822981956257::1790212530::0::1::::<>RefCounted<><>0<>0<><>::
-::res://scenes/::1790259278
+::res://scenes/::1790429723
+answer_popup.gd::GDScript::2181880523479918738::1790429710::0::1::::<>Control<><>0<>0<><>::
+answer_popup.tscn::PackedScene::-1::1790429711::0::1::::<><><>0<>0<><>::res://scenes/answer_popup.gd
 city_map.tscn::PackedScene::2599789304135292814::1790253888::0::1::::<><><>0<>0<><>::uid://dmq77akb2x7qb::::res://assets/walls/city_tileset.tres<>uid://cdc2gt4i5m4cf::::res://assets/props/tricycle.png<>uid://bnj4co3u3bpxj::::res://assets/props/jeepney.png<>uid://dt0g35v8wwju8::::res://assets/props/electric_post.png<>uid://cugtminybb1c8::::res://assets/walls/roof_green.png<>uid://t0bl5t8jl63i::::res://assets/walls/tree_lot.png
 host_modal.gd::GDScript::7332410545579789731::1790255366::0::1::::<>Control<><>0<>0<><>::
 host_modal.tscn::PackedScene::1356062619239856718::1790257097::0::1::::<><><>0<>0<><>::uid://dcp4y3l6k2ehn::::res://scenes/host_modal.gd<>uid://dp261yo0aux57::::res://assets/ui/host_store/store_top.png<>uid://tiw4a2txl8sj::::res://assets/ui/card.png<>uid://c2wxq4j8wv6qy::::res://scenes/png_button.gd<>uid://cxmowardm3p68::::res://assets/ui/button_close.png<>uid://dic03r71rmtbw::::res://assets/ui/button_cancel.png<>uid://ckmo4huacf7tl::::res://assets/ui/button_start.png<>uid://b7qdu1em0p5gp::::res://assets/ui/host_store/store_body.png<>uid://dxqgt8ua7lrs7::::res://assets/ui/host_store/store_counter.png<>uid://8216hfn7sojn::::res://assets/ui/host_store/chalkboard.png
@@ -74,8 +76,8 @@ join_modal.gd::GDScript::1518821617575977712::1790255378::0::1::::<>Control<><>0
 join_modal.tscn::PackedScene::-1::1790255691::0::1::::<><><>0<>0<><>::
 lobby.tscn::PackedScene::7920026046889609523::1790254493::0::1::::<><><>0<>0<><>::
 lobby_modal.tscn::PackedScene::4532292663624402130::1790257068::0::1::::<><><>0<>0<><>::res://scenes/lobby_modal.gd<>res://assets/ui/store_top.png<>uid://tiw4a2txl8sj::::res://assets/ui/card.png<>uid://c2wxq4j8wv6qy::::res://scenes/png_button.gd<>uid://cxmowardm3p68::::res://assets/ui/button_close.png<>uid://cax6ef6pxd0pe::::res://assets/ui/button_connect.png<>uid://dic03r71rmtbw::::res://assets/ui/button_cancel.png<>uid://ckmo4huacf7tl::::res://assets/ui/button_start.png<>res://assets/ui/store_body.png<>res://assets/ui/store_counter.png<>res://assets/ui/chalkboard.png<>uid://dndp83j860eqb::::res://assets/ui/button_join_small.png
-maze_game.gd::GDScript::6058914795429303529::1790248423::0::1::::<>Node2D<><>0<>0<><>::
-maze_game.tscn::PackedScene::-1::1790248432::0::1::::<><><>0<>0<><>::res://scenes/maze_game.gd<>res://scenes/quiz_panel.tscn<>res://scenes/minimap.gd
+maze_game.gd::GDScript::6058914795429303529::1790429756::0::1::::<>Node2D<><>0<>0<><>::
+maze_game.tscn::PackedScene::6544003693271671996::1790429756::0::1::::<><><>0<>0<><>::uid://csk8palh22nef::::res://scenes/maze_game.gd<>uid://cy52s7tac2lpu::::res://scenes/quiz_panel.tscn<>uid://bsh7gunep56sm::::res://scenes/minimap.gd<>uid://bdbmfdn2jastq::::res://scenes/city_map.tscn<>res://scenes/answer_popup.tscn
 minimap.gd::GDScript::3666225242740521228::1790247417::0::1::::<>Control<><>0<>0<><>::
 player.gd::GDScript::9204251098496422090::1790248465::0::1::::<>CharacterBody2D<><>0<>0<><>::
 player.tscn::PackedScene::-1::1790248465::0::1::::<><><>0<>0<><>::res://scenes/player.gd<>res://assets/characters/tubig_kid.png

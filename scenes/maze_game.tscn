@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://c0h71xfkxatlk"]
 
-[ext_resource type="Script" path="res://scenes/maze_game.gd" id="1"]
-[ext_resource type="PackedScene" path="res://scenes/quiz_panel.tscn" id="2"]
-[ext_resource type="Script" path="res://scenes/minimap.gd" id="3"]
-[ext_resource type="PackedScene" path="res://scenes/city_map.tscn" id="4"]
+[ext_resource type="Script" uid="uid://csk8palh22nef" path="res://scenes/maze_game.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://cy52s7tac2lpu" path="res://scenes/quiz_panel.tscn" id="2"]
+[ext_resource type="Script" uid="uid://bsh7gunep56sm" path="res://scenes/minimap.gd" id="3"]
+[ext_resource type="PackedScene" uid="uid://bdbmfdn2jastq" path="res://scenes/city_map.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/answer_popup.tscn" id="5"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_e"]
 bg_color = Color(0.1, 0.12, 0.18, 0.97)
@@ -17,39 +18,46 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[node name="MazeGame" type="Node2D"]
+[node name="MazeGame" type="Node2D" unique_id=91605449]
 script = ExtResource("1")
 
-[node name="Map" parent="." instance=ExtResource("4")]
+[node name="Map" parent="." unique_id=1936862147 instance=ExtResource("4")]
 
-[node name="Camera" type="Camera2D" parent="."]
+[node name="Camera" type="Camera2D" parent="." unique_id=276241452]
 zoom = Vector2(2.5, 2.5)
 position_smoothing_enabled = true
 position_smoothing_speed = 8.0
 
-[node name="Scrolls" type="Node2D" parent="."]
+[node name="Scrolls" type="Node2D" parent="." unique_id=720310975]
 
-[node name="Actors" type="Node2D" parent="."]
+[node name="Actors" type="Node2D" parent="." unique_id=1779401320]
 
-[node name="RoundTimer" type="Timer" parent="."]
+[node name="RoundTimer" type="Timer" parent="." unique_id=567428213]
 
-[node name="HUD" type="CanvasLayer" parent="."]
+[node name="HUD" type="CanvasLayer" parent="." unique_id=304323186]
 
-[node name="Minimap" type="Control" parent="HUD"]
-offset_left = 748.0
+[node name="Minimap" type="Control" parent="HUD" unique_id=441835393]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -212.0
 offset_top = 46.0
-offset_right = 940.0
+offset_right = -20.0
 offset_bottom = 204.0
+grow_horizontal = 0
 mouse_filter = 2
 script = ExtResource("3")
 
-[node name="TopBar" type="ColorRect" parent="HUD"]
-offset_right = 960.0
+[node name="TopBar" type="ColorRect" parent="HUD" unique_id=1450523209]
+anchors_preset = 10
+anchor_right = 1.0
 offset_bottom = 38.0
+grow_horizontal = 2
 mouse_filter = 2
 color = Color(0.08, 0.1, 0.16, 1)
 
-[node name="ScoreLabel" type="Label" parent="HUD/TopBar"]
+[node name="ScoreLabel" type="Label" parent="HUD/TopBar" unique_id=570420858]
 layout_mode = 0
 offset_left = 16.0
 offset_top = 7.0
@@ -58,7 +66,7 @@ offset_bottom = 33.0
 theme_override_font_sizes/font_size = 18
 text = "Questions: 0 / 10"
 
-[node name="TimerLabel" type="Label" parent="HUD/TopBar"]
+[node name="TimerLabel" type="Label" parent="HUD/TopBar" unique_id=256850376]
 layout_mode = 0
 offset_left = 240.0
 offset_top = 7.0
@@ -67,28 +75,36 @@ offset_bottom = 33.0
 theme_override_font_sizes/font_size = 18
 text = "Time: 180"
 
-[node name="ModeLabel" type="Label" parent="HUD/TopBar"]
-layout_mode = 0
-offset_left = 744.0
+[node name="ModeLabel" type="Label" parent="HUD/TopBar" unique_id=472460157]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -276.0
 offset_top = 9.0
-offset_right = 944.0
+offset_right = -16.0
 offset_bottom = 33.0
+grow_horizontal = 0
 theme_override_font_sizes/font_size = 14
 text = "1 Player"
 horizontal_alignment = 2
 
-[node name="WarningLabel" type="Label" parent="HUD"]
-offset_left = 370.0
+[node name="WarningLabel" type="Label" parent="HUD" unique_id=591897249]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -185.0
 offset_top = 5.0
-offset_right = 740.0
+offset_right = 185.0
 offset_bottom = 35.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 0.3, 0.25, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 
-[node name="WarningGlow" type="Control" parent="HUD"]
+[node name="WarningGlow" type="Control" parent="HUD" unique_id=1332482523]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -97,51 +113,69 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Top" type="ColorRect" parent="HUD/WarningGlow"]
-layout_mode = 0
+[node name="Top" type="ColorRect" parent="HUD/WarningGlow" unique_id=2109763102]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
 offset_top = 38.0
-offset_right = 960.0
 offset_bottom = 50.0
+grow_horizontal = 2
 mouse_filter = 2
 color = Color(1, 0.1, 0.05, 0.8)
 
-[node name="Bottom" type="ColorRect" parent="HUD/WarningGlow"]
-layout_mode = 0
-offset_top = 628.0
-offset_right = 960.0
-offset_bottom = 640.0
+[node name="Bottom" type="ColorRect" parent="HUD/WarningGlow" unique_id=905449145]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -12.0
+grow_horizontal = 2
+grow_vertical = 0
 mouse_filter = 2
 color = Color(1, 0.1, 0.05, 0.8)
 
-[node name="Left" type="ColorRect" parent="HUD/WarningGlow"]
-layout_mode = 0
+[node name="Left" type="ColorRect" parent="HUD/WarningGlow" unique_id=880454825]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
 offset_top = 38.0
 offset_right = 12.0
-offset_bottom = 640.0
+grow_vertical = 2
 mouse_filter = 2
 color = Color(1, 0.1, 0.05, 0.8)
 
-[node name="Right" type="ColorRect" parent="HUD/WarningGlow"]
-layout_mode = 0
-offset_left = 948.0
+[node name="Right" type="ColorRect" parent="HUD/WarningGlow" unique_id=796340655]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -12.0
 offset_top = 38.0
-offset_right = 960.0
-offset_bottom = 640.0
+grow_horizontal = 0
+grow_vertical = 2
 mouse_filter = 2
 color = Color(1, 0.1, 0.05, 0.8)
 
-[node name="MessageLabel" type="Label" parent="HUD"]
+[node name="MessageLabel" type="Label" parent="HUD" unique_id=1026206978]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
 offset_left = 80.0
-offset_top = 596.0
-offset_right = 880.0
-offset_bottom = 626.0
+offset_top = -44.0
+offset_right = -80.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 0
 theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 7
 theme_override_font_sizes/font_size = 20
 horizontal_alignment = 1
 
-[node name="PauseLabel" type="Label" parent="HUD"]
+[node name="PauseLabel" type="Label" parent="HUD" unique_id=1396732241]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -159,10 +193,11 @@ theme_override_font_sizes/font_size = 28
 text = "PAUSED — press Esc to resume"
 horizontal_alignment = 1
 
-[node name="QuizPanel" parent="HUD" instance=ExtResource("2")]
+[node name="QuizPanel" parent="HUD" unique_id=1232063149 instance=ExtResource("2")]
 
-[node name="EndPanel" type="PanelContainer" parent="HUD"]
-theme_override_styles/panel = SubResource("StyleBox_e")
+[node name="AnswerPopup" parent="HUD" instance=ExtResource("5")]
+
+[node name="EndPanel" type="PanelContainer" parent="HUD" unique_id=807811703]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -174,42 +209,45 @@ offset_right = 220.0
 offset_bottom = 150.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBox_e")
 
-[node name="Margin" type="MarginContainer" parent="HUD/EndPanel"]
+[node name="Margin" type="MarginContainer" parent="HUD/EndPanel" unique_id=1417103417]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 20
 
-[node name="VBox" type="VBoxContainer" parent="HUD/EndPanel/Margin"]
+[node name="VBox" type="VBoxContainer" parent="HUD/EndPanel/Margin" unique_id=756537343]
 layout_mode = 2
 theme_override_constants/separation = 14
 alignment = 1
 
-[node name="ResultLabel" type="Label" parent="HUD/EndPanel/Margin/VBox"]
+[node name="ResultLabel" type="Label" parent="HUD/EndPanel/Margin/VBox" unique_id=823918668]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 text = "RESULT"
 horizontal_alignment = 1
 
-[node name="StatsLabel" type="Label" parent="HUD/EndPanel/Margin/VBox"]
+[node name="StatsLabel" type="Label" parent="HUD/EndPanel/Margin/VBox" unique_id=1668807904]
 layout_mode = 2
 theme_override_font_sizes/font_size = 17
 text = "Stats"
 horizontal_alignment = 1
 
-[node name="Buttons" type="HBoxContainer" parent="HUD/EndPanel/Margin/VBox"]
+[node name="Buttons" type="HBoxContainer" parent="HUD/EndPanel/Margin/VBox" unique_id=176441821]
 layout_mode = 2
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="PlayAgainButton" type="Button" parent="HUD/EndPanel/Margin/VBox/Buttons"]
+[node name="PlayAgainButton" type="Button" parent="HUD/EndPanel/Margin/VBox/Buttons" unique_id=459285418]
 custom_minimum_size = Vector2(150, 44)
 layout_mode = 2
 text = "Play Again"
 
-[node name="MenuButton" type="Button" parent="HUD/EndPanel/Margin/VBox/Buttons"]
+[node name="MenuButton" type="Button" parent="HUD/EndPanel/Margin/VBox/Buttons" unique_id=2045391028]
 custom_minimum_size = Vector2(150, 44)
 layout_mode = 2
 text = "Main Menu"
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=673616158]

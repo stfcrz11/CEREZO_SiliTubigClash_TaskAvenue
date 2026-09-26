@@ -33,7 +33,7 @@ const CAMERA_MARGIN := 3          # tiles of city the camera may show past the m
 @export var rescue_distance: float = 26.0
 @export var min_frozen_time: float = 1.0
 @export var grace_after_question: float = 1.0
-@export var feedback_time: float = 2.0
+@export var feedback_time: float = 3.5        # how long the TAMA!/MALI! popup stays
 @export var camera_zoom: float = 2.5          # higher = closer; 2.5 shows about 10 x 6 tiles
 
 @onready var maze_layer: TileMapLayer = $Map/Maze
@@ -51,6 +51,7 @@ const CAMERA_MARGIN := 3          # tiles of city the camera may show past the m
 @onready var pause_label: Label = $HUD/PauseLabel
 @onready var minimap: Control = $HUD/Minimap
 @onready var quiz_panel: Control = $HUD/QuizPanel
+@onready var answer_popup: Control = $HUD/AnswerPopup
 @onready var end_panel: Control = $HUD/EndPanel
 @onready var play_again_button: Button = $HUD/EndPanel/Margin/VBox/Buttons/PlayAgainButton
 @onready var menu_button: Button = $HUD/EndPanel/Margin/VBox/Buttons/MenuButton
@@ -67,6 +68,7 @@ var questions_asked: int = 0
 var time_left: float = 0.0
 var message_time: float = 0.0
 var local_player: Node2D             # the camera follows only this device's player
+var question_picker: int = 0         # who is answering the open question
 
 # host-only bookkeeping
 var _begun: bool = false
@@ -313,6 +315,7 @@ func _open_question(scroll_id: int, picker_id: int, q_index: int, order: Array, 
 		scrolls[scroll_id].queue_free()
 		scrolls.erase(scroll_id)
 	questions_asked = asked
+	question_picker = picker_id
 	GameState.round_state = GameState.RoundState.QUESTION
 	var picker_name := Network.player_name_of(picker_id)
 	quiz_panel.show_question(QuestionBank.QUESTIONS[q_index], order,
@@ -351,7 +354,13 @@ func _host_resolve(position: int) -> void:
 func _question_result(position: int, correct: bool, total: int) -> void:
 	correct_answers = total
 	quiz_panel.show_result(position, correct)
-	_show_message(("Tama! %d / %d" % [total, questions_to_win]) if correct else "Mali! Find another scroll.", 2.5)
+	quiz_panel.close()
+	# big TAMA! / MALI! popup on every screen
+	var entry: Dictionary = quiz_panel.entry
+	answer_popup.open(correct, position < 0, Network.player_name_of(question_picker),
+		entry["choices"][entry["answer"]], entry.get("fact", ""), total, questions_to_win)
+	if not correct:
+		_show_message("Find another scroll!", feedback_time + 2.0)
 	_update_hud()
 
 
@@ -367,6 +376,7 @@ func _host_after_question() -> void:
 @rpc("authority", "call_local", "reliable")
 func _resume_after_question() -> void:
 	quiz_panel.close()
+	answer_popup.close()
 	for t in tubigs:
 		if not t.frozen:
 			t.give_grace(grace_after_question)
@@ -554,6 +564,7 @@ func _host_end(team_won: bool, title: String) -> void:
 func _end_round(team_won: bool, title: String, stats: String) -> void:
 	GameState.round_state = GameState.RoundState.ENDED
 	quiz_panel.close()
+	answer_popup.close()
 	warning_label.text = ""
 	warning_glow.modulate.a = 0.0
 	var result: Label = $HUD/EndPanel/Margin/VBox/ResultLabel

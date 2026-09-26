@@ -94,8 +94,9 @@ func _refresh_found() -> void:
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		found_list.add_child(empty)
 	else:
-		for ip in Network.found_hosts:
-			found_list.add_child(_game_row(ip, Network.found_hosts[ip]))
+		for id in Network.found_hosts:
+			var info: Dictionary = Network.found_hosts[id]
+			found_list.add_child(_game_row(info["ip"], info))
 
 
 func _game_row(ip: String, info: Dictionary) -> Control:

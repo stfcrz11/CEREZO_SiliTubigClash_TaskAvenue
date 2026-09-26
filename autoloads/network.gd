@@ -15,12 +15,13 @@ const MAX_PLAYERS := 6
 const MIN_PLAYERS := 2
 const BEACON := "SILITUBIG_TASKAVENUE"
 
-var players: Dictionary = {}        # peer_id -> slot (0..3)  => P1..P4
+var players: Dictionary = {}        # peer_id -> slot (0..5)
 var player_names: Dictionary = {}   # peer_id -> chosen display name
 var online: bool = false
 var game_started: bool = false
 var last_error: String = ""
-var found_hosts: Dictionary = {}    # ip -> {"players": n, "name": host name, "seen": msec}
+var found_hosts: Dictionary = {}    # host id -> {"ip", "ips", "players", "name", "seen"}
+var host_id: int = 0                # random id of the game this device hosts
 var ready_peers: Dictionary = {}    # host: peers whose maze scene has loaded
 var round_number: int = 0           # host: used to rotate the Sili role
 
@@ -58,6 +59,7 @@ func host_game() -> Error:
 	players = {1: 0}
 	player_names = {1: GameState.player_name}
 	online = true
+	host_id = randi()
 	round_number = randi() % MAX_PLAYERS   # random first Sili
 	_start_beacon()
 	players_changed.emit()
@@ -135,11 +137,20 @@ func sorted_ids() -> Array:
 
 
 func local_ips() -> Array:
-	var out := []
+	# real Wi-Fi / LAN / hotspot addresses first; virtual adapters (VirtualBox
+	# 192.168.56.x, Hyper-V / WSL / Docker 172.16-31.x) last
+	var real := []
+	var virtual := []
 	for ip in IP.get_local_addresses():
-		if ip.count(".") == 3 and not ip.begins_with("127.") and not ip.begins_with("169.254."):
-			out.append(ip)
-	return out
+		if ip.count(".") != 3 or ip.begins_with("127.") or ip.begins_with("169.254."):
+			continue
+		var parts: PackedStringArray = ip.split(".")
+		var is_virtual := ip.begins_with("192.168.56.") 			or (parts[0] == "172" and int(parts[1]) >= 16 and int(parts[1]) <= 31)
+		if is_virtual:
+			virtual.append(ip)
+		else:
+			real.append(ip)
+	return real + virtual
 
 
 # ------------------------------------------------------ connections
@@ -259,12 +270,26 @@ func _start_game() -> void:
 
 
 # ------------------------------------------------ LAN discovery
-# Host: broadcasts a small UDP "beacon" every second.
-# Joiner: listens for beacons and lists hosts it hears.
+# The JOINER asks and the HOST answers:
+#   joiner: every second broadcasts "SILITUBIG_FIND" from its own random port
+#   host:   listens on DISCOVERY_PORT and answers each FIND directly with
+#           "SILITUBIG_TASKAVENUE|<host id>|<players>|<host name>"
+# Why this way round:
+#   - any number of joiners work, even several on one PC (each has its own port)
+#   - the joiner's firewall lets the answer in (it is a reply to its question)
+#   - a host with two network adapters (e.g. Wi-Fi + VirtualBox) answers
+#     from both, but has ONE id, so it is listed once, with the IP that is
+#     on the same network as the joiner
+const FIND := "SILITUBIG_FIND"
+
+
 func _start_beacon() -> void:
+	# host: start answering FIND messages
+	_stop_beacon()
 	_beacon_udp = PacketPeerUDP.new()
-	_beacon_udp.set_broadcast_enabled(true)
-	_beacon_timer = 0.0
+	if _beacon_udp.bind(DISCOVERY_PORT) != OK:
+		# another game on this PC is already answering; players can still type the IP
+		_beacon_udp = null
 
 
 func _stop_beacon() -> void:
@@ -274,11 +299,14 @@ func _stop_beacon() -> void:
 
 
 func start_listening() -> void:
+	# joiner: start asking "who is hosting?"
 	stop_listening()
 	found_hosts.clear()
 	_listen_udp = PacketPeerUDP.new()
-	if _listen_udp.bind(DISCOVERY_PORT) != OK:
+	_listen_udp.set_broadcast_enabled(true)
+	if _listen_udp.bind(0) != OK:   # 0 = any free port
 		_listen_udp = null
+	_beacon_timer = 0.0
 
 
 func stop_listening() -> void:
@@ -289,35 +317,71 @@ func stop_listening() -> void:
 
 func _process(delta: float) -> void:
 	if _beacon_udp:
+		_answer_finds()
+	if _listen_udp:
 		_beacon_timer -= delta
 		if _beacon_timer <= 0.0:
 			_beacon_timer = 1.0
-			var host_name := player_name_of(1).replace("|", "/")
-			var msg := ("%s|%d|%s" % [BEACON, players.size(), host_name]).to_utf8_buffer()
-			# global broadcast + each network's x.y.z.255 (covers phone and
-			# Windows hotspots, which use different subnets)
-			var targets := ["255.255.255.255"]
-			for ip in local_ips():
-				var parts: PackedStringArray = ip.split(".")
-				targets.append("%s.%s.%s.255" % [parts[0], parts[1], parts[2]])
-			for t in targets:
-				_beacon_udp.set_dest_address(t, DISCOVERY_PORT)
-				_beacon_udp.put_packet(msg)
+			_send_find()
+		_read_answers()
 
-	if _listen_udp:
-		var changed := false
-		while _listen_udp.get_available_packet_count() > 0:
-			var text := _listen_udp.get_packet().get_string_from_utf8()
-			var ip := _listen_udp.get_packet_ip()
-			var parts := text.split("|")
-			if parts.size() >= 2 and parts[0] == BEACON:
-				var count := int(parts[1])
-				changed = changed or not found_hosts.has(ip) or found_hosts[ip]["players"] != count
-				var host_name := parts[2] if parts.size() >= 3 else ""
-				found_hosts[ip] = {"players": count, "name": host_name, "seen": Time.get_ticks_msec()}
-		for ip in found_hosts.keys():
-			if Time.get_ticks_msec() - found_hosts[ip]["seen"] > 4000:
-				found_hosts.erase(ip)
-				changed = true
-		if changed:
-			hosts_found_changed.emit()
+
+func _answer_finds() -> void:
+	while _beacon_udp.get_available_packet_count() > 0:
+		var text := _beacon_udp.get_packet().get_string_from_utf8()
+		if text != FIND or game_started:
+			continue
+		var host_name := player_name_of(1).replace("|", "/")
+		var reply := ("%s|%d|%d|%s" % [BEACON, host_id, players.size(), host_name]).to_utf8_buffer()
+		_beacon_udp.set_dest_address(_beacon_udp.get_packet_ip(), _beacon_udp.get_packet_port())
+		_beacon_udp.put_packet(reply)
+
+
+func _send_find() -> void:
+	# global broadcast + each network's x.y.z.255 (covers phone and Windows
+	# hotspots, and PCs with more than one network adapter)
+	var targets := ["255.255.255.255"]
+	for ip in local_ips():
+		var parts: PackedStringArray = ip.split(".")
+		targets.append("%s.%s.%s.255" % [parts[0], parts[1], parts[2]])
+	var msg := FIND.to_utf8_buffer()
+	for t in targets:
+		_listen_udp.set_dest_address(t, DISCOVERY_PORT)
+		_listen_udp.put_packet(msg)
+
+
+func _read_answers() -> void:
+	var changed := false
+	var now := Time.get_ticks_msec()
+	while _listen_udp.get_available_packet_count() > 0:
+		var text := _listen_udp.get_packet().get_string_from_utf8()
+		var ip := _listen_udp.get_packet_ip()
+		var parts := text.split("|")
+		if parts.size() < 4 or parts[0] != BEACON:
+			continue
+		var id := parts[1]
+		var info: Dictionary = found_hosts.get(id, {"ips": {}})
+		info["ips"][ip] = now
+		var best := _best_ip(info["ips"].keys())
+		changed = changed or not found_hosts.has(id) or info.get("players", -1) != int(parts[2]) 			or info.get("ip", "") != best
+		info["ip"] = best
+		info["players"] = int(parts[2])
+		info["name"] = parts[3]
+		info["seen"] = now
+		found_hosts[id] = info
+	for id in found_hosts.keys():
+		if now - found_hosts[id]["seen"] > 4000:
+			found_hosts.erase(id)
+			changed = true
+	if changed:
+		hosts_found_changed.emit()
+
+
+func _best_ip(ips: Array) -> String:
+	# prefer the host IP that is on the same network (same x.y.z) as this device
+	for mine in local_ips():
+		var prefix: String = mine.substr(0, mine.rfind(".") + 1)
+		for ip in ips:
+			if ip.begins_with(prefix):
+				return ip
+	return ips[0]

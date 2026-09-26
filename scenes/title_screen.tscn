@@ -174,9 +174,9 @@ theme_override_styles/panel = SubResource("StyleBox_h")
 [node name="Margin" type="MarginContainer" parent="HowToPanel" unique_id=398978775]
 layout_mode = 2
 theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 18
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 14
 
 [node name="VBox" type="VBoxContainer" parent="HowToPanel/Margin" unique_id=949862973]
 layout_mode = 2
@@ -184,27 +184,72 @@ theme_override_constants/separation = 10
 
 [node name="Header" type="Label" parent="HowToPanel/Margin/VBox" unique_id=9937575]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "How to Play"
+theme_override_colors/font_color = Color(1, 0.82, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.06, 0.02, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 32
+text = "HOW TO PLAY"
 horizontal_alignment = 1
 
-[node name="Rules" type="Label" parent="HowToPanel/Margin/VBox" unique_id=1084084316]
-custom_minimum_size = Vector2(610, 0)
+[node name="Divider" type="ColorRect" parent="HowToPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(1, 0.82, 0.3, 0.5)
+
+[node name="Scroll" type="ScrollContainer" parent="HowToPanel/Margin/VBox"]
+custom_minimum_size = Vector2(620, 330)
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 15
-text = "ROLES: 2-4 players = 1 Sili, 5-6 players = 2 Silis. Everyone else is Tubig. The Sili role rotates every round.
+horizontal_scroll_mode = 0
 
-TUBIG TEAM: answer 10 questions about Filipino culture correctly before the 3-minute timer ends.
-• Walk into a ? scroll to get a question (answer by click, tap, or 1-4). While you answer you can't move and can't be tagged; the others keep playing. Wrong = find another scroll.
-• Stuck? Press ASK A TEAMMATE FOR HELP (H). The first teammate who says YES gets the question with a fresh timer, and you are free to run. If you are the only Tubig, the Sili waits while you answer.
-• When a Sili comes near you get a warning: \"SILI NEARBY!\" then \"RUN!\".
-• Caught Tubigs freeze. A teammate touches you to save you (1.5 s of safety + speed burst).
+[node name="Rules" type="RichTextLabel" parent="HowToPanel/Margin/VBox/Scroll" unique_id=1084084316]
+custom_minimum_size = Vector2(600, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 1
+theme_override_colors/default_color = Color(0.92, 0.94, 0.98, 1)
+theme_override_constants/line_separation = 5
+theme_override_font_sizes/normal_font_size = 15
+theme_override_font_sizes/bold_font_size = 15
+theme_override_font_sizes/italics_font_size = 15
+bbcode_enabled = true
+text = "[center][color=#9aa4b8][i]A Filipino street chase game — with a quiz twist![/i][/color][/center]
 
-SILI: touch Tubigs to freeze them. Freeze every Tubig, or survive until time runs out, to win.
+[font_size=19][b][color=#ffd24d]ROLES[/color][/b][/font_size]
+• 2–4 players → [color=#ff6155][b]1 Sili[/b][/color]   ·   5–6 players → [color=#ff6155][b]2 Silis[/b][/color]. Everyone else is [color=#5aa8ff][b]Tubig[/b][/color].
+• The [color=#ff6155][b]Sili[/b][/color] role rotates every round.
 
-LAN: one player picks Host Game; the others pick Join Game on the same Wi-Fi or hotspot.
-CONTROLS: W A S D or arrow keys to move, Shift or Space to sprint, Esc to pause (host)."
+[font_size=19][b][color=#5aa8ff]TUBIG TEAM[/color][/b][/font_size]
+• Goal: answer [color=#6be38a][b]10 questions[/b][/color] about Filipino culture before time runs out.
+• Time: [b]3:00[/b] for 1 [color=#5aa8ff][b]Tubig[/b][/color], [b]20 s less[/b] for each extra [color=#5aa8ff][b]Tubig[/b][/color] — you can answer at the same time.
+• Walk into a [b]? scroll[/b] to get a question. Answer by click, tap or [bgcolor=#33405e][color=#ffffff][b] 1–4 [/b][/color][/bgcolor].
+• While you answer you [b]can't move[/b] and [b]can't be tagged[/b]. The others keep playing.
+• Wrong answer? Find another scroll.
+• A [color=#ff6155][b]Sili[/b][/color] is near? You get a warning: [color=#ffa53d][b]SILI NEARBY![/b][/color] then [color=#ff6155][b]RUN![/b][/color]
+• Caught Tubigs freeze. A teammate touches you to save you ([b]1.5 s[/b] safety + speed burst).
+
+[font_size=19][b][color=#6be38a]ASKING FOR HELP[/color][/b][/font_size]
+• Stuck? Press [bgcolor=#33405e][color=#ffffff][b] ASK A TEAMMATE FOR HELP [/b][/color][/bgcolor] or [bgcolor=#33405e][color=#ffffff][b] H [/b][/color][/bgcolor].
+• Only [b]one [color=#5aa8ff][b]Tubig[/b][/color][/b] can ask at a time.
+• The [b]first free teammate[/b] who says [bgcolor=#33405e][color=#ffffff][b] YES (Y) [/b][/color][/bgcolor] gets your question with a fresh timer — and you are free to run.
+• If you are the only [color=#5aa8ff][b]Tubig[/b][/color], the [color=#ff6155][b]Sili[/b][/color] waits while you answer.
+
+[font_size=19][b][color=#ff6155]SILI[/color][/b][/font_size]
+• Touch [color=#5aa8ff][b]Tubig[/b][/color]s to freeze them.
+• Win by freezing [b]every[/b] [color=#5aa8ff][b]Tubig[/b][/color], or when time runs out.
+
+[font_size=19][b][color=#ffd24d]PLAYING TOGETHER (LAN)[/color][/b][/font_size]
+• One player picks [b]HOST GAME[/b]; the others pick [b]JOIN GAME[/b].
+• Everyone must be on the same Wi-Fi or phone hotspot.
+
+[font_size=19][b][color=#ffd24d]CONTROLS[/color][/b][/font_size]
+[bgcolor=#33405e][color=#ffffff][b] W A S D [/b][/color][/bgcolor] or arrows — move
+[bgcolor=#33405e][color=#ffffff][b] Shift [/b][/color][/bgcolor] or [bgcolor=#33405e][color=#ffffff][b] Space [/b][/color][/bgcolor] — sprint
+[bgcolor=#33405e][color=#ffffff][b] 1 [/b][/color][/bgcolor] [bgcolor=#33405e][color=#ffffff][b] 2 [/b][/color][/bgcolor] [bgcolor=#33405e][color=#ffffff][b] 3 [/b][/color][/bgcolor] [bgcolor=#33405e][color=#ffffff][b] 4 [/b][/color][/bgcolor] — answer
+[bgcolor=#33405e][color=#ffffff][b] H [/b][/color][/bgcolor] — ask for help      [bgcolor=#33405e][color=#ffffff][b] Y [/b][/color][/bgcolor] / [bgcolor=#33405e][color=#ffffff][b] N [/b][/color][/bgcolor] — answer a help request
+[bgcolor=#33405e][color=#ffffff][b] Esc [/b][/color][/bgcolor] — pause (host only)"
+fit_content = true
+scroll_active = false
 autowrap_mode = 3
 
 [node name="CloseButton" type="TextureButton" parent="HowToPanel/Margin/VBox" unique_id=620605177]

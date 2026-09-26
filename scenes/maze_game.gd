@@ -24,7 +24,9 @@ const TILE := 40                  # must match the TileSet's tile size (40 x 40 
 const CAMERA_MARGIN := 3          # tiles of city the camera may show past the maze edge
 
 @export var questions_to_win: int = 10
-@export var round_time: float = 180.0
+@export var round_time: float = 180.0          # round length with 1 Tubig (3:00)
+@export var less_time_per_extra_tubig: float = 20.0   # more Tubigs answer at once, so less time
+@export var min_round_time: float = 90.0
 @export var scrolls_on_map: int = 3
 @export var pickup_distance: float = 24.0
 @export var tag_distance: float = 24.0        # Sili touching Tubig
@@ -70,19 +72,27 @@ var questions_asked: int = 0
 var time_left: float = 0.0
 var message_time: float = 0.0
 var local_player: Node2D             # the camera follows only this device's player
-var question_picker: int = 0         # who is answering the open question
-var question_full_stop: bool = false  # true = only one Tubig, so the whole chase stops
+var questions: Dictionary = {}       # open questions (every device): qid -> info
+var my_question: int = -1            # the question THIS device is answering (-1 = none)
+var popup_question: int = -1         # the question the TAMA!/MALI! popup is about
+var _help_queue: Array = []          # help requests waiting to be shown to me
+var _help_showing: int = -1          # the help request in the alert right now
+var help_locked_by: int = 0          # the answerer who is asking for help now (0 = nobody)
 
 # host-only bookkeeping
 var _begun: bool = false
 var _next_scroll_id: int = 0
 var _question_deck: Array = []
-var _q: Dictionary = {}             # the open question
-var _result_timer: float = -1.0
+var _questions: Dictionary = {}     # open questions (host): qid -> info
+var _help_active: int = -1          # host: the ONE question with an open help request
+var _next_question_id: int = 0
 
 
 func _ready() -> void:
 	randomize()
+	# The HUD is hidden in the editor so it doesn't cover the map while you
+	# edit (click the eye next to "HUD" to see it); the game shows it here.
+	$HUD.visible = true
 	if Network.players.is_empty():
 		Network.play_solo()   # scene started directly (e.g. from the editor)
 	_build_maze()
@@ -219,8 +229,18 @@ func _host_try_begin() -> void:
 	_spawn_all.rpc(roster)
 	for i in scrolls_on_map:
 		_host_spawn_scroll()
-	_start_round.rpc(round_time)
+	var tubig_count := 0
+	for id in roles:
+		if roles[id] == "tubig":
+			tubig_count += 1
+	_start_round.rpc(_round_seconds(tubig_count))
 	round_timer.start()
+
+
+func _round_seconds(tubig_count: int) -> float:
+	# 1 Tubig: 3:00. Each extra Tubig can answer at the same time as the
+	# others, so the round gets 20 s shorter per extra Tubig (never below 1:30).
+	return max(min_round_time, round_time - less_time_per_extra_tubig * max(0, tubig_count - 1))
 
 
 @rpc("authority", "call_local", "reliable")
@@ -257,12 +277,13 @@ func _start_round(seconds: float) -> void:
 	GameState.round_state = GameState.RoundState.PLAYING
 	_update_hud()
 	var me = player_by_id.get(multiplayer.get_unique_id())
+	var clock := "  (%s for %d Tubig%s)" % [_format_time(seconds), tubigs.size(), "" if tubigs.size() == 1 else "s"]
 	if silis.is_empty():
 		_show_message("Test mode: no Sili (needs 2+ players over LAN).", 4.0)
 	elif me and not me.is_tubig():
-		_show_message("You are SILI! Tag every Tubig before they answer %d questions!" % questions_to_win, 4.0)
+		_show_message("You are SILI! Tag every Tubig before they answer %d questions!%s" % [questions_to_win, clock], 5.0)
 	else:
-		_show_message("You are TUBIG! Find ? scrolls and answer %d questions!" % questions_to_win, 4.0)
+		_show_message("You are TUBIG! Find ? scrolls and answer %d questions!%s" % [questions_to_win, clock], 5.0)
 
 
 # ============================================================= scrolls
@@ -305,18 +326,26 @@ func _host_next_question_index() -> int:
 	return _question_deck.pop_back()
 
 
+# Several Tubigs can answer at the same time: every open question has its
+# own id, answerer, timer and (at most one) helper.
+#   host:     _questions[qid] = {picker, asker, index, order, answered,
+#             help_asked, passed, full_stop, deadline, result_timer}
+#   everyone: questions[qid]  = {picker, asker, index, order, asked, full_stop}
 func _host_open_question(scroll_id: int, picker_id: int) -> void:
 	questions_asked += 1
+	var qid := _next_question_id
+	_next_question_id += 1
 	var order := [0, 1, 2, 3]
 	order.shuffle()
 	# Only one Tubig in the game: nobody else can play, so the whole chase
 	# stops (the Sili sees "Tubig is answering"). Otherwise only the
 	# answerer stops and everyone else keeps playing.
 	var full_stop := tubigs.size() <= 1
-	_q = {"picker": picker_id, "asker": picker_id, "index": _host_next_question_index(), "order": order,
+	var index := _host_next_question_index()
+	_questions[qid] = {"picker": picker_id, "asker": picker_id, "index": index, "order": order,
 		"answered": false, "help_asked": false, "passed": false, "full_stop": full_stop,
-		"deadline": _question_deadline()}
-	_open_question.rpc(scroll_id, picker_id, _q["index"], order, questions_asked, full_stop)
+		"deadline": _question_deadline(), "result_timer": -1.0}
+	_open_question.rpc(qid, scroll_id, picker_id, index, order, questions_asked, full_stop)
 
 
 func _question_deadline() -> int:
@@ -325,25 +354,31 @@ func _question_deadline() -> int:
 
 
 @rpc("authority", "call_local", "reliable")
-func _open_question(scroll_id: int, picker_id: int, q_index: int, order: Array, asked: int, full_stop: bool) -> void:
+func _open_question(qid: int, scroll_id: int, picker_id: int, q_index: int, order: Array, asked: int, full_stop: bool) -> void:
 	if scrolls.has(scroll_id):
 		scrolls[scroll_id].queue_free()
 		scrolls.erase(scroll_id)
 	questions_asked = asked
-	question_picker = picker_id
-	question_full_stop = full_stop
+	questions[qid] = {"picker": picker_id, "asker": picker_id, "index": q_index, "order": order,
+		"asked": asked, "full_stop": full_stop}
 	if full_stop:
 		GameState.round_state = GameState.RoundState.QUESTION   # everyone stops, clock stops
 	var picker = player_by_id.get(picker_id)
 	if picker:
 		picker.set_answering(true)
 	var picker_name := Network.player_name_of(picker_id)
-	var me = player_by_id.get(multiplayer.get_unique_id())
-	quiz_panel.show_question(QuestionBank.QUESTIONS[q_index], order,
-		"Scroll #%d  —  picked by %s  —  Correct: %d / %d" % [asked, picker_name, correct_answers, questions_to_win],
-		picker_id == multiplayer.get_unique_id(), picker_name, not full_stop)
 	if picker_id == multiplayer.get_unique_id():
+		my_question = qid
+		_help_queue.clear()   # busy answering: no help alerts for me now
+		_help_showing = -1
+		help_alert.close()
+		quiz_panel.show_question(QuestionBank.QUESTIONS[q_index], order,
+			"Scroll #%d  —  picked by %s  —  Correct: %d / %d" % [asked, picker_name, correct_answers, questions_to_win],
+			true, picker_name, not full_stop)
+		if help_locked_by != 0:
+			quiz_panel.set_help_locked(true, Network.player_name_of(help_locked_by))
 		return
+	var me = player_by_id.get(multiplayer.get_unique_id())
 	if full_stop:
 		if me and not me.is_tubig():
 			answering_notice.open()
@@ -352,44 +387,58 @@ func _open_question(scroll_id: int, picker_id: int, q_index: int, order: Array, 
 
 
 func _on_local_choice(position: int) -> void:
+	if my_question < 0:
+		return
 	if multiplayer.is_server():
-		_host_receive_answer(1, position)
+		_host_receive_answer(1, my_question, position)
 	else:
-		_submit_answer.rpc_id(1, position)
+		_submit_answer.rpc_id(1, my_question, position)
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func _submit_answer(position: int) -> void:
-	_host_receive_answer(multiplayer.get_remote_sender_id(), position)
+func _submit_answer(qid: int, position: int) -> void:
+	_host_receive_answer(multiplayer.get_remote_sender_id(), qid, position)
 
 
-func _host_receive_answer(sender: int, position: int) -> void:
-	if _q.is_empty() or _q["answered"] or sender != _q["picker"]:
-		return   # only the Tubig who has the question may answer
-	_host_resolve(position)
+func _host_receive_answer(sender: int, qid: int, position: int) -> void:
+	var q: Dictionary = _questions.get(qid, {})
+	if q.is_empty() or q["answered"] or sender != q["picker"]:
+		return   # only the Tubig who has this question may answer it
+	_host_resolve(qid, position)
 
 
-func _host_resolve(position: int) -> void:
-	_q["answered"] = true
-	var entry: Dictionary = QuestionBank.QUESTIONS[_q["index"]]
-	var correct: bool = position >= 0 and _q["order"][position] == entry["answer"]
+func _host_resolve(qid: int, position: int) -> void:
+	var q: Dictionary = _questions[qid]
+	q["answered"] = true
+	if _help_active == qid:
+		_host_release_help()   # the question is over, so its help request is too
+	var entry: Dictionary = QuestionBank.QUESTIONS[q["index"]]
+	var correct: bool = position >= 0 and q["order"][position] == entry["answer"]
 	var total := correct_answers + (1 if correct else 0)
-	_question_result.rpc(position, correct, total)
-	_result_timer = feedback_time
+	_question_result.rpc(qid, position, correct, total)
+	q["result_timer"] = feedback_time
 
 
 @rpc("authority", "call_local", "reliable")
-func _question_result(position: int, correct: bool, total: int) -> void:
+func _question_result(qid: int, position: int, correct: bool, total: int) -> void:
 	correct_answers = total
-	quiz_panel.show_result(position, correct)
-	quiz_panel.close()
-	help_alert.close()
-	answering_notice.close()
-	var entry: Dictionary = quiz_panel.entry
-	var picker_name := Network.player_name_of(question_picker)
-	if question_full_stop or question_picker == multiplayer.get_unique_id():
+	var q: Dictionary = questions.get(qid, {})
+	if q.is_empty():
+		return
+	_forget_help_request(qid)
+	var entry: Dictionary = QuestionBank.QUESTIONS[q["index"]]
+	var picker_name := Network.player_name_of(q["picker"])
+	var mine: bool = q["picker"] == multiplayer.get_unique_id()
+	if mine:
+		quiz_panel.show_result(position, correct)
+		quiz_panel.close()
+		my_question = -1
+	if q["full_stop"]:
+		answering_notice.close()
+	if mine or q["full_stop"]:
 		# the big TAMA! / MALI! popup: for the answerer, or for everyone
 		# when the whole game is stopped anyway
+		popup_question = qid
 		answer_popup.open(correct, position < 0, picker_name,
 			entry["choices"][entry["answer"]], entry.get("fact", ""), total, questions_to_win)
 	else:
@@ -399,56 +448,69 @@ func _question_result(position: int, correct: bool, total: int) -> void:
 	_update_hud()
 
 
-func _host_after_question() -> void:
+func _host_after_question(qid: int) -> void:
+	_questions.erase(qid)
 	if GameState.round_state == GameState.RoundState.ENDED:
 		return
-	_q = {}
 	if correct_answers >= questions_to_win:
 		_host_end(true, "TUBIG TEAM WINS!")
 		return
 	_host_spawn_scroll()
-	_resume_after_question.rpc()
+	_resume_after_question.rpc(qid)
 
 
 @rpc("authority", "call_local", "reliable")
-func _resume_after_question() -> void:
-	quiz_panel.close()
-	answer_popup.close()
-	help_alert.close()
-	answering_notice.close()
-	var picker = player_by_id.get(question_picker)
+func _resume_after_question(qid: int) -> void:
+	var q: Dictionary = questions.get(qid, {})
+	questions.erase(qid)
+	if popup_question == qid:
+		answer_popup.close()
+		popup_question = -1
+	if q.is_empty():
+		return
+	var picker = player_by_id.get(q["picker"])
 	if picker:
 		picker.set_answering(false)
 		picker.give_grace(grace_after_question)   # a waiting Sili can't tag them at once
-	if question_full_stop:
+	if q["full_stop"]:
 		for t in tubigs:
 			if not t.frozen:
 				t.give_grace(grace_after_question)
 		GameState.round_state = GameState.RoundState.PLAYING
-	question_picker = 0
-	question_full_stop = false
 
 
 # ============================================================ asking for help
-# The answerer presses ASK A TEAMMATE FOR HELP (once). Every free teammate
-# gets a bottom-right alert; the FIRST one who says YES gets the question
-# with a fresh timer, and the asker goes back to the chase.
+# The answerer presses ASK A TEAMMATE FOR HELP (once per question). Every
+# free teammate gets a bottom-right alert; the FIRST one who says YES gets
+# the question with a fresh timer, and the asker goes back to the chase.
+# If several teammates ask at the same time, the alerts wait in a queue.
 func _on_help_pressed() -> void:
+	if my_question < 0:
+		return
 	if multiplayer.is_server():
-		_host_help_request(1)
+		_host_help_request(1, my_question)
 	else:
-		_request_help.rpc_id(1)
+		_request_help.rpc_id(1, my_question)
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func _request_help() -> void:
-	_host_help_request(multiplayer.get_remote_sender_id())
+func _request_help(qid: int) -> void:
+	_host_help_request(multiplayer.get_remote_sender_id(), qid)
 
 
-func _host_help_request(sender: int) -> void:
-	if _q.is_empty() or _q["answered"] or _q["full_stop"] or _q["help_asked"] or sender != _q["picker"]:
+func _host_help_request(sender: int, qid: int) -> void:
+	var q: Dictionary = _questions.get(qid, {})
+	if q.is_empty() or q["answered"] or q["full_stop"] or q["help_asked"] or sender != q["picker"]:
 		return
-	_q["help_asked"] = true
+	if _help_active >= 0:
+		# someone else pressed first (same instant): this button waits too
+		var locker: int = _questions[_help_active]["picker"]
+		if sender == 1:
+			_help_rejected(locker)
+		else:
+			_help_rejected.rpc_id(sender, locker)
+		return
+	q["help_asked"] = true
 	var helpers := 0
 	for t in tubigs:
 		if t.peer_id != sender and not t.frozen and not t.answering:
@@ -459,7 +521,27 @@ func _host_help_request(sender: int) -> void:
 		else:
 			_help_unavailable.rpc_id(sender)
 		return
-	_help_asked.rpc(sender)
+	_help_active = qid
+	_help_lock.rpc(sender)    # lock everyone else's help button
+	_help_asked.rpc(qid, sender)
+
+
+func _host_release_help() -> void:
+	_help_active = -1
+	_help_lock.rpc(0)
+
+
+@rpc("authority", "call_local", "reliable")
+func _help_lock(asker_id: int) -> void:
+	# only ONE Tubig can ask for help at a time; the others' buttons wait
+	help_locked_by = asker_id
+	if my_question >= 0 and asker_id != multiplayer.get_unique_id():
+		quiz_panel.set_help_locked(asker_id != 0, Network.player_name_of(asker_id))
+
+
+@rpc("authority", "call_remote", "reliable")
+func _help_rejected(locker_id: int) -> void:
+	quiz_panel.help_rejected(Network.player_name_of(locker_id))
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -468,58 +550,98 @@ func _help_unavailable() -> void:
 
 
 @rpc("authority", "call_local", "reliable")
-func _help_asked(asker_id: int) -> void:
+func _help_asked(qid: int, asker_id: int) -> void:
 	var me = player_by_id.get(multiplayer.get_unique_id())
-	if me and me.is_tubig() and me.peer_id != asker_id and not me.frozen and not me.answering:
-		help_alert.open(Network.player_name_of(asker_id))
+	if me and me.is_tubig() and me.peer_id != asker_id:
+		_help_queue.append(qid)
+		_show_next_help_request()
+
+
+func _show_next_help_request() -> void:
+	# one alert at a time; skip requests that are over or that I can't take
+	var me = player_by_id.get(multiplayer.get_unique_id())
+	while not _help_queue.is_empty():
+		if help_alert.visible and _help_showing == _help_queue[0]:
+			return
+		var qid: int = _help_queue[0]
+		var q: Dictionary = questions.get(qid, {})
+		if q.is_empty() or q["picker"] != q["asker"] or not me or me.frozen or me.answering:
+			_help_queue.pop_front()
+			continue
+		_help_showing = qid
+		help_alert.open(Network.player_name_of(q["asker"]))
+		return
+	_help_showing = -1
+	help_alert.close()
+
+
+func _forget_help_request(qid: int) -> void:
+	_help_queue.erase(qid)
+	if _help_showing == qid:
+		_help_showing = -1
+		help_alert.close()
+	_show_next_help_request()
 
 
 func _on_help_answer(yes: bool) -> void:
-	if not yes:
-		return
-	if multiplayer.is_server():
-		_host_help_offer(1)
-	else:
-		_offer_help.rpc_id(1)
+	var qid := _help_showing
+	_help_queue.erase(qid)
+	_help_showing = -1
+	if yes and qid >= 0:
+		if multiplayer.is_server():
+			_host_help_offer(1, qid)
+		else:
+			_offer_help.rpc_id(1, qid)
+	_show_next_help_request()
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func _offer_help() -> void:
-	_host_help_offer(multiplayer.get_remote_sender_id())
+func _offer_help(qid: int) -> void:
+	_host_help_offer(multiplayer.get_remote_sender_id(), qid)
 
 
-func _host_help_offer(helper_id: int) -> void:
+func _host_help_offer(helper_id: int, qid: int) -> void:
 	# only the first YES counts, and only from a free teammate
-	if _q.is_empty() or _q["answered"] or _q["passed"] or not player_by_id.has(helper_id):
+	var q: Dictionary = _questions.get(qid, {})
+	if q.is_empty() or q["answered"] or q["passed"] or not player_by_id.has(helper_id):
 		return
 	var helper = player_by_id[helper_id]
-	if not helper.is_tubig() or helper.frozen or helper.answering or helper_id == _q["picker"]:
+	if not helper.is_tubig() or helper.frozen or helper.answering or helper_id == q["picker"]:
 		return
-	_q["passed"] = true
-	_q["picker"] = helper_id
-	_q["deadline"] = _question_deadline()   # the helper gets a fresh timer
-	_question_passed.rpc(helper_id)
+	q["passed"] = true
+	q["picker"] = helper_id
+	q["deadline"] = _question_deadline()   # the helper gets a fresh timer
+	_question_passed.rpc(qid, helper_id)
+	if _help_active == qid:
+		_host_release_help()   # the request was answered: others may ask now
 
 
 @rpc("authority", "call_local", "reliable")
-func _question_passed(helper_id: int) -> void:
-	help_alert.close()
-	var asker = player_by_id.get(question_picker)
+func _question_passed(qid: int, helper_id: int) -> void:
+	var q: Dictionary = questions.get(qid, {})
+	if q.is_empty():
+		return
+	var asker_id: int = q["picker"]
+	q["picker"] = helper_id
+	_forget_help_request(qid)
+	var asker = player_by_id.get(asker_id)
 	var helper = player_by_id.get(helper_id)
-	var asker_name := Network.player_name_of(question_picker)
+	var asker_name := Network.player_name_of(asker_id)
 	var helper_name := Network.player_name_of(helper_id)
 	if asker:
 		asker.set_answering(false)
 		asker.give_grace(grace_after_question)
 	if helper:
 		helper.set_answering(true)
-	var was_asker := question_picker == multiplayer.get_unique_id()
-	question_picker = helper_id
 	if helper_id == multiplayer.get_unique_id():
-		quiz_panel.show_question(quiz_panel.entry, quiz_panel.order,
-			"Helping %s  —  Scroll #%d  —  Correct: %d / %d" % [asker_name, questions_asked, correct_answers, questions_to_win],
+		my_question = qid
+		help_alert.close()
+		_help_queue.clear()   # busy answering now
+		quiz_panel.show_question(QuestionBank.QUESTIONS[q["index"]], q["order"],
+			"Helping %s  —  Scroll #%d  —  Correct: %d / %d" % [asker_name, q["asked"], correct_answers, questions_to_win],
 			true, helper_name, false)
-	elif was_asker:
+	elif asker_id == multiplayer.get_unique_id():
+		my_question = -1
 		quiz_panel.close()
 	_show_message("%s is helping %s with the question!" % [helper_name, asker_name], 3.0)
 
@@ -574,20 +696,21 @@ func _host_check_rescues() -> void:
 
 
 func _host_check_pickups() -> void:
-	if not _q.is_empty():
-		return   # only one question at a time
+	# any free Tubig can open a scroll, even while teammates are answering
 	for id in scrolls:
 		for t in tubigs:   # only Tubigs can open scrolls
-			if not t.frozen and t.global_position.distance_to(scrolls[id].position) <= pickup_distance:
+			if not t.frozen and not t.answering \
+					and t.global_position.distance_to(scrolls[id].position) <= pickup_distance:
 				_host_open_question(id, t.peer_id)
-				return   # one question at a time
+				return   # the scroll list just changed; the next frame checks the rest
 
 
 func _host_on_peer_left(id: int) -> void:
 	if player_by_id.has(id):
 		_remove_player.rpc(id)
-		if not _q.is_empty() and _q["picker"] == id and not _q["answered"]:
-			_host_resolve(-1)
+		for qid in _questions.keys():
+			if _questions[qid]["picker"] == id and not _questions[qid]["answered"]:
+				_host_resolve(qid, -1)
 		if GameState.round_state in [GameState.RoundState.PLAYING, GameState.RoundState.QUESTION, GameState.RoundState.PAUSED]:
 			if silis.is_empty():
 				_host_end(true, "THE SILI LEFT — TUBIG WINS!")
@@ -613,15 +736,18 @@ func _remove_player(id: int) -> void:
 func _physics_process(delta: float) -> void:
 	if not multiplayer.is_server():
 		return
-	if _result_timer > 0.0:
-		_result_timer -= delta
-		if _result_timer <= 0.0:
-			_host_after_question()
-	if not _q.is_empty() and not _q["answered"]:
-		if GameState.round_state == GameState.RoundState.PAUSED:
-			_q["deadline"] += int(delta * 1000.0)   # the answer clock waits while paused
-		elif Time.get_ticks_msec() > _q["deadline"]:
-			_host_resolve(-1)   # answerer never answered (e.g. disconnected)
+	for qid in _questions.keys():
+		if not _questions.has(qid):
+			continue   # already closed this frame (e.g. the round ended)
+		var q: Dictionary = _questions[qid]
+		if q["answered"]:
+			q["result_timer"] -= delta
+			if q["result_timer"] <= 0.0:
+				_host_after_question(qid)
+		elif GameState.round_state == GameState.RoundState.PAUSED:
+			q["deadline"] += int(delta * 1000.0)   # the answer clock waits while paused
+		elif Time.get_ticks_msec() > q["deadline"]:
+			_host_resolve(qid, -1)   # answerer never answered (e.g. disconnected)
 	if GameState.round_state == GameState.RoundState.PLAYING:
 		_host_check_tags()
 		_host_check_rescues()
@@ -702,8 +828,8 @@ func _format_time(seconds: float) -> String:
 
 func _host_end(team_won: bool, title: String) -> void:
 	round_timer.stop()
-	_q = {}                # an open question ends with the round
-	_result_timer = -1.0
+	_questions.clear()     # open questions end with the round
+	_help_active = -1
 	var stats := "Correct answers: %d / %d\nScrolls opened: %d\nTime left: %s" % \
 		[correct_answers, questions_to_win, questions_asked, _format_time(time_left)]
 	_end_round.rpc(team_won, title, stats)
@@ -716,6 +842,12 @@ func _end_round(team_won: bool, title: String, stats: String) -> void:
 	answer_popup.close()
 	help_alert.close()
 	answering_notice.close()
+	questions.clear()
+	my_question = -1
+	popup_question = -1
+	_help_queue.clear()
+	_help_showing = -1
+	help_locked_by = 0
 	warning_label.text = ""
 	warning_glow.modulate.a = 0.0
 	var result: Label = $HUD/EndPanel/Margin/VBox/ResultLabel

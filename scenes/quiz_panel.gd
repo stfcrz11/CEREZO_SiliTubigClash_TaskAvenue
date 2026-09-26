@@ -26,6 +26,7 @@ var order: Array = []          # order[i] = index into entry.choices shown at bu
 var can_answer: bool = false
 var waiting: bool = false
 var time_left: float = 0.0
+var _help_used: bool = false   # this question already asked for help (or got told no one can)
 
 
 func _ready() -> void:
@@ -53,6 +54,7 @@ func show_question(q: Dictionary, shown_order: Array, header: String, answerer_i
 	help_button.visible = answerer_is_me and can_ask_help
 	help_button.disabled = false
 	help_button.text = "ASK A TEAMMATE FOR HELP (H)"
+	_help_used = false
 	time_left = answer_time
 	waiting = true
 	visible = answerer_is_me
@@ -82,6 +84,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _ask_help() -> void:
 	if not (waiting and can_answer) or help_button.disabled:
 		return
+	_help_used = true
 	help_button.disabled = true
 	help_button.text = "Asking your teammates..."
 	help_requested.emit()
@@ -90,6 +93,21 @@ func _ask_help() -> void:
 ## Called when the host says nobody can help right now.
 func help_unavailable() -> void:
 	help_button.text = "No teammate can help right now"
+
+
+## Only one Tubig can ask for help at a time: while someone else is asking,
+## this button waits (it comes back when their request is over).
+func set_help_locked(locked: bool, asker_name: String) -> void:
+	if _help_used or not can_answer:
+		return
+	help_button.disabled = locked
+	help_button.text = ("%s is already asking for help..." % asker_name) if locked else "ASK A TEAMMATE FOR HELP (H)"
+
+
+## Pressed at the same instant as someone else: wait for their request to end.
+func help_rejected(asker_name: String) -> void:
+	_help_used = false
+	set_help_locked(true, asker_name)
 
 
 func _pick(position: int) -> void:

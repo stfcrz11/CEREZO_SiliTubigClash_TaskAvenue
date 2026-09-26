@@ -1,8 +1,13 @@
 # Project State — Sili-Tubig: Task Avenue
 
-State of the project as of **2026-09-24**. Latest commit: `673d4a1 Add new bg`. Everything
-below comes from the actual files in this folder: `.gd`, `.tscn`, `project.godot`,
-`README.md` and `assets/`. Anything I could not confirm from the files is marked **[CHECK]**.
+State of the project as of **2026-09-26**. Latest commit: `3faf041 Edit the gameplay by
+making tubig ask for teammates help and being untagged`. On top of that commit are the
+**uncommitted** leaderboard and name-tag changes: `data/leaderboard.gd` (new),
+`scenes/maze_game.gd`, `player.gd`, `player.tscn`, `title_screen.gd`, `title_screen.tscn`.
+
+Everything below comes from the actual files in this folder: `.gd`, `.tscn`,
+`project.godot`, `README.md` and `assets/`. Anything I could not confirm from the files is
+marked **[CHECK]**.
 
 ---
 
@@ -14,6 +19,7 @@ below comes from the actual files in this folder: `.gd`, `.tscn`, `project.godot
 based on the Filipino street game *sili-tubig*. **Sili** players chase and **Tubig**
 players run. The Tubig team must also pick up "?" scrolls and correctly answer
 multiple-choice questions about Filipino culture (`data/questions.gd`, 32 questions).
+Tubigs can answer at the same time and can pass a question to a teammate.
 
 ### Roles and player counts (`autoloads/network.gd`)
 
@@ -27,7 +33,23 @@ multiple-choice questions about Filipino culture (`data/questions.gd`, 32 questi
 - **Role rotation:** the first Sili is random (`round_number = randi() % MAX_PLAYERS`).
   After that the role moves down the player list every round (`assign_roles()`).
 - **Solo test mode:** if `maze_game.tscn` is run directly, `Network.play_solo()` makes a
-  1-player game with no Sili. The message "Test mode: no Sili" is shown.
+  1-player game with no Sili. The message "Test mode: no Sili" is shown, and the round is
+  not added to the leaderboard.
+
+### Round time (`maze_game.gd _round_seconds()`)
+
+Tubigs can answer questions at the same time, so the round gets shorter the more Tubigs
+there are:
+
+| Tubigs | Round time |
+|---|---|
+| 1 | 3:00 (`round_time` = 180) |
+| 2 | 2:40 |
+| 3 | 2:20 |
+| 4 | 2:00 |
+
+That is 20 s less per extra Tubig (`less_time_per_extra_tubig`), never below 1:30
+(`min_round_time`). The start message shows it, e.g. "(2:00 for 4 Tubigs)".
 
 ### Win / lose rules (`scenes/maze_game.gd`)
 
@@ -35,56 +57,106 @@ multiple-choice questions about Filipino culture (`data/questions.gd`, 32 questi
 |---|---|
 | **TUBIG TEAM WINS!** | `questions_to_win` = **10** correct answers |
 | **SILI WINS!** | every Tubig is frozen at the same time |
-| **TIME'S UP — SILI WINS!** | `round_time` = **180 s** runs out |
+| **TIME'S UP — SILI WINS!** | the round time runs out |
 | **THE SILI LEFT — TUBIG WINS!** | every Sili disconnects mid-round |
 | **ALL TUBIG LEFT — SILI WINS!** | every Tubig disconnects mid-round |
 
-Each device shows "You win!" or "You lose!" for its own role, plus the stats: correct
-answers, scrolls opened and time left.
+Each device shows "You win!" or "You lose!" for its own role, the stats (correct
+answers, scrolls opened, time left) and "You earned +N points".
 
-### Rules in detail (values from the exported variables)
+### Questions (`maze_game.gd`, `quiz_panel.gd`)
 
-- **Scrolls:** 3 on the map (`scrolls_on_map`). A Tubig picks one up within **24 px**.
-  After each question a new scroll appears at least 5 tiles away from every Tubig.
-- **Questions:**
-  - Drawn at random with no repeats until all 32 are used. The 4 choices are shuffled.
-  - The picker has **15 s** (`quiz_panel.gd answer_time`). A wrong answer or timeout
-    shows "Mali!" plus the correct answer and a fact.
-  - All movement stops while a question is open (round state `QUESTION`).
-  - After the question, every unfrozen Tubig gets **1 s** of protection (`grace_after_question`).
-- **Tag:** a Sili within **24 px** of a Tubig freezes it (`tag_distance`).
-- **Rescue:** an unfrozen teammate within **26 px** of a frozen Tubig frees it, but only
-  after it has been frozen for **1 s** (`min_frozen_time`). The rescued Tubig gets
-  **1.5 s** of immunity and **×1.3** speed (`player.gd`).
+- **Scrolls:** 3 on the map (`scrolls_on_map`). A free Tubig (not caught, not answering)
+  picks one up within **24 px**. After each question a new scroll appears at least
+  5 tiles away from every Tubig.
+- **Several at once:** any free Tubig can open a scroll even while teammates are
+  answering, so several questions can be open at the same time. Each has its own
+  answerer and timer.
+- **Answering:** questions are drawn at random with no repeats until all 32 are used,
+  and the 4 choices are shuffled. Only the answerer sees the question window.
+  - The answerer has **15 s** (`answer_time`). The timer waits while the game is paused.
+  - While answering, that Tubig **can't move and can't be tagged**, and "ANSWERING..." is
+    shown next to their name. Everyone else keeps playing and the round clock keeps
+    running.
+- **Only one Tubig in the game:** the whole chase stops (round state `QUESTION`) and the
+  clock stops. The Sili sees "Tubig is answering, cannot be tagged"
+  (`answering_notice.tscn`).
+- **Result:**
+  - A big **TAMA! / MALI! / TIME'S UP!** popup (`answer_popup.tscn`) shows the correct
+    answer, a fact and the score for **3.5 s** (`feedback_time`).
+  - It appears on the answerer's screen only. With one Tubig, it appears on everyone's.
+  - Other players get a short line, e.g. "Ben: TAMA! (3 / 10)".
+  - After the popup, the answerer gets **1 s** of protection (`grace_after_question`).
+
+### Asking a teammate for help
+
+- The answerer can press **ASK A TEAMMATE FOR HELP** (or **H**) once per question. It is
+  not available when there is only one Tubig.
+- **Only one Tubig can ask at a time.** While someone is asking, every other answerer's
+  button is disabled with "<name> is already asking for help...". It comes back when that
+  request ends: someone said YES, or the question was answered or timed out.
+- Every **free** teammate (not caught, not answering) gets an alert in the bottom-right
+  corner: "<name> needs help with the question! Do you want to help?", with
+  **YES (Y) / NO (N)** (`help_alert.tscn`). The game does not stop.
+- The **first YES** gets the question with a fresh 15 s timer. The asker's window
+  closes, the asker is free to run again (with 1 s protection), and all other alerts
+  close. Later YESes are ignored.
+- If nobody says YES, the asker must answer before the timer runs out.
+
+### Tag, rescue, movement
+
+- **Tag:** a Sili within **24 px** of a Tubig freezes it (`tag_distance`), unless that
+  Tubig is answering or protected.
+- **Rescue:** a free teammate within **26 px** of a frozen Tubig frees it, but only after
+  it has been frozen for **1 s** (`min_frozen_time`). The rescued Tubig gets **1.5 s** of
+  immunity and **×1.3** speed.
 - **Speed:** Tubig 140 px/s with sprint ×1.6. Sili 150 px/s with sprint ×1.35.
   Stamina lasts 3 s of sprinting and refills at 0.5 per second.
-- **Warnings (Tubig only):** "!! SILI NEARBY !!" within **170 px**, and
-  "RUN! SILI IS RIGHT THERE!" within **90 px**, with a pulsing red screen edge and a "!"
-  over your own character.
+- **Warnings (Tubig only):** "!! SILI NEARBY !!" within **170 px** and
+  "RUN! SILI IS RIGHT THERE!" within **90 px**, with a pulsing red screen edge.
+- **Name tags:** each player's **name is shown above their head**, with no role word.
+  Your own name is yellow.
+
+### Leaderboard (`data/leaderboard.gd`, title screen "TOP PLAYERS")
+
+- **Opening it:** the **LEADERBOARD** button on the title screen opens it as a centered
+  pop-up over a dark backdrop. Close it with ✕, Esc, or a click outside. The rankings
+  reload every time it opens.
+
+- **Points per round:** win **3**, correct answer **1** (the helper gets it if the
+  question was passed), tag **1**, rescue **1**.
+- **Saving:** each device saves every LAN round it plays to `user://leaderboard.cfg`, for
+  all players in that round. Players are matched by name.
+- **Ranking:** points, then wins, then fewer games. The top 20 are shown with
+  gold/silver/bronze for ranks 1–3, and your own name in yellow.
 
 ### Controls
 
-**Keyboard.** The input actions are created in code in `autoloads/game_state.gd`;
-`project.godot` has no `[input]` section.
+**Keyboard.** The input actions are created in code in `autoloads/game_state.gd`; the
+other keys are read directly.
 
 | Key | Action |
 |---|---|
-| W A S D / arrow keys | move (`move_up/down/left/right`) |
-| Shift / Space | sprint (`sprint`, uses stamina) |
-| 1, 2, 3, 4 | answer a question (only the picker) |
-| Esc (`ui_cancel`) | in a round: pause / resume for everyone (host only; others see "Only the host can pause.") |
-| Esc | closes the How to Play, Host and Join windows |
-| Enter in the IP box | connect (same as CONNECT) |
+| W A S D / arrow keys | move |
+| Shift / Space | sprint (uses stamina) |
+| 1, 2, 3, 4 | answer a question |
+| H | ask a teammate for help |
+| Y / N | accept / refuse a help request |
+| Esc | in a round: pause / resume for everyone (host only; others see "Only the host can pause.") |
+| Esc | closes How to Play, Leaderboard, Host and Join windows |
+| Enter in the IP box | connect |
 
 **Buttons and fields**
 
 | Screen | Buttons / fields |
 |---|---|
-| Title | PLAYER NAME field (saved to `user://player_settings.cfg`), HOST GAME, JOIN GAME, HOW TO PLAY, QUIT |
-| How to Play window | GOT IT! |
-| Host window | ✕ (close), CANCEL, START GAME (disabled until 2+ players) |
+| Title | PLAYER NAME field (saved to `user://player_settings.cfg`), HOST GAME, JOIN GAME, HOW TO PLAY, LEADERBOARD, QUIT |
+| Leaderboard window | ✕ (or Esc / click outside) |
+| How to Play | scrollable rules, GOT IT! |
+| Host window | ✕, CANCEL, START GAME (disabled until 2+ players) |
 | Join window | JOIN on each game found (disabled when full), IP field + CONNECT, ✕, CANCEL |
-| Question window | the 4 answer buttons (click or tap) |
+| Question window | 4 answer buttons, ASK A TEAMMATE FOR HELP |
+| Help alert | YES (Y), NO (N) |
 | End of round | Play Again / "Play Again (next Sili)" (host only), Main Menu / Leave |
 
 ---
@@ -93,17 +165,20 @@ answers, scrolls opened and time left.
 
 | Scene | What it shows | Main nodes |
 |---|---|---|
-| `scenes/title_screen.tscn` (main scene) | City background, logo, name field, 4 menu buttons; opens How to Play, Host and Join | `Background` (TextureRect), `Dim`, `Menu` (`TitleLogo`, `PlayerNameRow/PlayerNameInput`, `HostButton`, `JoinButton`, `HowToButton`, `QuitButton`, `ErrorLabel`), `HowToDim`, `HowToPanel` (rules + `CloseButton`), `HostModal`, `JoinModal` (instances) |
-| `scenes/host_modal.tscn` | "HOST A GAME" window drawn as a sari-sari store: IP on a chalkboard, 6 player slots, status, START GAME | `Dim`, `Center/Store/Top` (`Roof`, `Title`, `CloseButton`), `Body/VBox/HostCard` (`IpLabel`, `Hint`), `PlayersCard` (`Count`, `SiliChip`, `TubigChip`, `Slots/SlotTemplate`), `Counter` (`Status`, `CancelButton`, `StartButton`) |
-| `scenes/join_modal.tscn` | "JOIN A GAME" store window: games found nearby, type-an-IP, then player slots after connecting | same frame; `FindCard` (`Searching`, `FoundList/GameTemplate`), `IpCard` (`IpEdit`, `ConnectButton`), `PlayersCard`, `Counter` (`Status`, `CancelButton`) |
-| `scenes/maze_game.tscn` | The round | `Map` (instance of city_map), `Camera` (Camera2D), `Scrolls`, `Actors`, `RoundTimer`, `HUD` (CanvasLayer: `Minimap`, `TopBar` with Score/Timer/Mode labels, `WarningLabel`, `WarningGlow` (4 red edges), `MessageLabel`, `PauseLabel`, `QuizPanel`, `EndPanel` with `PlayAgainButton`/`MenuButton`). A `Vignette` is added by code. |
-| `scenes/city_map.tscn` | The city and maze, painted with tiles | `Surroundings` (TileMapLayer, decoration outside the maze), `Maze` (TileMapLayer, the playable 23×15 maze), `Props` (Sprite2D jeepneys, tricycles, electric posts), `Starts` (Marker2D `TubigStart1–4`, `SiliStart1–2`) |
-| `scenes/player.tscn` | One character | `Player` (CharacterBody2D), `Body` (Sprite2D), `NameLabel`, `AlertLabel`, `CollisionShape2D` (circle, r = 11) |
-| `scenes/question_scroll.tscn` | The "?" pickup | `QuestionScroll` (Node2D), `Icon` (Sprite2D) |
-| `scenes/quiz_panel.tscn` | Question window | `Dim`, `Panel/Margin/VBox` (`HeaderLabel`, `TimeLabel`, `QuestionLabel`, `Choices/Choice1–4`, `FeedbackLabel`) |
-| `scenes/how_to_play.tscn` | Old standalone How to Play panel | **Not used by any scene or script.** The title screen has its own `HowToPanel`. |
-| `scenes/lobby.tscn` | Old lobby screen (replaced by the Host/Join windows) | **Not used.** Its script `lobby.gd` was deleted. |
-| `scenes/lobby_modal.tscn` | Old combined Host/Join window | **Not used, and broken:** it points to the deleted `lobby_modal.gd` and to `assets/ui/store_*.png` / `chalkboard.png`, which moved to `host_store/` and `join_store/`. Loading it gives errors (see §9). |
+| `title_screen.tscn` (main scene) | City background, logo, name field, menu; opens How to Play, Leaderboard, Host and Join | `Background`, `Dim`, `Menu` (`TitleLogo`, `PlayerNameRow`, `HostButton`, `JoinButton`, `HowToButton`, `LeaderboardButton`, `QuitButton`, `ErrorLabel`), `LeaderboardDim`, `Leaderboard` pop-up (`Header` with `Title` + `CloseButton`, `Scoring`, `HeaderRow`, `Scroll/Rows/RowTemplate`, `Empty`), `HowToDim`, `HowToPanel` (`Header`, `Divider`, `Scroll/Rules` RichTextLabel, `CloseButton`), `HostModal`, `JoinModal` |
+| `host_modal.tscn` | "HOST A GAME" sari-sari store window: IP on a chalkboard, 6 player slots, status, START GAME | `Center/Store/Top` (`Roof`, `Title`, `CloseButton`), `Body/VBox/HostCard`, `PlayersCard` (`Slots/SlotTemplate`), `Counter` (`Status`, buttons) |
+| `join_modal.tscn` | "JOIN A GAME" store window: games nearby, type-an-IP, slots after connecting | `FindCard` (`FoundList/GameTemplate`), `IpCard` (`IpEdit`, `ConnectButton`), `PlayersCard`, `Counter` |
+| `maze_game.tscn` | The round | `Map` (city_map), `Camera`, `Scrolls`, `Actors`, `RoundTimer`, `AnimationPlayer`, `HUD` (CanvasLayer: `Minimap`, `TopBar`, `WarningLabel`, `WarningGlow`, `MessageLabel`, `PauseLabel`, `QuizPanel`, `AnswerPopup`, `AnsweringNotice`, `HelpAlert`, `EndPanel`). The `HUD` is **hidden in the editor** so it doesn't cover the map; the game shows it at start. |
+| `city_map.tscn` | City and maze painted with tiles | `Surroundings`, `Maze` (TileMapLayers), `Props` (jeepneys, tricycles, posts), `Starts` (`TubigStart1–4`, `SiliStart1–2`) |
+| `player.tscn` | One character | `Body` (Sprite2D), `NameLabel` (above the head), `AlertLabel` ("!" above the name), `CollisionShape2D` |
+| `question_scroll.tscn` | The "?" pickup | `Icon` (Sprite2D) |
+| `quiz_panel.tscn` | Question window | `Panel/Margin/VBox` (`HeaderLabel`, `TimeLabel`, `QuestionLabel`, `Choices/Choice1–4`, `HelpButton`, `FeedbackLabel`) |
+| `answer_popup.tscn` | TAMA! / MALI! / TIME'S UP! popup | `Center/Panel/Margin/VBox` (`BigWord`, `Who`, `Answer`, `Fact`, `Score`) |
+| `help_alert.tscn` | Bottom-right help request | `Panel/Margin/VBox` (`Title`, `Message`, `Buttons/YesButton`, `NoButton`) |
+| `answering_notice.tscn` | "Tubig is answering, cannot be tagged" (Sili, one-Tubig games) | `Center/Panel/Margin/Label` |
+| `how_to_play.tscn` | Old standalone How to Play panel | **Not used** |
+| `lobby.tscn` | Old lobby screen | **Not used**; its script was deleted |
+| `lobby_modal.tscn` | Old combined Host/Join window | **Not used and broken** (see §9) |
 
 ---
 
@@ -111,135 +186,132 @@ answers, scrolls opened and time left.
 
 | Script | Responsibility |
 |---|---|
-| `autoloads/game_state.gd` | Global round state (`READY, PLAYING, QUESTION, PAUSED, ENDED`), scene paths, player name (saved/loaded from `user://player_settings.cfg`), creates the keyboard input actions. |
-| `autoloads/network.gd` | LAN networking with ENet: host/join/leave, player list and names, role assignment and rotation, "everyone loaded" handshake, UDP discovery beacon and listener. |
-| `data/questions.gd` | Question bank: 32 entries, each with question, 4 choices, answer index and a short fact. |
-| `scenes/maze_game.gd` | The round and all game rules: reads the maze from the TileMap, camera and vignette, spawning, scrolls, questions, tag/rescue, warnings, timer, pause, win/lose, Play Again. The host decides; all devices display. |
-| `scenes/player.gd` | One Tubig/Sili: movement, sprint/stamina, sends its position 30×/s, smooths other players' movement, sprite-strip walking animation with left/right flip, caught/rescued/immunity visuals. |
-| `scenes/minimap.gd` | Draws the whole maze in the HUD corner ("MAPA"), your position dot (blue for Tubig, red for Sili) and a white box showing what the camera sees. Other players are not shown. |
-| `scenes/quiz_panel.gd` | Question window: shows the question to the picker, 15 s countdown, answer by click or keys 1–4, shows the host's verdict and the fact. |
-| `scenes/question_scroll.gd` | Scroll visual: scales `scroll.png` to 24 px and pulses it. |
-| `scenes/title_screen.gd` | Title menu: name field, opens Host/Join windows and How to Play, Quit, shows the last network error. |
-| `scenes/store_modal.gd` | Shared base for both store windows: player slots (copied from `SlotTemplate`), SILI/TUBIG counts, status line, close with ✕ / CANCEL / Esc. |
-| `scenes/host_modal.gd` | Host window: starts hosting, shows the IP, turns START GAME on at 2+ players, starts the game. |
-| `scenes/join_modal.gd` | Join window: starts discovery, lists games (copied from `GameTemplate`), connects by list or typed IP, shows slots after connecting. |
-| `scenes/png_button.gd` | TextureButton made from one PNG: fits the picture, glows on hover, shrinks when pressed, greys out when disabled. |
-| `scenes/ui_button_style.gd` | Code-drawn (StyleBoxFlat) button styles, still used by the end-of-round buttons and the 4 answer buttons. |
+| `autoloads/game_state.gd` | Round state (`READY, PLAYING, QUESTION, PAUSED, ENDED`), scene paths, player name (saved in `user://player_settings.cfg`), keyboard input actions. |
+| `autoloads/network.gd` | LAN networking with ENet: host/join/leave, player list and names, role assignment and rotation, "everyone loaded" handshake, LAN discovery (joiner asks, host answers). |
+| `data/questions.gd` | Question bank: 32 entries with question, 4 choices, answer and a fact. |
+| `data/leaderboard.gd` | Leaderboard: points formula, saving round results to `user://leaderboard.cfg`, sorted rankings. |
+| `scenes/maze_game.gd` | The round and all rules: reads the maze from the TileMap, camera and vignette, spawning, round time, scrolls, several questions at once, help requests (one at a time), tag/rescue, warnings, timer, pause, per-player stats, win/lose, leaderboard results, Play Again. The host decides; all devices display. |
+| `scenes/player.gd` | One character: movement, sprint/stamina, position sync, walking animation, name tag above the head, answering / caught / rescued / immunity states. |
+| `scenes/minimap.gd` | Whole maze in the corner ("MAPA"), your dot, camera-view box. |
+| `scenes/quiz_panel.gd` | Question window: 15 s countdown (waits while paused), answer by click or 1–4, help button and its locked / unavailable states. |
+| `scenes/answer_popup.gd` | Result popup; words and colors editable in the Inspector. |
+| `scenes/help_alert.gd` | Help request alert with YES/NO and Y/N keys; text editable in the Inspector. |
+| `scenes/answering_notice.gd` | The Sili's "Tubig is answering" notice; text editable in the Inspector. |
+| `scenes/question_scroll.gd` | Scroll sprite scaling and pulse. |
+| `scenes/title_screen.gd` | Title menu, name field, How to Play, and the Leaderboard pop-up (open, close, refill). |
+| `scenes/store_modal.gd` | Shared base of the Host/Join windows: player slots, counts, status, close. |
+| `scenes/host_modal.gd` / `join_modal.gd` | Host window (IP, START) and Join window (games list, connect). |
+| `scenes/png_button.gd` | PNG buttons: fit, hover glow, press shrink, grey when disabled. |
+| `scenes/ui_button_style.gd` | Code-drawn button styles (end-of-round, answer, help and help-alert buttons). |
 
 ---
 
 ## 4. What works now vs. what is incomplete
 
-### Works — tested this session (see "Test run" at the end)
+### Works — tested with real game copies over LAN (see "Test runs")
 
-- Title screen, PNG buttons, How to Play window.
-- Host window: IP shown, player slots update live, START GAME disabled below 2 players.
-- Join window: connect by typed IP (127.0.0.1); the game list and FULL/disabled JOIN
-  render correctly (tested with sample data).
-- 3-player LAN round: roles (1 Sili / 2 Tubig), 3 scrolls, question pickup, correct answer
-  counted on all devices, tag, rescue, Sili win, correct "You win/You lose" per device,
-  the timer counts down.
-- Host pause/resume with Esc reaches every device.
-- Play Again: a new round starts and the Sili role moves to the next player.
-- Camera: zoom 2.5, active on every device, follows that device's own player.
-- Tile collisions: all 345 maze cells match the painted map (0 mismatches).
-- Solo mode (maze scene run directly) runs with no errors.
+- Title screen, How to Play (scrolls), TOP PLAYERS leaderboard, Host/Join windows.
+- LAN discovery: several joiners on one PC; a host with two network adapters is listed
+  once, with the right IP; joining by the list's JOIN button.
+- Rounds with 2, 3, 4 and 6 players:
+  - roles and round time
+  - scroll pickup, several questions at once, the answerer can't be tagged
+  - help requests: one at a time, only free teammates alerted, first YES wins, late YES ignored
+  - TAMA!/MALI! popup, tag, rescue, Sili win
+  - pause (question timer waits), Play Again with the Sili role rotating
+- One-Tubig games: the whole chase stops, the Sili notice shows, and the clock pauses.
+- Leaderboard points (win / correct / tag) and "You earned +N points".
+- Screen shapes 2400×1080, 1024×768 and 1920×1080: screen filled and HUD placed
+  correctly.
 
-### Works according to the code or README, not re-tested this session **[CHECK]**
+### Not re-tested **[CHECK]**
 
-- Wrong answer / answer timeout, the time-up loss, a player leaving mid-round, 7th player
-  refused, automatic LAN discovery between separate devices (the game list was only
-  tested with sample data here), the warning banners on screen.
+- The full 3-minute timeout, a player or host leaving mid-round, 7th player refused,
+  rescue points on the leaderboard, discovery across separate real devices or hotspots,
+  mouse clicks on real hardware, Android or exported builds.
 
 ### Incomplete / placeholder
 
-- **Art is placeholder**, generated by script (see §6). The walking animation is one
-  4-frame strip flipped left/right; there are no up/down animations. Being caught is
-  only a grey tint, not an animation.
+- **Art:** placeholder, generated by script (§6). There is one walking strip flipped
+  left/right, with no up/down animations.
 - **No sound or music.**
-- **No touch controls:** there is no on-screen joystick, so phones/Android cannot move.
-  No Android build was made.
-- **No stamina bar:** `get_stamina_ratio()` exists but nothing uses it.
-- **No fog of war:** only the close camera plus a dark vignette at the screen edges.
-- **One maze only** (`city_map.tscn`).
-- **No reconnect:** if the host leaves, everyone returns to the title screen.
-- **Other players don't see the question** (see §9): only the picker's device shows the
-  question window.
-- `random_floor_cell()` in `maze_game.gd` is never used.
-- `README.md` is partly out of date (see §9).
+- **No touch controls or Android build.**
+- **No stamina bar** (`get_stamina_ratio()` is unused).
+- **No fog of war:** only the close camera and a vignette.
+- **One maze only.**
+- **No reconnect.**
+- **Leaderboard is per device:** players are matched by name only, and it can't be reset
+  from the game (delete `user://leaderboard.cfg`).
+- **Old files:** `how_to_play.tscn`, `lobby.tscn` and `lobby_modal.tscn` are unused.
+  `README.md` is partly out of date.
 
 ---
 
 ## 5. Networking model
 
-- **Transport:** Godot high-level multiplayer with `ENetMultiplayerPeer`.
-  - Game port **7777** (`GAME_PORT`); discovery port **7778** (UDP).
-  - The host creates the server with room for 5 clients (`MAX_PLAYERS - 1`) and also
-    plays as peer 1.
-- **Host:** HOST GAME → `Network.host_game()`.
-  - The host broadcasts a UDP beacon every 1 s: `SILITUBIG_TASKAVENUE|<players>|<host name>`.
-  - It is sent to `255.255.255.255` and to each local network's `x.y.z.255`.
-- **Join:** JOIN GAME → `start_listening()` on port 7778.
-  - Games heard in the last 4 s are listed as "<name>'s game  n/6".
-  - The player can press JOIN, or type an IP and press CONNECT (`join_game(ip)`).
-- **Joining:**
-  - On connect, the client sends its name to the host (`_register_player_name`).
-  - The host sends the player list and names to everyone (`_sync_players`, `_sync_player_names`).
-  - A player who connects after the game started, or when 6 are already in, is disconnected.
-- **Start:**
-  - The host calls `start_game()`, and every device loads `maze_game.tscn`.
-  - Each device calls `report_ready()`. The host spawns everyone only after all devices
-    have reported (`everyone_ready()`).
-- **The host decides** (functions named `_host_*`, sent with `@rpc("authority")`):
-  - roles and spawn positions (`_spawn_all`)
-  - scroll spawns
-  - which question and choice order (`_open_question`)
-  - whether the answer is right (`_question_result`)
-  - tags and rescues
-  - the timer (`_sync_time`, every 1 s)
-  - pause, win/lose and Play Again
+- **Transport:** Godot high-level multiplayer (`ENetMultiplayerPeer`). Game port **7777**,
+  discovery port **7778** (UDP). The host plays as peer 1 and allows 5 clients.
+- **Discovery** (`network.gd`; the joiner asks, the host answers):
+  - The joiner broadcasts `SILITUBIG_FIND` every 1 s from **its own random port**, to
+    `255.255.255.255` and every local network's `x.y.z.255`.
+  - The host listens on 7778 and answers each FIND directly with
+    `SILITUBIG_TASKAVENUE|<host id>|<players>|<host name>`.
+  - Games are grouped by **host id**, so a host with several network adapters is listed
+    once. The IP on the same network as the joiner is used. Games not heard from for 4 s
+    are removed.
+  - Why this way: several joiners work on one PC, and the joiner's firewall lets the
+    answers in because they are replies.
+  - The host's IP list puts real Wi-Fi/LAN addresses first and virtual adapters
+    (192.168.56.x, 172.16–31.x) last.
+- **Joining:** the client sends its name. The host syncs players and names to everyone,
+  and refuses joins after the start or when 6 are in.
+- **Start:** the host calls `start_game()`, every device loads the maze and reports
+  ready, and the host spawns everyone once all have reported.
+- **The host decides** (`_host_*` functions, `@rpc("authority")`):
+  - roles and round time
+  - spawns and scrolls
+  - opening questions (`_open_question` with a question id)
+  - answers (`_question_result`)
+  - help requests: `_help_lock` makes one request at a time, `_help_asked` alerts
+    teammates, `_question_passed` hands over the question
+  - tags and rescues, the timer (`_sync_time`), pause
+  - win/lose and the per-player results for the leaderboard (`_end_round`)
 - **Each device sends:**
-  - its own position about 30 times per second (`_net_position`, unreliable ordered)
-  - its answer, only if it is the picker (`_submit_answer`, to the host)
+  - its own position about 30 times per second (`_net_position`)
+  - its answer (`_submit_answer(qid, choice)`)
+  - its help request (`_request_help`) and help offer (`_offer_help`)
   - its name, and "my scene is ready"
-- **Movement:** each player is the multiplayer authority of its own character. Other
-  characters glide toward the last position received.
-- **Disconnects:** if the host leaves, clients return to the title screen with "The host
-  left the game." If a player leaves, the host removes them and may end the round (§1).
+- **Disconnects:** if the host leaves, clients return to the title screen. If a player
+  leaves, the host removes them, times out their open question, and may end the round.
 
 ---
 
 ## 6. Assets
 
-**Source:** all PNGs below except the two marked **[CHECK]** were **generated for this
-project** by Python/Pillow scripts during the development sessions with Claude
-(Anthropic). The TileSet was built with a Godot script. No third-party asset packs are in
-the project. `README.md` mentions the group project's credits (EsriEsra, LimeZu, Crusenho,
-Yūki — CC BY-SA 4.0), but none of those files are in this folder.
+**Source:** all PNGs except the two marked **[CHECK]** were generated for this project
+by Python/Pillow scripts during development sessions with Claude (Anthropic). The TileSet
+was built with a Godot script. No third-party asset packs are included. `README.md`
+mentions the group project's credits (EsriEsra, LimeZu, Crusenho, Yūki — CC BY-SA 4.0),
+but none of those files are in this folder.
 
 | File(s) | Size (px) | Used by | Source / license |
 |---|---|---|---|
-| `backgrounds/title_city.png` | 1199×633 | title `Background` | **[CHECK]** replaced in commit `8ee0cc3`; source and license unknown |
-| `ui/title_logo.png` | 421×180 | title `TitleLogo` | **[CHECK]** replaced in commit `8ee0cc3`; source and license unknown |
-| `characters/tubig_kid.png`, `sili_kid.png` | 96×24 (4 frames of 24×24) | `player.gd` | generated (restored to the originals from commit `75fff8b`) |
-| `props/jeepney.png`, `tricycle.png`, `electric_post.png` | 38×20, 16×22, 16×12 | `city_map.tscn` Props | generated |
-| `walls/road.png`, `road_lines_h.png`, `road_lines_v.png`, `road_crossing.png` | 40×40 each | TileSet (walkable) | generated |
-| `walls/roof_red/blue/green/gray.png`, `house_front.png`, `house_front_pink.png`, `store_front.png`, `tree_lot.png` | 40×40 each | TileSet (walls, with collision) | generated |
-| `walls/city_tileset.tres` | tile size 40×40, 12 sources, physics layer 0 | `city_map.tscn` | generated by a Godot script |
-| `ui/scroll.png` | 24×24 | `question_scroll.tscn` | generated |
-| `ui/button_host/join/how_to_play/quit/got_it.png` | 720×112, 720×96, 400×96 | title screen | generated |
-| `ui/button_start/cancel/connect/join_small/close.png` | various | Host/Join windows | generated |
-| `ui/panel.png`, `ui/card.png` | 64×64, 48×48 | How to Play frame; cards and slots | generated |
-| `ui/host_store/store_top/body/counter.png`, `chalkboard.png` | 1280×236, 128×64, 128×76, 48×48 | `host_modal.tscn` | generated |
-| `ui/join_store/store_top/body/counter.png` | same sizes | `join_modal.tscn` | generated |
-| `ui/store_templates/*` (4 templates + `HOW_TO_DRAW_THE_STORE.png`) | same sizes / 1100×1160 | not used in game; drawing guides | generated |
+| `backgrounds/title_city.png` | 1199×633 | title background | **[CHECK]** replaced in commit `8ee0cc3`; source and license unknown |
+| `ui/title_logo.png` | 421×180 | title logo | **[CHECK]** replaced in commit `8ee0cc3`; source and license unknown |
+| `characters/tubig_kid.png`, `sili_kid.png` | 96×24 (4 frames) | `player.gd` | generated |
+| `props/jeepney.png`, `tricycle.png`, `electric_post.png` | small | `city_map.tscn` | generated |
+| `walls/*.png` (12 tiles) + `walls/city_tileset.tres` | 40×40 | maze TileSet | generated |
+| `ui/scroll.png` | 24×24 | scroll | generated |
+| `ui/button_*.png` (11 buttons, incl. `button_leaderboard.png` 720×96) | various | title, Host/Join windows | generated |
+| `ui/panel.png`, `ui/card.png` | 64×64, 48×48 | How to Play and leaderboard frame; cards/slots | generated |
+| `ui/host_store/*`, `ui/join_store/*` | 1280×236, 128×64, 128×76, 48×48 | store windows | generated |
+| `ui/store_templates/*` | same sizes | drawing guides (not used in game) | generated |
 
 **Fonts:**
-- No font files are in the project. All in-game text uses Godot's default font
-  (`ThemeDB.fallback_font`).
-- The words inside the generated button, logo and sign PNGs were drawn with Windows
-  **Arial Black / Arial Bold** when the PNGs were made. **[CHECK]** whether the course
-  needs this listed under font licensing.
+- There are no font files. Text uses Godot's default font; RichTextLabel bold and italic
+  use the default theme's variants.
+- Words inside the generated PNGs were drawn with Windows **Arial Black / Arial Bold**
+  **[CHECK]** whether the course needs this listed.
 
 ---
 
@@ -247,158 +319,125 @@ Yūki — CC BY-SA 4.0), but none of those files are in this folder.
 
 | Setting | Value |
 |---|---|
-| Engine | `config/features = "4.7", "Forward Plus"`. Tested with **Godot 4.7.2-stable**. `README.md` still says 4.3 **[CHECK]** |
-| Renderer | Forward Plus |
+| Engine | `config/features = "4.7", "Forward Plus"`. Tested with Godot 4.7.2-stable. `README.md` still says 4.3 **[CHECK]** |
 | Main scene | `res://scenes/title_screen.tscn` |
-| Viewport | 960 × 640 |
-| Window size override | 1280 × 720 |
-| Stretch mode | `canvas_items` (aspect not set, so Godot's default `keep`) |
-| Orientation | **not set** in `project.godot`, so Godot's default (landscape) is used. `README.md` says `window/handheld/orientation` was changed to landscape, but the key is not in the file **[CHECK]** |
-| Default texture filter | `0` = Nearest (crisp pixel art). The title screen sets its own filter to Linear |
-| Autoloads | `GameState` = `autoloads/game_state.gd`, `Network` = `autoloads/network.gd` |
-| Input map | none in the file; actions are created in `game_state.gd` |
-| Export presets | **none** (`export_presets.cfg` does not exist) |
-| Physics layers (in code) | walls = layer 1 (TileSet physics layer), Tubig = layer 2, Sili = layer 4; both players collide with walls only (mask 1) |
+| Viewport | 960 × 640 (window override 1280 × 720) |
+| Stretch | mode `canvas_items`, aspect **`expand`**: the game fills any screen shape, and the HUD is anchored to the edges |
+| Orientation | `window/handheld/orientation=4` (sensor landscape) |
+| Default texture filter | Nearest (pixel art). The title screen uses Linear |
+| Autoloads | `GameState`, `Network` |
+| Export presets | **none** |
+| Physics layers (in code) | walls 1, Tubig 2, Sili 4; players collide with walls only |
 
 ---
 
 ## 8. Changes compared to a basic maze chase with placeholder shapes
 
-| Area | Before | Now |
-|---|---|---|
-| Viewpoint | whole maze on screen, no camera | `Camera2D` zoom 2.5 follows only your own player (about 10×6 of 23×15 tiles visible), with smoothing and limits 3 tiles past the maze |
-| Fog / darkness | none | **no real fog**; a radial vignette darkens the screen edges (`_add_vignette`) |
-| Minimap | none | "MAPA" in the HUD: whole maze, your dot, white box of the camera view |
-| Maze | text array (`MAZE` const) drawn as brown `ColorRect`s | painted `TileMapLayer` (`city_map.tscn`) from a 12-tile TileSet. Walls = tiles with collision. The game reads the map at start, so editing the map in the editor changes the game |
-| City look | green floor, brown walls | roads with lane lines and crossings, GI roofs, house/store fronts, tree lots, outer city blocks (`Surroundings`), jeepney/tricycle/electric-post props |
-| Start spots | `P`/`S` letters in the text maze | draggable `Marker2D` nodes (`TubigStart1–4`, `SiliStart1–2`) |
-| Characters | coloured squares | PNG kids (blue Tubig, red Sili) with a 4-frame walk, left/right flip, per-teammate tint, grey when caught, blinking when immune; Sili drawn 15% bigger |
-| Name labels | large text | 15 px text at scale 0.4 so it stays sharp at zoom 2.5 |
-| Other players | earlier "perspective" attempt hid all other players | visible again; the close camera limits what you see |
-| Scroll | yellow square with "?" | `scroll.png` sprite, any size scaled to 24 px, pulsing |
-| Title screen | text title, standard buttons | city background PNG, logo PNG, PNG buttons (hover glow / press), How to Play with frame and dark backdrop |
-| Lobby | separate `lobby.tscn` screen | two pop-up windows on the title screen (`host_modal.tscn`, `join_modal.tscn`) drawn as a sari-sari store, with hanging snack sachets, a chalkboard IP, a wooden counter, player slots with HOST/YOU badges and SILI/TUBIG counts |
-| Discovery list | IP only | host's name + player count ("Stef's game 2/6"), refreshes when the count changes |
-| Theme | code-drawn buttons | mostly PNG-based UI. There is no Godot `Theme` resource; the end-of-round and answer buttons still use `ui_button_style.gd` |
-| Customizing | code only | texts and colors in the Inspector (Host/Join windows), editable templates, replaceable PNGs, drawing templates in `assets/ui/store_templates/`, guide in `assets/README.md` |
+| Area | Now |
+|---|---|
+| Viewpoint | `Camera2D` zoom 2.5 following your own player; limits 3 tiles past the maze |
+| Fog | none; a radial vignette darkens the screen edges |
+| Minimap | "MAPA": whole maze, your dot, camera-view box |
+| Maze | painted TileMapLayer (`city_map.tscn`); walls are tiles with collision; draggable start markers |
+| City look | roads, GI roofs, house/store fronts, trees, outer city, jeepney/tricycle/post props |
+| Characters | PNG kids (blue Tubig, red Sili), 4-frame walk, tints; grey when caught; blink when immune; **name above the head** (own name yellow) |
+| Title screen | PNG background, logo and buttons; scrollable formatted How to Play; **LEADERBOARD button → TOP PLAYERS pop-up** |
+| Lobby | Host / Join pop-up windows drawn as a sari-sari store |
+| Questions | several at once; the answerer is frozen and untaggable; pass to one teammate; one help request at a time; result popup |
+| Round time | shorter with more Tubigs |
+| Screens | fills any screen shape; HUD anchored; sensor landscape |
+| Editing | HUD and pop-ups hidden in the editor; templates for slots/rows/games; texts and colors in the Inspector; replaceable PNGs; drawing templates |
 
 ---
 
 ## 9. Known bugs, Output errors and fragile parts
 
-### Errors / warnings
-
-1. **`scenes/lobby_modal.tscn` fails to load.** Output shows:
-   - `Attempt to open script 'res://scenes/lobby_modal.gd' ... 'File not found'`
-   - `Resource file not found: res://assets/ui/store_top.png` (and `store_body`,
-     `store_counter`, `chalkboard`)
-   - `Parse Error: [ext_resource] referenced non-existent resource`
-
-   Nothing uses this file. It keeps coming back because the Godot editor had it open and
-   saves it again. **Fix:** close its tab in Godot without saving, delete it, and commit.
-2. **`scenes/lobby.tscn`** is also unused. Its script `lobby.gd` was deleted.
-   **`scenes/how_to_play.tscn`** is an unused duplicate of the title screen's How to Play
-   panel.
-3. In the three-player test runs, **no runtime errors or warnings** were printed by the
-   game (host and both joiners).
-4. **Likely editor warnings [CHECK]** (the GDScript analyzer shows these in the editor,
-   not in a headless run):
-   - `var name` in `network.gd _register_player_name()` hides `Node.name`.
-   - Parameters called `position` in `maze_game.gd` and `quiz_panel.gd` hide
-     `Node2D.position` / `Control.position`.
-   - Integer division warnings in `maze_game.gd` (`maze[0].length() / 2`,
-     `total_seconds / 60`).
-5. In one earlier run the host printed `ERROR: Unable to send packet` from the discovery
-   beacon. It seems to happen when a broadcast address is not reachable, and the game
-   kept working **[CHECK]**.
-6. `Could not host (port 7777 busy?)` appears if another copy of the game is already
-   hosting on the same PC.
-
-### Behaviour that differs from the documentation
-
-7. **Only the picker sees the question.** `quiz_panel.show_question()` sets
-   `visible = answerer_is_me`. `README.md` and the How to Play text say every screen
-   shows the question, and teammates are told "help them!", but other devices only see
-   the frozen game. **[CHECK]** whether this is intended.
-8. **README out of date:**
-   - It says Godot 4.3, "Placeholder shapes / no external assets", "no player names
-     (P1–P6 only)" and "No real sprites".
-   - It says the orientation setting was fixed, but the key is not in `project.godot`.
-   - A comment in `network.gd` says slots are "0..3 => P1..P4", but there are 6 slots.
-
-### Fragile parts
-
-9. **Start markers:** `_spawn_all` uses `tubig_starts[tubigs.size()]`. The map needs at
-   least **4 `TubigStart`** and **2 `SiliStart`** markers on road tiles, or a 6-player
-   game crashes with an index error.
-10. **Tile size:** `TILE = 40` in `maze_game.gd` must match the TileSet (40×40). Tile PNGs
-    must be exactly 40×40.
-11. **Maze painting:** unpainted cells inside the maze count as road but show nothing. A
-    new tile is a wall only if it has a collision shape on physics layer 0.
-12. **Label scale:** `player.tscn` name/alert labels use scale 0.4, which is 1 ÷ camera
-    zoom 2.5. If `camera_zoom` changes, the labels become blurry or the wrong size.
-13. **Rescue order:** in the same physics frame, tags are checked before rescues. A
-    rescuer who arrives while the Sili is still next to the frozen player is tagged
-    first. This was seen during testing and is probably fine as a rule **[CHECK]**.
-14. **Minimap colors** are fixed in `minimap.gd` and do not follow the tile art.
-15. **Uncommitted change:** `scenes/maze_game.tscn` has changes from an editor re-save
-    (IDs and `layout_mode`, no gameplay change).
-16. **Not tested on real devices:** Wi-Fi/hotspot discovery between separate devices,
-    Android, and exported builds.
+1. **`scenes/lobby_modal.tscn` fails to load.** It points to the deleted
+   `lobby_modal.gd` and to old `assets/ui/store_*.png` / `chalkboard.png`, so Godot prints
+   `File not found` / `Parse Error` when it imports or loads it. Nothing uses it; it
+   comes back when the editor re-saves an open tab. **Fix:** close its tab without saving,
+   delete it, and commit. `lobby.tscn` and `how_to_play.tscn` are also unused.
+2. **No runtime errors or warnings** were printed in any of the test runs listed below.
+3. **Likely editor warnings [CHECK]** (the analyzer shows them in the editor only): `var
+   name` in `network.gd` hides `Node.name`; parameters named `position` in
+   `maze_game.gd` / `quiz_panel.gd`; integer divisions in `maze_game.gd`.
+4. **Leaderboard on one PC:** several game copies on one PC share one leaderboard file.
+   If they save at the same moment, one save can be lost (seen in testing: 2 games
+   recorded instead of 3). Separate devices each have their own file.
+5. **Leaderboard identity:** players are matched by name only. Two people with the same
+   name share one row, and renaming starts a new row.
+6. **Only the answerer sees the question**; teammates see the result line. How to Play
+   describes this correctly; `README.md` does not.
+7. **README out of date:** Godot 4.3, "placeholder shapes", "no player names", "no real
+   sprites", "everyone sees the question", old lobby.
+8. **Fragile parts:**
+   - The map needs **4 `TubigStart`** and **2 `SiliStart`** markers on road tiles.
+   - `TILE = 40` must match the TileSet.
+   - Name-tag scale 0.4 is tied to camera zoom 2.5.
+   - Minimap colors are fixed in `minimap.gd`.
+9. **Not tested on real devices:** discovery across devices or hotspots, Android, exports.
+   The host PC's firewall must allow Godot (ports 7777/7778) for others to join.
 
 ---
 
-## 10. Bugs fixed during our sessions
+## 10. Bugs fixed during development sessions
 
 | # | What happened | Cause | Fix | Result after fix |
 |---|---|---|---|---|
-| 1 | The "perspective" change hid every other player, so a Tubig could not see the Sili chasing it | `body_rect.visible = is_local()` in `player.gd` hid all characters except your own | Removed those lines; a close-up `Camera2D` now limits the view | Players near you are visible; far ones are off-screen. Checked in screenshots |
-| 2 | The whole maze was still on screen | No camera existed | Added `Camera` (zoom 2.5, smoothing, limits) following only the local player | About 10×6 tiles visible; test shows `camera zoom=(2.5,2.5) current=true` on every device |
-| 3 | Name labels were blurry at the new zoom | A 6 px font was drawn small and enlarged 2.5× by the camera | Font 15 px with label scale 0.4 (net 1:1 on screen) | Sharp text (screenshot) |
-| 4 | Minimap used hard-coded `Vector2(20,40)` and `40` | Values copied instead of passed in | `set_maze(layout, origin, tile)` gets the real origin and tile size | Minimap position dot and camera box line up (screenshot) |
-| 5 | Maze could not be edited visually | Maze was a text array drawn in code | TileMapLayer + TileSet; game reads walls from tile collision | Collision check: 345 cells, **0 mismatches** |
-| 6 | Title logo: the banner stripes overlapped "TASK AVENUE" | Banner too narrow | Widened the banner and moved the stripes | Text clear (preview image) |
-| 7 | PNG button press effect unreliable | `is_pressed()` read inside the `button_down` / `button_up` signals | Separate handlers for down/up | Button shrinks on press and restores on release [CHECK: not clicked with a real mouse] |
-| 8 | START GAME looked clickable with fewer than 2 players | PNG buttons had no disabled look | `png_button.gd` greys out disabled buttons | START greyed until 2 players (screenshot) |
-| 9 | Join list showed old player counts | `hosts_found_changed` fired only for new IPs | Also fire when a host's player count changes | List updates counts |
-| 10 | Host/Join window ran off the bottom of the screen | Manual `reset_size()` + position did not shrink the panel | Put the panel in a `CenterContainer` | Window centered and sized to its content (screenshots) |
-| 11 | Host window too tall for the 640 px screen | Large margins, fonts and slots | Smaller spacing, font sizes and slot height | Fits on screen |
-| 12 | Host/Join window invisible when opened in the editor | Root node saved with `visible = false`; slots and game rows existed only at runtime | Root visible in its own scene (hidden by the title screen instance); added `SlotTemplate` / `GameTemplate` nodes that the code copies | Window and one slot/row visible and editable in the editor; 2-player test shows slots "Stef[HOST][YOU]", "Ana" |
-| 13 | Old lobby scene kept returning | The open editor re-saved deleted scenes | Deleted `lobby.tscn` / `lobby_modal.tscn` | **Not solved:** they are back in the repo (see §9, #1–2) |
-| 14 | "BAWAL ANG UTANG" text overflowed its sign | Font too large for the sign | Wider sign, smaller font | Fits (preview image) |
-| 15 | Parameter names `seed` and `show` hid built-in names | Naming | Renamed to `variant` / `open` | No conflict |
+| 1 | Other players were invisible | An earlier "perspective" change hid everyone except you | Removed; a close-up camera limits the view instead | Nearby players visible |
+| 2 | The whole maze was on screen | No camera | `Camera2D` zoom 2.5 following the local player | About 10×6 tiles visible |
+| 3 | Name labels blurry at zoom | Small font scaled up 2.5× | 15 px font at scale 0.4 | Sharp text |
+| 4 | Minimap used hard-coded origin/tile | Copied numbers | Real values passed in | Dot and camera box line up |
+| 5 | Maze not editable visually | Text array drawn in code | TileMapLayer + TileSet | 345 cells, 0 collision mismatches |
+| 6 | Logo banner overlapped text | Banner too narrow | Wider banner | Clear |
+| 7 | PNG button press unreliable | `is_pressed()` read inside signals | Separate down/up handlers | Shrinks on press **[CHECK: real mouse]** |
+| 8 | START looked clickable below 2 players | No disabled look | Grey when disabled | Greyed until 2 players |
+| 9 | Join list had stale counts | Refreshed only for new IPs | Refresh on count change | Counts update |
+| 10 | Host/Join window ran off screen | Manual resize | `CenterContainer` | Fits |
+| 11 | Host window too tall | Large spacing | Tighter layout | Fits 640 px |
+| 12 | Host/Join window invisible in the editor | Root hidden; rows built only in code | Visible scene root; editable templates | Editable |
+| 13 | Old lobby scenes keep returning | Editor re-saves open tabs | Deleted | **Not solved** (§9 #1) |
+| 14 | Sign text overflowed | Font too big | Smaller font, wider sign | Fits |
+| 15 | Parameter names hid built-ins | Naming | Renamed | No conflict |
+| 16 | TAMA/MALI hard to read | Small line at the bottom of the question window, 2 s | `answer_popup.tscn`, 3.5 s | Readable popup |
+| 17 | Game didn't fit other screens | Aspect `keep` + fixed HUD positions | Aspect `expand`, anchored HUD | Tested at 20:9, 4:3, 16:9 |
+| 18 | Same host listed twice | Host PC has two adapters (Wi-Fi + VirtualBox); each IP listed | Host id in answers; one entry per id; best IP chosen | Listed once, real IP |
+| 19 | Second joiner on the same PC saw no games | All joiners bound the same port 7778; the second failed silently | Joiner asks from a random port; host answers directly | 3 joiners on one PC all see the game |
+| 20 | Host window could show a virtual IP | Adapter order | Real LAN IPs sorted first | Shows 192.168.0.x |
+| 21 | Pop-ups covered the map while editing | HUD CanvasLayer and pop-ups visible in the editor | HUD and pop-ups hidden in the scene; shown by code | Map visible when editing |
+| 22 | How to Play too tall for the screen | Long text in a fixed 500 px panel | ScrollContainer + formatted RichTextLabel | Whole text reachable by scrolling |
+| 23 | Two HELP presses at the same instant | Second asker could be stuck on "Asking..." | Host rejects the second one; its button shows "already asking" | No stuck button |
+| 24 | Name tags floated too high | Offset too large after moving them above the head | Lowered to sit just above the sprite | Checked in screenshot |
 
-**Fixed before these sessions** (from `README.md`, not re-checked here): the Sili could
-never tag (collision circles blocked the 20 px tag distance); Esc could pause but not
-resume; a teammate next to a caught Tubig rescued it instantly (now 1 s minimum); the
-handheld orientation was portrait (see §7 **[CHECK]**).
+**Fixed before these sessions** (from `README.md`, not re-checked): the Sili could not
+tag (collision circles too big); Esc could pause but not resume; instant rescue
+(now 1 s minimum); portrait orientation (now sensor landscape, see §7).
 
 ---
 
-## Test run (2026-09-24, Godot 4.7.2-stable, Windows 11)
+## Test runs
 
-I ran the tests with headless Godot copies of the real game on one PC over 127.0.0.1.
-A temporary script clicked through the game; it has been deleted. Screenshots were taken
-with Godot's movie writer.
+All tests used Godot 4.7.2-stable copies of the real game on one Windows 11 PC over
+127.0.0.1, driven by temporary scripts (deleted afterwards). Screenshots were taken from
+the game's own viewport.
 
-| Test | Result |
-|---|---|
-| Load and create every scene | All used scenes load. `lobby_modal.tscn` **fails** (missing files, §9) |
-| Import project (`--import`) | No errors |
-| Solo: run `maze_game.tscn` directly for 5 s | No errors or warnings |
-| Host opens window | IP shown (`192.168.0.103`), START disabled with 1 player |
-| 2 joiners connect by IP | Both show "Connected! Waiting for host..."; host shows 3 players, "Ready!", START enabled |
-| START GAME | All 3 load the maze. Roles 1 Sili / 2 Tubig, 3 scrolls, maze 23×15, time 180 |
-| Wall collisions | 345 cells, 0 mismatches |
-| Host presses Esc twice | PAUSED then PLAYING on all 3 devices; pause label shown/hidden on host |
-| Tubig walks onto scroll | QUESTION on all 3 devices; question window visible **only** on the picker |
-| Picker answers correctly | `correct_answers = 1` on all devices; play resumes after 2 s |
-| Sili tags Tubig A | A frozen |
-| Tubig B touches A after > 1 s | A rescued |
-| Sili tags A, then B | all Tubig frozen → **"SILI WINS!"** on all 3; "You win!" for the Sili, "You lose!" for the Tubigs; time left 2:54 (timer ran) |
-| Host presses Play Again | Round 2 starts on all 3; the Sili role moved to the next player |
-| Host/Join windows, join list with sample data | Render correctly; a full game shows "FULL" and a greyed JOIN |
+| Date | Test | Result |
+|---|---|---|
+| 09-24 | Load every scene | All used scenes load; `lobby_modal.tscn` fails (§9) |
+| 09-24 | 3-player round: join, pause, question, tag, rescue, Sili win, Play Again | All correct on all devices; Sili rotated |
+| 09-24 | Wall collisions | 345 cells, 0 mismatches |
+| 09-26 | Result popup, solo | TAMA! (green) / MALI! (red) with answer, fact, score |
+| 09-26 | Screen sizes 2400×1080, 1024×768, 1920×1080 | Screen filled, HUD placed correctly |
+| 09-26 | 2 players (1 Tubig) question | Chase stops, Sili sees notice, clock held at 178, no help button |
+| 09-26 | 6 players help flow | Answerer untaggable; B's NO closes only B's alert; C's YES wins; D's late YES ignored; popup only on the answerer |
+| 09-26 | Discovery: host + 3 joiners on one PC, host with 2 adapters | Each joiner lists the host once, with IP 192.168.0.104 |
+| 09-26 | 4 players joining by the list's JOIN button | All reach the maze |
+| 09-26 | 6 players, two questions at once + help | Two open questions, pass to C, both scored (2/10) |
+| 09-26 | 6 players, help lock | B's button "Host is already asking..." (disabled) until C accepted; then B asked and D helped |
+| 09-26 | Round time | 4 Tubigs → 2:00; 1 Tubig → 3:00 |
+| 09-26 | How to Play at 960×640 | 700×525 panel; rules 1056 px tall, scroll to the bottom |
+| 09-26 | Leaderboard round (3 players) | +1 for a correct answer, +5 for the Sili (win + 2 tags), +0 for the other Tubig; TOP PLAYERS shows the ranking; test data deleted afterwards |
+| 09-26 | Name tags | Name above the head, own name yellow |
+| 09-26 | Leaderboard pop-up (sample data, deleted afterwards) | Opens centered with 4 ranked rows; closes with Esc, click outside and ✕ |
 
-**Not tested:** wrong answer, answer timeout, full 3-minute timeout, player or host
-leaving mid-round, 7th player refused, discovery across real devices or hotspots, mouse
-clicks on real hardware, Android or any export.
+**Not tested:** see §4 "Not re-tested".

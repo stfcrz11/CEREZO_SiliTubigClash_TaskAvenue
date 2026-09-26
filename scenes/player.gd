@@ -67,6 +67,8 @@ func setup(id: int, player_slot: int, player_role: String, color_index: int, sta
 	base_color = tints[color_index % tints.size()]
 	body.self_modulate = base_color
 	name_label.text = _label()
+	if is_local():
+		name_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.35))   # your own name in yellow
 	alert_label.visible = false
 
 
@@ -79,8 +81,7 @@ func is_local() -> bool:
 
 
 func _label() -> String:
-	var you := " (You)" if is_local() else ""
-	return "%s %s%s" % ["TUBIG" if is_tubig() else "SILI", Network.player_name_of(peer_id), you]
+	return Network.player_name_of(peer_id)   # just the name, shown above the head
 
 
 func _physics_process(delta: float) -> void:

@@ -11,6 +11,7 @@ extends Node2D
 ## host. Each device only moves its own character.
 
 const QuestionBank := preload("res://data/questions.gd")
+const Leaderboard := preload("res://data/leaderboard.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const SCROLL_SCENE := preload("res://scenes/question_scroll.tscn")
 const ButtonStyle := preload("res://scenes/ui_button_style.gd")
@@ -85,6 +86,7 @@ var _next_scroll_id: int = 0
 var _question_deck: Array = []
 var _questions: Dictionary = {}     # open questions (host): qid -> info
 var _help_active: int = -1          # host: the ONE question with an open help request
+var _stats: Dictionary = {}         # host: peer id -> {correct, tags, rescues} this round
 var _next_question_id: int = 0
 
 
@@ -226,6 +228,7 @@ func _host_try_begin() -> void:
 	var roster := []
 	for id in Network.sorted_ids():
 		roster.append([id, Network.slot_of(id), roles[id]])
+		_stats[id] = {"correct": 0, "tags": 0, "rescues": 0}
 	_spawn_all.rpc(roster)
 	for i in scrolls_on_map:
 		_host_spawn_scroll()
@@ -414,6 +417,8 @@ func _host_resolve(qid: int, position: int) -> void:
 		_host_release_help()   # the question is over, so its help request is too
 	var entry: Dictionary = QuestionBank.QUESTIONS[q["index"]]
 	var correct: bool = position >= 0 and q["order"][position] == entry["answer"]
+	if correct:
+		_count(q["picker"], "correct")   # whoever answered (the helper, if it was passed)
 	var total := correct_answers + (1 if correct else 0)
 	_question_result.rpc(qid, position, correct, total)
 	q["result_timer"] = feedback_time
@@ -651,6 +656,7 @@ func _host_check_tags() -> void:
 	for s in silis:
 		for t in tubigs:
 			if t.can_be_tagged() and s.global_position.distance_to(t.global_position) <= tag_distance:
+				_count(s.peer_id, "tags")
 				_tubig_caught.rpc(t.peer_id)
 	_host_check_team_out()
 
@@ -691,6 +697,7 @@ func _host_check_rescues() -> void:
 		for helper in tubigs:
 			if helper != frozen_t and not helper.frozen and not helper.answering \
 					and helper.global_position.distance_to(frozen_t.global_position) <= rescue_distance:
+				_count(helper.peer_id, "rescues")
 				_tubig_rescued.rpc(frozen_t.peer_id)
 				break
 
@@ -826,17 +833,31 @@ func _format_time(seconds: float) -> String:
 	return "%d:%02d" % [minutes, secs]
 
 
+func _count(peer_id: int, what: String) -> void:
+	if _stats.has(peer_id):
+		_stats[peer_id][what] += 1
+
+
 func _host_end(team_won: bool, title: String) -> void:
+	if GameState.round_state == GameState.RoundState.ENDED:
+		return
 	round_timer.stop()
 	_questions.clear()     # open questions end with the round
 	_help_active = -1
 	var stats := "Correct answers: %d / %d\nScrolls opened: %d\nTime left: %s" % \
 		[correct_answers, questions_to_win, questions_asked, _format_time(time_left)]
-	_end_round.rpc(team_won, title, stats)
+	# leaderboard results for everyone still in the game (not for solo test rounds)
+	var results := []
+	if not silis.is_empty():
+		for id in player_by_id:
+			var s: Dictionary = _stats.get(id, {"correct": 0, "tags": 0, "rescues": 0})
+			results.append({"id": id, "name": Network.player_name_of(id), "won": player_by_id[id].is_tubig() == team_won,
+				"correct": s["correct"], "tags": s["tags"], "rescues": s["rescues"]})
+	_end_round.rpc(team_won, title, stats, results)
 
 
 @rpc("authority", "call_local", "reliable")
-func _end_round(team_won: bool, title: String, stats: String) -> void:
+func _end_round(team_won: bool, title: String, stats: String, results: Array) -> void:
 	GameState.round_state = GameState.RoundState.ENDED
 	quiz_panel.close()
 	answer_popup.close()
@@ -858,6 +879,11 @@ func _end_round(team_won: bool, title: String, stats: String) -> void:
 	if me:
 		verdict = "You win!" if me.is_tubig() == team_won else "You lose!"
 	$HUD/EndPanel/Margin/VBox/StatsLabel.text = verdict + "\n" + stats
+	if not results.is_empty():
+		Leaderboard.record(results)   # saved on this device; shown on the title screen
+		for r in results:
+			if r["id"] == multiplayer.get_unique_id():
+				$HUD/EndPanel/Margin/VBox/StatsLabel.text += "\n\nYou earned +%d points (see TOP PLAYERS)" % Leaderboard.points_for(r)
 	play_again_button.visible = multiplayer.is_server()
 	play_again_button.text = "Play Again (next Sili)" if Network.online else "Play Again"
 	menu_button.text = "Main Menu" if not Network.online else "Leave"

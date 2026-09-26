@@ -1,3 +1,5 @@
 res://scenes/maze_game.gd
 res://_tmp_keeper.gd
 res://_tmp_launch.gd
+res://scenes/player.gd
+res://scenes/quiz_panel.gd

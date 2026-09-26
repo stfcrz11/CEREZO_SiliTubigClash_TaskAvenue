@@ -196,7 +196,8 @@ theme_override_font_sizes/font_size = 15
 text = "ROLES: 2-4 players = 1 Sili, 5-6 players = 2 Silis. Everyone else is Tubig. The Sili role rotates every round.
 
 TUBIG TEAM: answer 10 questions about Filipino culture correctly before the 3-minute timer ends.
-• Walk into a yellow ? scroll. Everyone freezes and sees the question; only the Tubig who picked it answers (click, tap, or 1-4). Help your teammate! Wrong = find another scroll.
+• Walk into a ? scroll to get a question (answer by click, tap, or 1-4). While you answer you can't move and can't be tagged; the others keep playing. Wrong = find another scroll.
+• Stuck? Press ASK A TEAMMATE FOR HELP (H). The first teammate who says YES gets the question with a fresh timer, and you are free to run. If you are the only Tubig, the Sili waits while you answer.
 • When a Sili comes near you get a warning: \"SILI NEARBY!\" then \"RUN!\".
 • Caught Tubigs freeze. A teammate touches you to save you (1.5 s of safety + speed burst).
 

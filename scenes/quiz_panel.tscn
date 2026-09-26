@@ -109,6 +109,13 @@ text = "D.
 "
 alignment = 0
 
+[node name="HelpButton" type="Button" parent="Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 16
+text = "ASK A TEAMMATE FOR HELP (H)"
+
 [node name="FeedbackLabel" type="Label" parent="Panel/Margin/VBox" unique_id=816153848]
 custom_minimum_size = Vector2(600, 0)
 layout_mode = 2

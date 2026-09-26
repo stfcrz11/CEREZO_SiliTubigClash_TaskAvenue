@@ -32,7 +32,8 @@ var peer_id: int = 1
 var slot: int = 0
 var role: String = "tubig"          # "tubig" or "sili"
 var stamina: float = max_stamina
-var frozen: bool = false
+var frozen: bool = false            # caught by a Sili
+var answering: bool = false         # answering a question: can't move, can't be tagged
 var frozen_time: float = 0.0
 var immune_time: float = 0.0
 var base_color: Color
@@ -84,7 +85,6 @@ func _label() -> String:
 
 func _physics_process(delta: float) -> void:
 	var playing := GameState.round_state == GameState.RoundState.PLAYING
-	var question_lock := GameState.round_state == GameState.RoundState.QUESTION and is_tubig()
 	if playing:
 		if frozen:
 			frozen_time += delta
@@ -97,7 +97,7 @@ func _physics_process(delta: float) -> void:
 		global_position = global_position.lerp(_net_target, min(1.0, delta * 15.0))
 		return
 
-	if not playing or frozen or question_lock:
+	if not playing or frozen or answering:
 		velocity = Vector2.ZERO
 	else:
 		var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -140,7 +140,7 @@ func _net_position(pos: Vector2) -> void:
 
 
 func can_be_tagged() -> bool:
-	return is_tubig() and not frozen and immune_time <= 0.0
+	return is_tubig() and not frozen and not answering and immune_time <= 0.0
 
 
 func can_be_rescued(min_frozen_time: float) -> bool:
@@ -169,6 +169,13 @@ func set_rescued() -> void:
 	immune_time = rescue_immunity_time
 
 
+func set_answering(on: bool) -> void:
+	answering = on
+	name_label.text = ("%s  ANSWERING..." % Network.player_name_of(peer_id)) if on else _label()
+	if on:
+		alert_label.visible = false
+
+
 func give_grace(seconds: float) -> void:
 	# short protection after a question closes, so a Sili standing next
 	# to the scroll cannot tag the moment play resumes
@@ -177,5 +184,5 @@ func give_grace(seconds: float) -> void:
 
 func set_alert(level: int) -> void:
 	# 0 = safe, 1 = Sili nearby, 2 = Sili very close
-	alert_label.visible = level > 0 and not frozen and is_local()
+	alert_label.visible = level > 0 and not frozen and not answering and is_local()
 	alert_label.text = "!!" if level == 2 else "!"

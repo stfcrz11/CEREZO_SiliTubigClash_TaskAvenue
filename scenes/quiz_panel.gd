@@ -1,10 +1,12 @@
 extends Control
-## Multiple-choice question window. The chase freezes while it is open.
-## Everyone sees the question; only the Tubig who picked up the scroll
-## can answer (click/tap a choice or press 1-4). The host decides if the
+## Multiple-choice question window, shown only to the Tubig who is
+## answering (click/tap a choice or press 1-4). The host decides if the
 ## answer is right and tells every device (maze_game.gd).
+## With teammates in the game, the answerer can press ASK A TEAMMATE FOR
+## HELP (or H) once: the first teammate who says YES gets the question.
 
 signal choice_made(position: int)   # -1 = ran out of time
+signal help_requested
 
 const ButtonStyle := preload("res://scenes/ui_button_style.gd")
 
@@ -17,6 +19,7 @@ const ButtonStyle := preload("res://scenes/ui_button_style.gd")
 	$Panel/Margin/VBox/Choices/Choice1, $Panel/Margin/VBox/Choices/Choice2,
 	$Panel/Margin/VBox/Choices/Choice3, $Panel/Margin/VBox/Choices/Choice4]
 @onready var feedback_label: Label = $Panel/Margin/VBox/FeedbackLabel
+@onready var help_button: Button = $Panel/Margin/VBox/HelpButton
 
 var entry: Dictionary
 var order: Array = []          # order[i] = index into entry.choices shown at button i
@@ -30,9 +33,12 @@ func _ready() -> void:
 	for i in choice_buttons.size():
 		ButtonStyle.style_choice(choice_buttons[i], Color(0.23, 0.69, 0.96))
 		choice_buttons[i].pressed.connect(_pick.bind(i))
+	ButtonStyle.style_secondary(help_button, Color(0.85, 0.5, 0.15))
+	help_button.pressed.connect(_ask_help)
 
 
-func show_question(q: Dictionary, shown_order: Array, header: String, answerer_is_me: bool, answerer_name: String) -> void:
+func show_question(q: Dictionary, shown_order: Array, header: String, answerer_is_me: bool,
+		answerer_name: String, can_ask_help: bool = false) -> void:
 	entry = q
 	order = shown_order
 	header_label.text = header
@@ -43,14 +49,17 @@ func show_question(q: Dictionary, shown_order: Array, header: String, answerer_i
 		b.disabled = not answerer_is_me
 		b.modulate = Color.WHITE
 	can_answer = answerer_is_me
-	feedback_label.text = "" if answerer_is_me else "%s is answering... help them!" % answerer_name
+	feedback_label.text = "" if answerer_is_me else "%s is answering..." % answerer_name
+	help_button.visible = answerer_is_me and can_ask_help
+	help_button.disabled = false
+	help_button.text = "ASK A TEAMMATE FOR HELP (H)"
 	time_left = answer_time
 	waiting = true
 	visible = answerer_is_me
 
 
 func _process(delta: float) -> void:
-	if not waiting:
+	if not waiting or GameState.round_state == GameState.RoundState.PAUSED:
 		return
 	time_left -= delta
 	time_label.text = "Time to answer: %d" % ceili(max(time_left, 0.0))
@@ -65,12 +74,29 @@ func _unhandled_input(event: InputEvent) -> void:
 	if k >= KEY_1 and k <= KEY_4:
 		_pick(k - KEY_1)
 		get_viewport().set_input_as_handled()
+	elif k == KEY_H and help_button.visible and not help_button.disabled:
+		_ask_help()
+		get_viewport().set_input_as_handled()
+
+
+func _ask_help() -> void:
+	if not (waiting and can_answer) or help_button.disabled:
+		return
+	help_button.disabled = true
+	help_button.text = "Asking your teammates..."
+	help_requested.emit()
+
+
+## Called when the host says nobody can help right now.
+func help_unavailable() -> void:
+	help_button.text = "No teammate can help right now"
 
 
 func _pick(position: int) -> void:
 	if not (waiting and can_answer):
 		return
 	can_answer = false
+	help_button.disabled = true
 	for b in choice_buttons:
 		b.disabled = true
 	feedback_label.text = "Checking..."

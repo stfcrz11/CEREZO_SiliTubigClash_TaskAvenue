@@ -5,6 +5,8 @@
 [ext_resource type="Script" uid="uid://bsh7gunep56sm" path="res://scenes/minimap.gd" id="3"]
 [ext_resource type="PackedScene" uid="uid://bdbmfdn2jastq" path="res://scenes/city_map.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/answer_popup.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/help_alert.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/answering_notice.tscn" id="7"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_e"]
 bg_color = Color(0.1, 0.12, 0.18, 0.97)
@@ -196,6 +198,10 @@ horizontal_alignment = 1
 [node name="QuizPanel" parent="HUD" unique_id=1232063149 instance=ExtResource("2")]
 
 [node name="AnswerPopup" parent="HUD" instance=ExtResource("5")]
+
+[node name="AnsweringNotice" parent="HUD" instance=ExtResource("7")]
+
+[node name="HelpAlert" parent="HUD" instance=ExtResource("6")]
 
 [node name="EndPanel" type="PanelContainer" parent="HUD" unique_id=807811703]
 anchors_preset = 8

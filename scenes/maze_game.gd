@@ -112,6 +112,7 @@ func _ready() -> void:
 	warning_glow.modulate.a = 0.0
 	minimap.set_maze(maze, maze_origin, TILE)
 	minimap.set_camera(camera)
+	minimap.set_scrolls(scrolls)   # yellow scroll dots for Tubig players
 	_setup_camera()
 	_add_vignette()
 	mode_label.text = "Host (LAN)" if Network.is_host() else "LAN"

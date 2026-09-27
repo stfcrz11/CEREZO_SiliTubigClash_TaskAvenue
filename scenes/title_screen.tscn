@@ -12,8 +12,8 @@
 [ext_resource type="PackedScene" uid="uid://tk5fhd8ueg8u" path="res://scenes/host_modal.tscn" id="10"]
 [ext_resource type="Texture2D" uid="uid://dp4ok37vv8kft" path="res://assets/ui/panel.png" id="11"]
 [ext_resource type="PackedScene" path="res://scenes/join_modal.tscn" id="12"]
-[ext_resource type="Texture2D" path="res://assets/ui/button_leaderboard.png" id="13"]
-[ext_resource type="Texture2D" path="res://assets/ui/button_close.png" id="14"]
+[ext_resource type="Texture2D" uid="uid://c7lwyndg65j35" path="res://assets/ui/button_leaderboard.png" id="13"]
+[ext_resource type="Texture2D" uid="uid://cxmowardm3p68" path="res://assets/ui/button_close.png" id="14"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBox_h"]
 texture = ExtResource("11")
@@ -23,15 +23,15 @@ texture_margin_right = 20.0
 texture_margin_bottom = 20.0
 
 [sub_resource type="StyleBoxFlat" id="LeaderRow"]
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
 bg_color = Color(0.14, 0.17, 0.26, 0.95)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
-content_margin_left = 6.0
-content_margin_top = 3.0
-content_margin_right = 8.0
-content_margin_bottom = 3.0
 
 [node name="TitleScreen" type="Control" unique_id=1495704812]
 texture_filter = 2
@@ -48,10 +48,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -593.0
-offset_top = -177.0
-offset_right = 1.0
-offset_bottom = 270.0
+offset_left = -595.0
+offset_top = -259.0
+offset_right = -1.0
+offset_bottom = 188.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -64,9 +64,9 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 1.0
-offset_top = -1.0
-offset_bottom = 11.0
+offset_left = 3.0
+offset_right = 2.0
+offset_bottom = 12.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -121,7 +121,7 @@ alignment = 1
 max_length = 24
 
 [node name="HostButton" type="TextureButton" parent="Menu" unique_id=204025598]
-custom_minimum_size = Vector2(0, 58)
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 texture_normal = ExtResource("5")
 ignore_texture_size = true
@@ -129,7 +129,7 @@ stretch_mode = 5
 script = ExtResource("3")
 
 [node name="JoinButton" type="TextureButton" parent="Menu" unique_id=2052278970]
-custom_minimum_size = Vector2(0, 58)
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 texture_normal = ExtResource("6")
 ignore_texture_size = true
@@ -137,15 +137,15 @@ stretch_mode = 5
 script = ExtResource("3")
 
 [node name="HowToButton" type="TextureButton" parent="Menu" unique_id=1764769969]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 texture_normal = ExtResource("7")
 ignore_texture_size = true
 stretch_mode = 5
 script = ExtResource("3")
 
-[node name="LeaderboardButton" type="TextureButton" parent="Menu"]
-custom_minimum_size = Vector2(0, 50)
+[node name="LeaderboardButton" type="TextureButton" parent="Menu" unique_id=375590728]
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 texture_normal = ExtResource("13")
 ignore_texture_size = true
@@ -153,7 +153,7 @@ stretch_mode = 5
 script = ExtResource("3")
 
 [node name="QuitButton" type="TextureButton" parent="Menu" unique_id=1136458977]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 texture_normal = ExtResource("8")
 ignore_texture_size = true
@@ -166,7 +166,7 @@ layout_mode = 2
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="LeaderboardDim" type="ColorRect" parent="."]
+[node name="LeaderboardDim" type="ColorRect" parent="." unique_id=1190422184]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -176,7 +176,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.02, 0.02, 0.06, 0.72)
 
-[node name="Leaderboard" type="PanelContainer" parent="."]
+[node name="Leaderboard" type="PanelContainer" parent="." unique_id=351283512]
 visible = false
 layout_mode = 1
 anchors_preset = 8
@@ -192,26 +192,26 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBox_h")
 
-[node name="Margin" type="MarginContainer" parent="Leaderboard"]
+[node name="Margin" type="MarginContainer" parent="Leaderboard" unique_id=1382914283]
 layout_mode = 2
 theme_override_constants/margin_left = 18
 theme_override_constants/margin_top = 14
 theme_override_constants/margin_right = 14
 theme_override_constants/margin_bottom = 14
 
-[node name="VBox" type="VBoxContainer" parent="Leaderboard/Margin"]
+[node name="VBox" type="VBoxContainer" parent="Leaderboard/Margin" unique_id=1406376766]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Header" type="HBoxContainer" parent="Leaderboard/Margin/VBox"]
+[node name="Header" type="HBoxContainer" parent="Leaderboard/Margin/VBox" unique_id=575059615]
 layout_mode = 2
 
-[node name="Spacer" type="Control" parent="Leaderboard/Margin/VBox/Header"]
+[node name="Spacer" type="Control" parent="Leaderboard/Margin/VBox/Header" unique_id=255080689]
 custom_minimum_size = Vector2(36, 0)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Title" type="Label" parent="Leaderboard/Margin/VBox/Header"]
+[node name="Title" type="Label" parent="Leaderboard/Margin/VBox/Header" unique_id=115145947]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.82, 0.3, 1)
@@ -221,7 +221,7 @@ theme_override_font_sizes/font_size = 26
 text = "TOP PLAYERS"
 horizontal_alignment = 1
 
-[node name="CloseButton" type="TextureButton" parent="Leaderboard/Margin/VBox/Header"]
+[node name="CloseButton" type="TextureButton" parent="Leaderboard/Margin/VBox/Header" unique_id=778167543]
 custom_minimum_size = Vector2(36, 36)
 layout_mode = 2
 size_flags_vertical = 4
@@ -231,23 +231,23 @@ ignore_texture_size = true
 stretch_mode = 5
 script = ExtResource("3")
 
-[node name="Scoring" type="Label" parent="Leaderboard/Margin/VBox"]
+[node name="Scoring" type="Label" parent="Leaderboard/Margin/VBox" unique_id=811160376]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.66, 0.76, 1)
 theme_override_font_sizes/font_size = 11
 text = "Win 3  ·  Correct answer 1  ·  Tag 1  ·  Rescue 1"
 horizontal_alignment = 1
 
-[node name="Divider" type="ColorRect" parent="Leaderboard/Margin/VBox"]
+[node name="Divider" type="ColorRect" parent="Leaderboard/Margin/VBox" unique_id=1572461203]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 color = Color(1, 0.82, 0.3, 0.5)
 
-[node name="HeaderRow" type="HBoxContainer" parent="Leaderboard/Margin/VBox"]
+[node name="HeaderRow" type="HBoxContainer" parent="Leaderboard/Margin/VBox" unique_id=1506404192]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Rank" type="Label" parent="Leaderboard/Margin/VBox/HeaderRow"]
+[node name="Rank" type="Label" parent="Leaderboard/Margin/VBox/HeaderRow" unique_id=1824075754]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.66, 0.76, 1)
@@ -255,14 +255,14 @@ theme_override_font_sizes/font_size = 12
 text = "#"
 horizontal_alignment = 1
 
-[node name="Name" type="Label" parent="Leaderboard/Margin/VBox/HeaderRow"]
+[node name="Name" type="Label" parent="Leaderboard/Margin/VBox/HeaderRow" unique_id=1723455347]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.62, 0.66, 0.76, 1)
 theme_override_font_sizes/font_size = 12
 text = "PLAYER"
 
-[node name="Wins" type="Label" parent="Leaderboard/Margin/VBox/HeaderRow"]
+[node name="Wins" type="Label" parent="Leaderboard/Margin/VBox/HeaderRow" unique_id=206887707]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.66, 0.76, 1)
@@ -270,7 +270,7 @@ theme_override_font_sizes/font_size = 12
 text = "WINS"
 horizontal_alignment = 1
 
-[node name="Points" type="Label" parent="Leaderboard/Margin/VBox/HeaderRow"]
+[node name="Points" type="Label" parent="Leaderboard/Margin/VBox/HeaderRow" unique_id=2111520878]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.66, 0.76, 1)
@@ -278,26 +278,26 @@ theme_override_font_sizes/font_size = 12
 text = "PTS"
 horizontal_alignment = 2
 
-[node name="Scroll" type="ScrollContainer" parent="Leaderboard/Margin/VBox"]
+[node name="Scroll" type="ScrollContainer" parent="Leaderboard/Margin/VBox" unique_id=1913520624]
 custom_minimum_size = Vector2(0, 280)
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="Rows" type="VBoxContainer" parent="Leaderboard/Margin/VBox/Scroll"]
+[node name="Rows" type="VBoxContainer" parent="Leaderboard/Margin/VBox/Scroll" unique_id=1387691175]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="RowTemplate" type="PanelContainer" parent="Leaderboard/Margin/VBox/Scroll/Rows"]
+[node name="RowTemplate" type="PanelContainer" parent="Leaderboard/Margin/VBox/Scroll/Rows" unique_id=1129908369]
 layout_mode = 2
 theme_override_styles/panel = SubResource("LeaderRow")
 
-[node name="HBox" type="HBoxContainer" parent="Leaderboard/Margin/VBox/Scroll/Rows/RowTemplate"]
+[node name="HBox" type="HBoxContainer" parent="Leaderboard/Margin/VBox/Scroll/Rows/RowTemplate" unique_id=395068669]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Rank" type="Label" parent="Leaderboard/Margin/VBox/Scroll/Rows/RowTemplate/HBox"]
+[node name="Rank" type="Label" parent="Leaderboard/Margin/VBox/Scroll/Rows/RowTemplate/HBox" unique_id=321876231]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.82, 0.3, 1)
@@ -305,21 +305,21 @@ theme_override_font_sizes/font_size = 16
 text = "1"
 horizontal_alignment = 1
 
-[node name="Name" type="Label" parent="Leaderboard/Margin/VBox/Scroll/Rows/RowTemplate/HBox"]
+[node name="Name" type="Label" parent="Leaderboard/Margin/VBox/Scroll/Rows/RowTemplate/HBox" unique_id=524761078]
 layout_mode = 2
 size_flags_horizontal = 3
-clip_text = true
 theme_override_font_sizes/font_size = 15
 text = "Player"
+clip_text = true
 
-[node name="Wins" type="Label" parent="Leaderboard/Margin/VBox/Scroll/Rows/RowTemplate/HBox"]
+[node name="Wins" type="Label" parent="Leaderboard/Margin/VBox/Scroll/Rows/RowTemplate/HBox" unique_id=633526126]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
 text = "0"
 horizontal_alignment = 1
 
-[node name="Points" type="Label" parent="Leaderboard/Margin/VBox/Scroll/Rows/RowTemplate/HBox"]
+[node name="Points" type="Label" parent="Leaderboard/Margin/VBox/Scroll/Rows/RowTemplate/HBox" unique_id=379208429]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.5, 0.95, 0.55, 1)
@@ -327,7 +327,7 @@ theme_override_font_sizes/font_size = 16
 text = "0"
 horizontal_alignment = 2
 
-[node name="Empty" type="Label" parent="Leaderboard/Margin/VBox"]
+[node name="Empty" type="Label" parent="Leaderboard/Margin/VBox" unique_id=1559095684]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.66, 0.76, 1)
 theme_override_font_sizes/font_size = 14
@@ -381,12 +381,12 @@ theme_override_font_sizes/font_size = 32
 text = "HOW TO PLAY"
 horizontal_alignment = 1
 
-[node name="Divider" type="ColorRect" parent="HowToPanel/Margin/VBox"]
+[node name="Divider" type="ColorRect" parent="HowToPanel/Margin/VBox" unique_id=347380371]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 color = Color(1, 0.82, 0.3, 0.5)
 
-[node name="Scroll" type="ScrollContainer" parent="HowToPanel/Margin/VBox"]
+[node name="Scroll" type="ScrollContainer" parent="HowToPanel/Margin/VBox" unique_id=1152249852]
 custom_minimum_size = Vector2(620, 330)
 layout_mode = 2
 size_flags_vertical = 3
@@ -413,6 +413,7 @@ text = "[center][color=#9aa4b8][i]A Filipino street chase game — with a quiz t
 • Goal: answer [color=#6be38a][b]10 questions[/b][/color] about Filipino culture before time runs out.
 • Time: [b]3:00[/b] for 1 [color=#5aa8ff][b]Tubig[/b][/color], [b]20 s less[/b] for each extra [color=#5aa8ff][b]Tubig[/b][/color] — you can answer at the same time.
 • Walk into a [b]? scroll[/b] to get a question. Answer by click, tap or [bgcolor=#33405e][color=#ffffff][b] 1–4 [/b][/color][/bgcolor].
+• [color=#ffd24d][b]Yellow dots[/b][/color] on your MAPA show where the scrolls are. The [color=#ff6155][b]Sili[/b][/color] can't see them — but may be waiting there!
 • While you answer you [b]can't move[/b] and [b]can't be tagged[/b]. The others keep playing.
 • Wrong answer? Find another scroll.
 • A [color=#ff6155][b]Sili[/b][/color] is near? You get a warning: [color=#ffa53d][b]SILI NEARBY![/b][/color] then [color=#ff6155][b]RUN![/b][/color]
@@ -440,7 +441,6 @@ text = "[center][color=#9aa4b8][i]A Filipino street chase game — with a quiz t
 [bgcolor=#33405e][color=#ffffff][b] Esc [/b][/color][/bgcolor] — pause (host only)"
 fit_content = true
 scroll_active = false
-autowrap_mode = 3
 
 [node name="CloseButton" type="TextureButton" parent="HowToPanel/Margin/VBox" unique_id=620605177]
 custom_minimum_size = Vector2(200, 50)

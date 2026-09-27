@@ -7,7 +7,6 @@
 [ext_resource type="Texture2D" path="res://assets/ui/button_close.png" id="5"]
 [ext_resource type="Texture2D" path="res://assets/ui/button_connect.png" id="6"]
 [ext_resource type="Texture2D" path="res://assets/ui/button_cancel.png" id="7"]
-[ext_resource type="Texture2D" path="res://assets/ui/button_start.png" id="8"]
 [ext_resource type="Texture2D" path="res://assets/ui/join_store/store_body.png" id="9"]
 [ext_resource type="Texture2D" path="res://assets/ui/join_store/store_counter.png" id="10"]
 [ext_resource type="Texture2D" path="res://assets/ui/button_join_small.png" id="12"]

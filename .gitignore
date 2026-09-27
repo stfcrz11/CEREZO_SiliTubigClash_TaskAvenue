@@ -1,0 +1,5 @@
+# Godot 4 — files Godot rebuilds on each PC (do not upload)
+.godot/
+
+# Android export templates
+/android/

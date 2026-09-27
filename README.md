@@ -194,8 +194,15 @@ See `PROJECT_STATE.md` for the full list (cause, fix and result of each).
 
 ## Build status
 
-Attempted export target: ______________________
-Result (success / documented error): ______________________
+Attempted export target: **Android (debug APK)** — `build/SiliTubig_TaskAvenue.apk`
+Result (success / documented error): **Success** (2026-09-27, Godot 4.7.2).
+- 58 MB, package `com.cerezo.silitubig.taskavenue`, version 1.0, min Android 7.0
+  (API 24), ARM 32/64-bit, signed with the debug key (verified with apksigner)
+- Permissions: Internet, network/Wi-Fi state, Wi-Fi multicast (for LAN play)
+- First attempt failed with "ETC2/ASTC texture compression is required for
+  Android export"; fixed by enabling Import ETC2 ASTC in Project Settings.
+- Not yet installed on a phone. The game can't be moved on a phone yet (no
+  touch joystick) — menus and question buttons work by tapping.
 
 ## Authorized assets
 

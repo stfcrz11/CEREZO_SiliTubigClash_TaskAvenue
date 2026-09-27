@@ -23,7 +23,9 @@ Filipino culture (mythology, epics, traditions, dances, games).
 - **Tubig team wins** by answering **10 questions correctly** before time
   runs out. Round time: **3:00 for 1 Tubig, 20 s less for each extra Tubig**
   (Tubigs can answer at the same time), never below 1:30.
-- **Sili wins** by freezing every Tubig, or when time runs out.
+- **Sili wins** by freezing **all** Tubigs at the same time (catching one is
+  not enough, teammates can save them), or when time runs out. The top bar
+  shows **Frozen: X / Y**.
 - **Scrolls:** Tubigs see the scrolls as **yellow dots on their minimap**;
   the Sili doesn't, but can guess where they are going.
 - **Answering:** walking into a scroll opens a question for that Tubig only

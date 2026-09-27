@@ -55,7 +55,7 @@ That is 20 s less per extra Tubig (`less_time_per_extra_tubig`), never below 1:3
 | Result | When |
 |---|---|
 | **TUBIG TEAM WINS!** | `questions_to_win` = **10** correct answers |
-| **SILI WINS!** | every Tubig is frozen at the same time |
+| **SILI WINS! ALL TUBIG FROZEN** | every Tubig is frozen at the same time (`_free_tubig_count() == 0`); the top bar's **Frozen: X / Y** (`FrozenLabel`) shows the progress |
 | **TIME'S UP — SILI WINS!** | the round time runs out |
 | **THE SILI LEFT — TUBIG WINS!** | every Sili disconnects mid-round |
 | **ALL TUBIG LEFT — SILI WINS!** | every Tubig disconnects mid-round |
@@ -481,5 +481,7 @@ the game's own viewport.
 | 09-27 | Result popup only for the answerer (2 players, 1 Tubig) | Tubig: TAMA! popup; Sili: no popup, line "Stef answered correctly (1 / 10)" |
 | 09-27 | Android debug export | `build/SiliTubig_TaskAvenue.apk`, 58 MB; apksigner verify OK; package, version, label, permissions and ARM libraries checked with aapt. **Not installed on a device** |
 | 09-27 | Scroll dots (solo, Tubig) | 3 yellow dots at the scroll cells; after a pickup the dot moved to the new scroll's cell |
+| 09-27 | Joystick on the right (simulated touches, solo) | Drag on the right half → input (-1,0); RUN at bottom left → sprint on; tap on the help alert's YES → alert closed, joystick not started. APK rebuilt |
+| 09-27 | Freeze all (3 players, 2 Tubigs) | 1st Tubig frozen → round continues, all devices show "Frozen: 1 / 2" and "1 Tubig still free"; 2nd frozen → "SILI WINS! ALL TUBIG FROZEN" on all devices. Save files restored after the test |
 
 **Not tested:** see §4 "Not re-tested".

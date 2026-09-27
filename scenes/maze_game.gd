@@ -47,6 +47,7 @@ const CAMERA_MARGIN := 3          # tiles of city the camera may show past the m
 @onready var round_timer: Timer = $RoundTimer
 @onready var score_label: Label = $HUD/TopBar/ScoreLabel
 @onready var timer_label: Label = $HUD/TopBar/TimerLabel
+@onready var frozen_label: Label = $HUD/TopBar/FrozenLabel   # Sili goal: freeze them ALL
 @onready var mode_label: Label = $HUD/TopBar/ModeLabel
 @onready var warning_label: Label = $HUD/WarningLabel
 @onready var warning_glow: Control = $HUD/WarningGlow
@@ -295,7 +296,7 @@ func _start_round(seconds: float) -> void:
 	if silis.is_empty():
 		_show_message("Test mode: no Sili (needs 2+ players over LAN).", 4.0)
 	elif me and not me.is_tubig():
-		_show_message("You are SILI! Tag every Tubig before they answer %d questions!%s" % [questions_to_win, clock], 5.0)
+		_show_message("You are SILI! Freeze ALL Tubig at the same time before they answer %d questions!%s" % [questions_to_win, clock], 5.0)
 	else:
 		_show_message("You are TUBIG! Find ? scrolls and answer %d questions!%s" % [questions_to_win, clock], 5.0)
 
@@ -686,7 +687,10 @@ func _tubig_caught(id: int) -> void:
 	t.set_caught()
 	if t.is_local():
 		help_alert.close()
-	_show_message("%s was caught! Tubig team, touch them to save them!" % Network.player_name_of(t.peer_id), 3.0)
+	var free := _free_tubig_count()
+	if free > 0:
+		_show_message("%s was caught! %d Tubig still free — touch them to save them!" % [Network.player_name_of(t.peer_id), free], 3.0)
+	_update_hud()
 
 
 @rpc("authority", "call_local", "reliable")
@@ -696,15 +700,24 @@ func _tubig_rescued(id: int) -> void:
 	var t = player_by_id[id]
 	t.set_rescued()
 	_show_message("Tubig! %s is saved!" % Network.player_name_of(t.peer_id), 2.0)
+	_update_hud()
+
+
+# The Sili team wins only when EVERY Tubig is frozen at the same time
+# (with many Tubigs, catching one is not enough: teammates can save them).
+func _free_tubig_count() -> int:
+	var free := 0
+	for t in tubigs:
+		if not t.frozen:
+			free += 1
+	return free
 
 
 func _host_check_team_out() -> void:
 	if GameState.round_state != GameState.RoundState.PLAYING or silis.is_empty():
 		return
-	for t in tubigs:
-		if not t.frozen:
-			return
-	_host_end(false, "SILI WINS!")
+	if _free_tubig_count() == 0:
+		_host_end(false, "SILI WINS! ALL TUBIG FROZEN")
 
 
 func _host_check_rescues() -> void:
@@ -754,6 +767,7 @@ func _remove_player(id: int) -> void:
 		player_by_id.erase(id)
 		p.queue_free()
 		_show_message("%s left the game." % Network.player_name_of(p.peer_id), 2.5)
+		_update_hud()   # the Frozen: X / Y count changes
 
 
 # ============================================================ per frame
@@ -941,6 +955,8 @@ func _show_message(text: String, seconds: float) -> void:
 func _update_hud() -> void:
 	score_label.text = "Questions: %d / %d" % [correct_answers, questions_to_win]
 	timer_label.text = "Time: %s" % _format_time(time_left)
+	frozen_label.visible = not silis.is_empty() and not tubigs.is_empty()
+	frozen_label.text = "Frozen: %d / %d" % [tubigs.size() - _free_tubig_count(), tubigs.size()]
 
 
 # ================================================================ pause

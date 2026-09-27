@@ -446,7 +446,8 @@ text = "[center][color=#9aa4b8][i]A Filipino street chase game — with a quiz t
 
 [font_size=19][b][color=#ff6155]SILI[/color][/b][/font_size]
 • Touch [color=#5aa8ff][b]Tubig[/b][/color]s to freeze them.
-• Win by freezing [b]every[/b] [color=#5aa8ff][b]Tubig[/b][/color], or when time runs out.
+• Win by freezing [b]ALL[/b] the [color=#5aa8ff][b]Tubig[/b][/color]s at the same time (catching one is not enough — teammates can save them), or when time runs out.
+• The top bar shows [b]Frozen: 1 / 3[/b] — how many are frozen right now.
 
 [font_size=19][b][color=#ffd24d]PLAYING TOGETHER (LAN)[/color][/b][/font_size]
 • One player picks [b]HOST GAME[/b]; the others pick [b]JOIN GAME[/b].

@@ -86,8 +86,9 @@ answers, scrolls opened, time left) and "You earned +N points".
 - **Result:**
   - A big **TAMA! / MALI! / TIME'S UP!** popup (`answer_popup.tscn`) shows the correct
     answer, a fact and the score for **3.5 s** (`feedback_time`).
-  - It appears on the answerer's screen only. With one Tubig, it appears on everyone's.
-  - Other players get a short line, e.g. "Ben: TAMA! (3 / 10)".
+  - It appears **only on the answerer's screen**, including when there is only one Tubig.
+  - Everyone else (other Tubigs and the Sili) gets a short line: "Ben answered correctly
+    (3 / 10)", "Ben answered wrong" or "Ben ran out of time".
   - After the popup, the answerer gets **1 s** of protection (`grace_after_question`).
 
 ### Asking a teammate for help
@@ -452,6 +453,7 @@ the game's own viewport.
 | 09-26 | Leaderboard pop-up (sample data, deleted afterwards) | Opens centered with 4 ranked rows; closes with Esc, click outside and ✕ |
 | 09-27 | Project cleanup scan + import | 0 broken references, 0 orphan files; import without errors |
 | 09-27 | New button style at 960×640 | Title, How to Play, Host and Join windows all use the same pill buttons; disabled START shows grey |
+| 09-27 | Result popup only for the answerer (2 players, 1 Tubig) | Tubig: TAMA! popup; Sili: no popup, line "Stef answered correctly (1 / 10)" |
 | 09-27 | Android debug export | `build/SiliTubig_TaskAvenue.apk`, 58 MB; apksigner verify OK; package, version, label, permissions and ARM libraries checked with aapt. **Not installed on a device** |
 | 09-27 | Scroll dots (solo, Tubig) | 3 yellow dots at the scroll cells; after a pickup the dot moved to the new scroll's cell |
 

@@ -441,16 +441,15 @@ func _question_result(qid: int, position: int, correct: bool, total: int) -> voi
 		my_question = -1
 	if q["full_stop"]:
 		answering_notice.close()
-	if mine or q["full_stop"]:
-		# the big TAMA! / MALI! popup: for the answerer, or for everyone
-		# when the whole game is stopped anyway
+	if mine:
+		# the big TAMA! / MALI! popup is only for the player who answered
 		popup_question = qid
 		answer_popup.open(correct, position < 0, picker_name,
 			entry["choices"][entry["answer"]], entry.get("fact", ""), total, questions_to_win)
 	else:
-		# the others are still playing: just a short line
-		var word := "TAMA!" if correct else ("TIME'S UP!" if position < 0 else "MALI!")
-		_show_message("%s: %s  (%d / %d)" % [picker_name, word, total, questions_to_win], 3.0)
+		# everyone else (other Tubigs and the Sili) just gets a short line
+		var what := "answered correctly" if correct else ("ran out of time" if position < 0 else "answered wrong")
+		_show_message("%s %s  (%d / %d)" % [picker_name, what, total, questions_to_win], 3.5)
 	_update_hud()
 
 

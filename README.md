@@ -35,8 +35,9 @@ Filipino culture (mythology, epics, traditions, dances, games).
   once. Only one Tubig can ask at a time. Free teammates get a YES/NO alert;
   the **first YES** gets the question with a fresh timer, and the asker is
   free to run.
-- **Result:** a big **TAMA! / MALI! / TIME'S UP!** popup shows the answer and
-  a fun fact. Questions come at random from a bank of 32.
+- **Result:** the player who answered gets a big **TAMA! / MALI! / TIME'S UP!**
+  popup with the answer and a fun fact; everyone else sees a short line like
+  "Stef answered correctly". Questions come at random from a bank of 32.
 - A Sili touching a Tubig freezes it. A teammate touching a frozen Tubig
   rescues it (after 1 s) and gives 1.5 s of safety plus a speed burst.
 - Tubigs get a warning when a Sili is close: "!! SILI NEARBY !!", then

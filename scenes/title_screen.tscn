@@ -457,7 +457,8 @@ text = "[center][color=#9aa4b8][i]A Filipino street chase game — with a quiz t
 [bgcolor=#33405e][color=#ffffff][b] Shift [/b][/color][/bgcolor] or [bgcolor=#33405e][color=#ffffff][b] Space [/b][/color][/bgcolor] — sprint
 [bgcolor=#33405e][color=#ffffff][b] 1 [/b][/color][/bgcolor] [bgcolor=#33405e][color=#ffffff][b] 2 [/b][/color][/bgcolor] [bgcolor=#33405e][color=#ffffff][b] 3 [/b][/color][/bgcolor] [bgcolor=#33405e][color=#ffffff][b] 4 [/b][/color][/bgcolor] — answer
 [bgcolor=#33405e][color=#ffffff][b] H [/b][/color][/bgcolor] — ask for help      [bgcolor=#33405e][color=#ffffff][b] Y [/b][/color][/bgcolor] / [bgcolor=#33405e][color=#ffffff][b] N [/b][/color][/bgcolor] — answer a help request
-[bgcolor=#33405e][color=#ffffff][b] Esc [/b][/color][/bgcolor] — pause (host only)"
+[bgcolor=#33405e][color=#ffffff][b] Esc [/b][/color][/bgcolor] — pause (host only)
+[b]On a phone:[/b] drag on the right half of the screen to move, hold [b]RUN[/b] (bottom left) to sprint, tap the answers and buttons. The Back button works like Esc."
 fit_content = true
 scroll_active = false
 

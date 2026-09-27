@@ -28,6 +28,10 @@ func _ready() -> void:
 
 func open(asker_name: String) -> void:
 	message.text = message_text % asker_name
+	# with touch controls, sit above the joystick's resting spot (bottom right)
+	var lift := 170.0 if GameState.touch_controls else 0.0
+	$Panel.offset_top = -190.0 - lift
+	$Panel.offset_bottom = -56.0 - lift
 	visible = true
 
 

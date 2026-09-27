@@ -123,6 +123,9 @@ Instances → 2 or more, then Run. Host in one window, join from the others.
 | Pause / Resume | Esc (host only; pauses everyone) |
 | Close a window | Esc |
 | Settings (audio, controls) | Gear button, top right |
+| **Phone:** move | Drag on the right half of the screen (joystick) |
+| **Phone:** sprint | Hold the RUN button (bottom left) |
+| **Phone:** back / close / pause | Android Back button (same as Esc) |
 
 ## Completed features
 
@@ -150,6 +153,8 @@ Instances → 2 or more, then Run. Host in one window, join from the others.
   correct/wrong, help alert, Sili-nearby warning, game over, win/lose
 - Settings (gear button, top right of the title screen and the game): music
   and sound effects on/off + volume, controls list; saved on the device
+- Android touch controls: joystick (right half) and RUN button (left), turned on
+  automatically on touch screens (switch in Settings)
 
 ## Tested (Godot 4.7.2, several game instances on one PC over ENet)
 
@@ -166,7 +171,6 @@ Instances → 2 or more, then Run. Host in one window, join from the others.
 
 ## Incomplete / not attempted (honestly declared)
 
-- No on-screen touch joystick (movement needs a keyboard)
 - No reconnect if a player drops
 - Most art is simple starter art made for this project; no Filipino voice
   callouts yet
@@ -204,13 +208,16 @@ See `PROJECT_STATE.md` for the full list (cause, fix and result of each).
 
 Attempted export target: **Android (debug APK)** — `build/SiliTubig_TaskAvenue.apk`
 Result (success / documented error): **Success** (2026-09-27, Godot 4.7.2).
-- 58 MB, package `com.cerezo.silitubig.taskavenue`, version 1.0, min Android 7.0
+- Rebuilt 2026-09-27 with audio, settings and touch controls: 66 MB,
+  package `com.cerezo.silitubig.taskavenue`, version 1.0, min Android 7.0
   (API 24), ARM 32/64-bit, signed with the debug key (verified with apksigner)
 - Permissions: Internet, network/Wi-Fi state, Wi-Fi multicast (for LAN play)
 - First attempt failed with "ETC2/ASTC texture compression is required for
   Android export"; fixed by enabling Import ETC2 ASTC in Project Settings.
-- Not yet installed on a phone. The game can't be moved on a phone yet (no
-  touch joystick) — menus and question buttons work by tapping.
+- Playable on a phone: on-screen joystick + RUN button, tap for answers and
+  buttons, Back button = Esc. Not yet installed on a real phone (touch was
+  tested with simulated touches on PC). No custom app icon yet (Godot's
+  default icon).
 
 ## Authorized assets
 
@@ -244,7 +251,7 @@ documentation.
 
 ## Next development steps
 
-- On-screen joystick and Android export
+- Custom app icon; test on real phones
 - Up/down walking animations and final art (tiles, characters, props)
 - Reconnect support
 - Filipino voice callouts from the group game; key rebinding

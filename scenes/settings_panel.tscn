@@ -167,6 +167,28 @@ theme_override_colors/font_color = Color(1, 0.82, 0.3, 1)
 theme_override_font_sizes/font_size = 17
 text = "CONTROLS"
 
+[node name="TouchRow" type="HBoxContainer" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="Center/Panel/Margin/VBox/TouchRow"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Touch controls"
+
+[node name="On" type="CheckButton" parent="Center/Panel/Margin/VBox/TouchRow"]
+layout_mode = 2
+focus_mode = 0
+
+[node name="Hint" type="Label" parent="Center/Panel/Margin/VBox/TouchRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.62, 0.66, 0.76, 1)
+theme_override_font_sizes/font_size = 12
+text = "joystick (right half) + RUN button (left)"
+autowrap_mode = 3
+
 [node name="Controls" type="RichTextLabel" parent="Center/Panel/Margin/VBox"]
 layout_mode = 2
 mouse_filter = 2
@@ -180,7 +202,8 @@ text = "[bgcolor=#33405e][color=#ffffff][b] W A S D [/b][/color][/bgcolor] or ar
 [bgcolor=#33405e][color=#ffffff][b] 1 [/b][/color][/bgcolor] [bgcolor=#33405e][color=#ffffff][b] 2 [/b][/color][/bgcolor] [bgcolor=#33405e][color=#ffffff][b] 3 [/b][/color][/bgcolor] [bgcolor=#33405e][color=#ffffff][b] 4 [/b][/color][/bgcolor] — answer a question (or click / tap)
 [bgcolor=#33405e][color=#ffffff][b] H [/b][/color][/bgcolor] — ask a teammate for help
 [bgcolor=#33405e][color=#ffffff][b] Y [/b][/color][/bgcolor] / [bgcolor=#33405e][color=#ffffff][b] N [/b][/color][/bgcolor] — accept / refuse a help request
-[bgcolor=#33405e][color=#ffffff][b] Esc [/b][/color][/bgcolor] — close a window; pause the game (host only)"
+[bgcolor=#33405e][color=#ffffff][b] Esc [/b][/color][/bgcolor] — close a window; pause the game (host only)
+[color=#9aa4b8]Phone: joystick on the right half, hold RUN (bottom left) to sprint, tap answers / HELP / YES / NO, Back button = Esc.[/color]"
 fit_content = true
 scroll_active = false
 autowrap_mode = 3

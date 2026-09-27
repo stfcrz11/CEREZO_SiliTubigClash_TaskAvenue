@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scenes/png_button.gd" id="8"]
 [ext_resource type="Texture2D" path="res://assets/ui/button_settings.png" id="9"]
 [ext_resource type="PackedScene" path="res://scenes/settings_panel.tscn" id="10"]
+[ext_resource type="Script" path="res://scenes/touch_controls.gd" id="11"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_e"]
 bg_color = Color(0.1, 0.12, 0.18, 0.97)
@@ -217,6 +218,16 @@ theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 28
 text = "PAUSED — press Esc to resume"
 horizontal_alignment = 1
+
+[node name="TouchControls" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("11")
 
 [node name="QuizPanel" parent="HUD" unique_id=1232063149 instance=ExtResource("2")]
 visible = false

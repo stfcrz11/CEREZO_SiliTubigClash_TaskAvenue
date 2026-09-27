@@ -11,6 +11,7 @@ extends Control
 @onready var sfx_on: CheckButton = $Center/Panel/Margin/VBox/SfxRow/On
 @onready var sfx_slider: HSlider = $Center/Panel/Margin/VBox/SfxRow/Slider
 @onready var sfx_value: Label = $Center/Panel/Margin/VBox/SfxRow/Value
+@onready var touch_on: CheckButton = $Center/Panel/Margin/VBox/TouchRow/On
 
 
 func _ready() -> void:
@@ -21,6 +22,7 @@ func _ready() -> void:
 	music_slider.value_changed.connect(func(_v): _music_changed())
 	sfx_on.toggled.connect(func(_on): _sfx_changed())
 	sfx_slider.value_changed.connect(func(_v): _sfx_changed())
+	touch_on.toggled.connect(func(on): GameState.set_touch_controls(on))
 
 
 func open() -> void:
@@ -29,6 +31,7 @@ func open() -> void:
 	music_slider.set_value_no_signal(Sound.music_percent)
 	sfx_on.set_pressed_no_signal(Sound.sfx_on)
 	sfx_slider.set_value_no_signal(Sound.sfx_percent)
+	touch_on.set_pressed_no_signal(GameState.touch_controls)
 	_update_labels()
 	visible = true
 

@@ -105,6 +105,11 @@ func _ready() -> void:
 	quiz_panel.choice_made.connect(_on_local_choice)
 	quiz_panel.help_requested.connect(_on_help_pressed)
 	$HUD/TopBar/SettingsButton.pressed.connect(func(): $HUD/SettingsPanel.open())
+	# phone joystick + RUN button: off while a window covers the game
+	$HUD/TouchControls.is_blocked = func(): return quiz_panel.visible or answer_popup.visible \
+		or end_panel.visible or pause_label.visible or $HUD/SettingsPanel.visible
+	$HUD/TouchControls.excluded_rects = func():
+		return [$HUD/HelpAlert/Panel.get_global_rect()] if help_alert.visible else []
 	help_alert.answered.connect(_on_help_answer)
 	play_again_button.pressed.connect(_on_play_again)
 	menu_button.pressed.connect(_on_leave)

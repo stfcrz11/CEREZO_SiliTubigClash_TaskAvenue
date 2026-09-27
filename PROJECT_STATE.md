@@ -85,7 +85,8 @@ answers, scrolls opened, time left) and "You earned +N points".
   (`answering_notice.tscn`).
 - **Result:**
   - A big **TAMA! / MALI! / TIME'S UP!** popup (`answer_popup.tscn`) shows the correct
-    answer, a fact and the score for **3.5 s** (`feedback_time`).
+    answer, a fact and the score for **1.5 s** (`feedback_time`); the answerer stays
+    frozen (and untaggable) for that time.
   - It appears **only on the answerer's screen**, including when there is only one Tubig.
   - Everyone else (other Tubigs and the Sili) gets a short line: "Ben answered correctly
     (3 / 10)", "Ben answered wrong" or "Ben ran out of time".
@@ -437,6 +438,7 @@ but none of those files are in this folder.
 | 26 | Buttons looked mismatched | Every button a different bright color with white outlined text | One pill style and one color for all 11 buttons; title buttons one shape and height | Checked in screenshots of all screens |
 | 27 | Store-front walls showed a cut-off picture | `store_front.png` replaced with a 347×234 image; tiles are 40×40 | Restored the original 40×40 tile from commit `75fff8b` | Import clean; tile 40×40 |
 | 28 | Android export failed | "ETC2/ASTC texture compression is required for Android export" | Enabled Import ETC2 ASTC in Project Settings | APK built and signed |
+| 29 | Team lost with 10 correct answers | The win was checked only after the 3.5 s result popup; with 2+ Tubigs the clock kept running, so "TIME'S UP" could fire first | The host ends the round the moment the 10th correct answer is scored; popup shortened to 1.5 s | Answer at 0:01 → "TUBIG TEAM WINS!" on all devices |
 
 **Fixed before these sessions** (from `README.md`, not re-checked): the Sili could not
 tag (collision circles too big); Esc could pause but not resume; instant rescue
@@ -470,6 +472,7 @@ the game's own viewport.
 | 09-26 | Leaderboard pop-up (sample data, deleted afterwards) | Opens centered with 4 ranked rows; closes with Esc, click outside and ✕ |
 | 09-27 | Project cleanup scan + import | 0 broken references, 0 orphan files; import without errors |
 | 09-27 | New button style at 960×640 | Title, How to Play, Host and Join windows all use the same pill buttons; disabled START shows grey |
+| 09-27 | Last-second win (3 players, goal set to 2, clock set to 0:02) | Popup lasted 1.5 s; 2nd correct answer at 0:01 → "TUBIG TEAM WINS!" on all 3 devices |
 | 09-27 | Settings window | Gear on the title screen and in the top bar; music off + effects 60% → Music bus muted, SFX bus lowered, saved next to the player name; values shown again in the game; Esc closes it without pausing (round stayed PLAYING). Player settings file restored after the test |
 | 09-27 | Sounds (3 players) | Title music → click → game start; Sili-nearby for Tubigs; answering loop for the asker, stopped on hand-off; help alert, loop and correct for the helper; game over, then win (Sili) / lose (Tubigs) |
 | 09-27 | Result popup only for the answerer (2 players, 1 Tubig) | Tubig: TAMA! popup; Sili: no popup, line "Stef answered correctly (1 / 10)" |

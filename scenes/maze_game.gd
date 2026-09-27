@@ -36,7 +36,7 @@ const CAMERA_MARGIN := 3          # tiles of city the camera may show past the m
 @export var rescue_distance: float = 26.0
 @export var min_frozen_time: float = 1.0
 @export var grace_after_question: float = 1.0
-@export var feedback_time: float = 3.5        # how long the TAMA!/MALI! popup stays
+@export var feedback_time: float = 1.5        # how long the TAMA!/MALI! popup stays (the answerer waits this long)
 @export var camera_zoom: float = 2.5          # higher = closer; 2.5 shows about 10 x 6 tiles
 
 @onready var maze_layer: TileMapLayer = $Map/Maze
@@ -428,6 +428,10 @@ func _host_resolve(qid: int, position: int) -> void:
 	var total := correct_answers + (1 if correct else 0)
 	_question_result.rpc(qid, position, correct, total)
 	q["result_timer"] = feedback_time
+	if total >= questions_to_win:
+		# the 10th correct answer wins at once: don't wait for the popup,
+		# or the round clock could run out first and give the Sili the win
+		_host_end(true, "TUBIG TEAM WINS!")
 
 
 @rpc("authority", "call_local", "reliable")

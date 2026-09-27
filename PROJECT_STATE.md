@@ -1,9 +1,8 @@
 # Project State — Sili-Tubig: Task Avenue
 
-State of the project as of **2026-09-26**. Latest commit: `3faf041 Edit the gameplay by
-making tubig ask for teammates help and being untagged`. On top of that commit are the
-**uncommitted** leaderboard and name-tag changes: `data/leaderboard.gd` (new),
-`scenes/maze_game.gd`, `player.gd`, `player.tscn`, `title_screen.gd`, `title_screen.tscn`.
+State of the project as of **2026-09-27**. Latest commit: `1919187 Add scroll markings on
+the minimap`. Everything up to that commit is committed; this document and `README.md` were
+updated after it.
 
 Everything below comes from the actual files in this folder: `.gd`, `.tscn`,
 `project.godot`, `README.md` and `assets/`. Anything I could not confirm from the files is
@@ -69,6 +68,9 @@ answers, scrolls opened, time left) and "You earned +N points".
 - **Scrolls:** 3 on the map (`scrolls_on_map`). A free Tubig (not caught, not answering)
   picks one up within **24 px**. After each question a new scroll appears at least
   5 tiles away from every Tubig.
+- **Scroll dots on the minimap:** Tubig players see every scroll as a pulsing **yellow
+  dot** on their minimap (MAPA), so they know where to go. The Sili does **not** see them,
+  so the Sili has to guess where the Tubigs are heading.
 - **Several at once:** any free Tubig can open a scroll even while teammates are
   answering, so several questions can be open at the same time. Each has its own
   answerer and timer.
@@ -177,8 +179,7 @@ other keys are read directly.
 | `help_alert.tscn` | Bottom-right help request | `Panel/Margin/VBox` (`Title`, `Message`, `Buttons/YesButton`, `NoButton`) |
 | `answering_notice.tscn` | "Tubig is answering, cannot be tagged" (Sili, one-Tubig games) | `Center/Panel/Margin/Label` |
 | `how_to_play.tscn` | Old standalone How to Play panel | **Not used** |
-| `lobby.tscn` | Old lobby screen | **Not used**; its script was deleted |
-| `lobby_modal.tscn` | Old combined Host/Join window | **Not used and broken** (see §9) |
+| `lobby.tscn` | Old lobby screen | **Not used** (its script was deleted) |
 
 ---
 
@@ -192,7 +193,7 @@ other keys are read directly.
 | `data/leaderboard.gd` | Leaderboard: points formula, saving round results to `user://leaderboard.cfg`, sorted rankings. |
 | `scenes/maze_game.gd` | The round and all rules: reads the maze from the TileMap, camera and vignette, spawning, round time, scrolls, several questions at once, help requests (one at a time), tag/rescue, warnings, timer, pause, per-player stats, win/lose, leaderboard results, Play Again. The host decides; all devices display. |
 | `scenes/player.gd` | One character: movement, sprint/stamina, position sync, walking animation, name tag above the head, answering / caught / rescued / immunity states. |
-| `scenes/minimap.gd` | Whole maze in the corner ("MAPA"), your dot, camera-view box. |
+| `scenes/minimap.gd` | Whole maze in the corner ("MAPA"), your dot, camera-view box, and yellow scroll dots for Tubig players. |
 | `scenes/quiz_panel.gd` | Question window: 15 s countdown (waits while paused), answer by click or 1–4, help button and its locked / unavailable states. |
 | `scenes/answer_popup.gd` | Result popup; words and colors editable in the Inspector. |
 | `scenes/help_alert.gd` | Help request alert with YES/NO and Y/N keys; text editable in the Inspector. |
@@ -242,8 +243,7 @@ other keys are read directly.
 - **No reconnect.**
 - **Leaderboard is per device:** players are matched by name only, and it can't be reset
   from the game (delete `user://leaderboard.cfg`).
-- **Old files:** `how_to_play.tscn`, `lobby.tscn` and `lobby_modal.tscn` are unused.
-  `README.md` is partly out of date.
+- **Old files:** `how_to_play.tscn` and `lobby.tscn` are unused (they cause no errors).
 
 ---
 
@@ -288,21 +288,21 @@ other keys are read directly.
 
 ## 6. Assets
 
-**Source:** all PNGs except the two marked **[CHECK]** were generated for this project
-by Python/Pillow scripts during development sessions with Claude (Anthropic). The TileSet
-was built with a Godot script. No third-party asset packs are included. `README.md`
+**Source:** unless a row says otherwise, the PNGs were generated for this project by
+Python/Pillow scripts during development sessions with Claude (Anthropic). The TileSet was
+built with a Godot script. `README.md`
 mentions the group project's credits (EsriEsra, LimeZu, Crusenho, Yūki — CC BY-SA 4.0),
 but none of those files are in this folder.
 
 | File(s) | Size (px) | Used by | Source / license |
 |---|---|---|---|
-| `backgrounds/title_city.png` | 1199×633 | title background | **[CHECK]** replaced in commit `8ee0cc3`; source and license unknown |
-| `ui/title_logo.png` | 421×180 | title logo | **[CHECK]** replaced in commit `8ee0cc3`; source and license unknown |
+| `backgrounds/title_city.png` | 5000×3524 | title background | **"Sunset in the city background" by inbevel13**, from **Freepik**, **Premium license** (license text provided by the student): personal and commercial use and modification allowed; no sub-licensing, reselling, renting, or including it in an online/offline archive or database. The premium terms apply only if it was downloaded by a subscribed user; otherwise the Freepik free license applies (credit required). The README credits the author either way |
+| `ui/title_logo.png` | 421×180 | title logo | added by the student in commit `8ee0cc3` |
 | `characters/tubig_kid.png`, `sili_kid.png` | 96×24 (4 frames) | `player.gd` | generated |
 | `props/jeepney.png`, `tricycle.png`, `electric_post.png` | small | `city_map.tscn` | generated |
-| `walls/*.png` (12 tiles) + `walls/city_tileset.tres` | 40×40 | maze TileSet | generated |
+| `walls/*.png` (12 tiles) + `walls/city_tileset.tres` | 40×40 | maze TileSet | generated (`store_front.png` was briefly replaced by a 347×234 picture and restored to the original 40×40 tile on 09-27) |
 | `ui/scroll.png` | 24×24 | scroll | generated |
-| `ui/button_*.png` (11 buttons, incl. `button_leaderboard.png` 720×96) | various | title, Host/Join windows | generated |
+| `ui/button_*.png` (11 buttons + round ✕) | title buttons 540×108; window buttons 240–500 wide | title, How to Play, Host/Join windows | generated in **one style**: sky-blue glossy pill, thin dark navy outline, dark text in Arial Rounded MT Bold |
 | `ui/panel.png`, `ui/card.png` | 64×64, 48×48 | How to Play and leaderboard frame; cards/slots | generated |
 | `ui/host_store/*`, `ui/join_store/*` | 1280×236, 128×64, 128×76, 48×48 | store windows | generated |
 | `ui/store_templates/*` | same sizes | drawing guides (not used in game) | generated |
@@ -310,8 +310,9 @@ but none of those files are in this folder.
 **Fonts:**
 - There are no font files. Text uses Godot's default font; RichTextLabel bold and italic
   use the default theme's variants.
-- Words inside the generated PNGs were drawn with Windows **Arial Black / Arial Bold**
-  **[CHECK]** whether the course needs this listed.
+- Words inside the generated PNGs were drawn with Windows fonts: **Arial Rounded MT Bold**
+  on the buttons, and **Arial Black** on the store sign note. **[CHECK]** whether the course
+  needs these listed.
 
 ---
 
@@ -328,6 +329,7 @@ but none of those files are in this folder.
 | Autoloads | `GameState`, `Network` |
 | Export presets | **none** |
 | Physics layers (in code) | walls 1, Tubig 2, Sili 4; players collide with walls only |
+| Git | `.gitignore` excludes `.godot/` (Godot's cache, rebuilt on each PC) and `/android/` |
 
 ---
 
@@ -337,11 +339,12 @@ but none of those files are in this folder.
 |---|---|
 | Viewpoint | `Camera2D` zoom 2.5 following your own player; limits 3 tiles past the maze |
 | Fog | none; a radial vignette darkens the screen edges |
-| Minimap | "MAPA": whole maze, your dot, camera-view box |
+| Minimap | "MAPA": whole maze, your dot, camera-view box; yellow scroll dots (Tubig only) |
 | Maze | painted TileMapLayer (`city_map.tscn`); walls are tiles with collision; draggable start markers |
 | City look | roads, GI roofs, house/store fronts, trees, outer city, jeepney/tricycle/post props |
 | Characters | PNG kids (blue Tubig, red Sili), 4-frame walk, tints; grey when caught; blink when immune; **name above the head** (own name yellow) |
-| Title screen | PNG background, logo and buttons; scrollable formatted How to Play; **LEADERBOARD button → TOP PLAYERS pop-up** |
+| Title screen | sunset city background, logo; scrollable formatted How to Play; **LEADERBOARD button → TOP PLAYERS pop-up** |
+| Buttons | all PNG buttons in one consistent glossy-pill style and color |
 | Lobby | Host / Join pop-up windows drawn as a sari-sari store |
 | Questions | several at once; the answerer is frozen and untaggable; pass to one teammate; one help request at a time; result popup |
 | Round time | shorter with more Tubigs |
@@ -352,12 +355,13 @@ but none of those files are in this folder.
 
 ## 9. Known bugs, Output errors and fragile parts
 
-1. **`scenes/lobby_modal.tscn` fails to load.** It points to the deleted
-   `lobby_modal.gd` and to old `assets/ui/store_*.png` / `chalkboard.png`, so Godot prints
-   `File not found` / `Parse Error` when it imports or loads it. Nothing uses it; it
-   comes back when the editor re-saves an open tab. **Fix:** close its tab without saving,
-   delete it, and commit. `lobby.tscn` and `how_to_play.tscn` are also unused.
-2. **No runtime errors or warnings** were printed in any of the test runs listed below.
+1. **Maze tile size:** every tile PNG in `assets/walls/` must be exactly 40×40. A larger
+   picture shows only its top-left 40×40 corner (this happened once with
+   `store_front.png`; restored).
+2. **No import or runtime errors.** A full import runs clean, and a scan finds no broken
+   references, orphan `.import`/`.uid` files or unused resources. No errors or warnings
+   were printed in any test run. `lobby.tscn` and `how_to_play.tscn` are unused but
+   harmless.
 3. **Likely editor warnings [CHECK]** (the analyzer shows them in the editor only): `var
    name` in `network.gd` hides `Node.name`; parameters named `position` in
    `maze_game.gd` / `quiz_panel.gd`; integer divisions in `maze_game.gd`.
@@ -366,10 +370,12 @@ but none of those files are in this folder.
    recorded instead of 3). Separate devices each have their own file.
 5. **Leaderboard identity:** players are matched by name only. Two people with the same
    name share one row, and renaming starts a new row.
-6. **Only the answerer sees the question**; teammates see the result line. How to Play
-   describes this correctly; `README.md` does not.
-7. **README out of date:** Godot 4.3, "placeholder shapes", "no player names", "no real
-   sprites", "everyone sees the question", old lobby.
+6. **Only the answerer sees the question**; teammates see the result line. How to Play and
+   `README.md` both describe this.
+7. **Title background license:** Freepik forbids including the image in an online or offline
+   archive or database, and sub-licensing it. A **public** GitHub repository exposes the raw
+   5000×3524 file to anyone. **[CHECK]** whether to keep the repository private, or ask the
+   instructor whether this is acceptable.
 8. **Fragile parts:**
    - The map needs **4 `TubigStart`** and **2 `SiliStart`** markers on road tiles.
    - `TILE = 40` must match the TileSet.
@@ -396,7 +402,7 @@ but none of those files are in this folder.
 | 10 | Host/Join window ran off screen | Manual resize | `CenterContainer` | Fits |
 | 11 | Host window too tall | Large spacing | Tighter layout | Fits 640 px |
 | 12 | Host/Join window invisible in the editor | Root hidden; rows built only in code | Visible scene root; editable templates | Editable |
-| 13 | Old lobby scenes keep returning | Editor re-saves open tabs | Deleted | **Not solved** (§9 #1) |
+| 13 | Old lobby scene kept returning | Editor re-saved open tabs | Deleted again after the tab was closed | `lobby_modal.tscn` gone; import is clean |
 | 14 | Sign text overflowed | Font too big | Smaller font, wider sign | Fits |
 | 15 | Parameter names hid built-ins | Naming | Renamed | No conflict |
 | 16 | TAMA/MALI hard to read | Small line at the bottom of the question window, 2 s | `answer_popup.tscn`, 3.5 s | Readable popup |
@@ -408,6 +414,9 @@ but none of those files are in this folder.
 | 22 | How to Play too tall for the screen | Long text in a fixed 500 px panel | ScrollContainer + formatted RichTextLabel | Whole text reachable by scrolling |
 | 23 | Two HELP presses at the same instant | Second asker could be stuck on "Asking..." | Host rejects the second one; its button shows "already asking" | No stuck button |
 | 24 | Name tags floated too high | Offset too large after moving them above the head | Lowered to sit just above the sprite | Checked in screenshot |
+| 25 | "File not found" errors on every import | Broken `lobby_modal.tscn`, 13 leftover cache files, one unused resource in `join_modal.tscn` | Deleted them; removed the unused reference | Scan: 0 problems; import clean |
+| 26 | Buttons looked mismatched | Every button a different bright color with white outlined text | One pill style and one color for all 11 buttons; title buttons one shape and height | Checked in screenshots of all screens |
+| 27 | Store-front walls showed a cut-off picture | `store_front.png` replaced with a 347×234 image; tiles are 40×40 | Restored the original 40×40 tile from commit `75fff8b` | Import clean; tile 40×40 |
 
 **Fixed before these sessions** (from `README.md`, not re-checked): the Sili could not
 tag (collision circles too big); Esc could pause but not resume; instant rescue
@@ -439,5 +448,8 @@ the game's own viewport.
 | 09-26 | Leaderboard round (3 players) | +1 for a correct answer, +5 for the Sili (win + 2 tags), +0 for the other Tubig; TOP PLAYERS shows the ranking; test data deleted afterwards |
 | 09-26 | Name tags | Name above the head, own name yellow |
 | 09-26 | Leaderboard pop-up (sample data, deleted afterwards) | Opens centered with 4 ranked rows; closes with Esc, click outside and ✕ |
+| 09-27 | Project cleanup scan + import | 0 broken references, 0 orphan files; import without errors |
+| 09-27 | New button style at 960×640 | Title, How to Play, Host and Join windows all use the same pill buttons; disabled START shows grey |
+| 09-27 | Scroll dots (solo, Tubig) | 3 yellow dots at the scroll cells; after a pickup the dot moved to the new scroll's cell |
 
 **Not tested:** see §4 "Not re-tested".

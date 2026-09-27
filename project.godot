@@ -22,6 +22,7 @@ config/features=PackedStringArray("4.7", "Forward Plus")
 
 GameState="*res://autoloads/game_state.gd"
 Network="*res://autoloads/network.gd"
+Sound="*res://autoloads/sound.gd"
 
 [display]
 

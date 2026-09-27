@@ -26,8 +26,10 @@ func _ready() -> void:
 	$Menu/LeaderboardButton.pressed.connect(_show_leaderboard.bind(true))
 	$Leaderboard/Margin/VBox/Header/CloseButton.pressed.connect(_show_leaderboard.bind(false))
 	$LeaderboardDim.gui_input.connect(_on_leaderboard_dim_input)
+	$SettingsButton.pressed.connect(func(): $SettingsPanel.open())
 	_show_how_to(false)
 	_show_leaderboard(false)
+	Sound.play_music("title")   # keeps playing if it already is
 	get_tree().paused = false
 	# show why we came back here (e.g. the host left)
 	$Menu/ErrorLabel.text = Network.last_error

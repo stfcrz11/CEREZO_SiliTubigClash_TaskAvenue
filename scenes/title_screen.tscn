@@ -12,6 +12,8 @@
 [ext_resource type="PackedScene" uid="uid://tk5fhd8ueg8u" path="res://scenes/host_modal.tscn" id="10"]
 [ext_resource type="Texture2D" uid="uid://dp4ok37vv8kft" path="res://assets/ui/panel.png" id="11"]
 [ext_resource type="PackedScene" path="res://scenes/join_modal.tscn" id="12"]
+[ext_resource type="Texture2D" path="res://assets/ui/button_settings.png" id="15"]
+[ext_resource type="PackedScene" path="res://scenes/settings_panel.tscn" id="16"]
 [ext_resource type="Texture2D" uid="uid://c7lwyndg65j35" path="res://assets/ui/button_leaderboard.png" id="13"]
 [ext_resource type="Texture2D" uid="uid://cxmowardm3p68" path="res://assets/ui/button_close.png" id="14"]
 
@@ -335,6 +337,23 @@ text = "No games yet.
 Play a LAN round to get ranked!"
 horizontal_alignment = 1
 
+[node name="SettingsButton" type="TextureButton" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -66.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = 66.0
+grow_horizontal = 0
+focus_mode = 0
+tooltip_text = "Settings"
+texture_normal = ExtResource("15")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("3")
+
 [node name="HowToDim" type="ColorRect" parent="." unique_id=513728111]
 visible = false
 layout_mode = 1
@@ -456,5 +475,9 @@ visible = false
 layout_mode = 1
 
 [node name="JoinModal" parent="." unique_id=1823260444 instance=ExtResource("12")]
+visible = false
+layout_mode = 1
+
+[node name="SettingsPanel" parent="." instance=ExtResource("16")]
 visible = false
 layout_mode = 1

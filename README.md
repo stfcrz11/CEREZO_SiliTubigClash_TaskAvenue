@@ -63,6 +63,7 @@ a fun way to learn Filipino culture.
 autoloads/
   game_state.gd       Round state, scene paths, keyboard controls, player name
   network.gd          Host / join, LAN discovery, player list, roles
+  sound.gd            Music and sound effects (assets/audio/)
 data/
   questions.gd        32 Filipino-culture questions (edit to add more)
   leaderboard.gd      Points and rankings, saved on this device
@@ -82,6 +83,7 @@ scenes/
   answer_popup.*      TAMA! / MALI! result popup
   help_alert.*        "<name> needs help" YES/NO alert
   answering_notice.*  "Tubig is answering" notice for the Sili
+  settings_panel.*    Settings window (audio on/off + volume, controls)
 ```
 
 **Networking model:** the host is the only one who decides roles, round
@@ -120,6 +122,7 @@ Instances → 2 or more, then Run. Host in one window, join from the others.
 | Accept / refuse a help request | Y / N (or the buttons) |
 | Pause / Resume | Esc (host only; pauses everyone) |
 | Close a window | Esc |
+| Settings (audio, controls) | Gear button, top right |
 
 ## Completed features
 
@@ -143,6 +146,10 @@ Instances → 2 or more, then Run. Host in one window, join from the others.
 - Host pause for everyone; Play Again (next Sili); Leave
 - Player leaving mid-round is handled (round ends if no Sili / no Tubig left)
 - Fits any screen shape (wide phones, 4:3, 16:9)
+- Sound: title music, button clicks, game start, a loop while you answer,
+  correct/wrong, help alert, Sili-nearby warning, game over, win/lose
+- Settings (gear button, top right of the title screen and the game): music
+  and sound effects on/off + volume, controls list; saved on the device
 
 ## Tested (Godot 4.7.2, several game instances on one PC over ENet)
 
@@ -161,8 +168,8 @@ Instances → 2 or more, then Run. Host in one window, join from the others.
 
 - No on-screen touch joystick (movement needs a keyboard)
 - No reconnect if a player drops
-- Most art is simple starter art made for this project; no audio or
-  Filipino voice callouts yet
+- Most art is simple starter art made for this project; no Filipino voice
+  callouts yet
 - Walking animation is side-view only (no up/down animation)
 - One maze only
 - Leaderboard is saved per device and matches players by name
@@ -217,6 +224,9 @@ Result (success / documented error): **Success** (2026-09-27, Godot 4.7.2).
   Credit: image by inbevel13 on Freepik.
 - **Maze tiles, characters, props, scroll, buttons and store windows** were
   made for this project with Python scripts.
+- **Audio** (`assets/audio/`, 11 MP3 files: title music, answering loop,
+  button click, game start, correct, wrong, help alert, Sili nearby,
+  game over, win, lose): [add source / author / license].
 - **Fonts:** Godot's default font in the game. Text inside the generated
   button pictures uses the Windows fonts Arial Rounded MT Bold and Arial
   Black.
@@ -237,5 +247,5 @@ documentation.
 - On-screen joystick and Android export
 - Up/down walking animations and final art (tiles, characters, props)
 - Reconnect support
-- Sound effects, music and Filipino voice callouts from the group game
+- Filipino voice callouts from the group game; key rebinding
 - More mazes and questions (e.g. Cagayan Valley culture)

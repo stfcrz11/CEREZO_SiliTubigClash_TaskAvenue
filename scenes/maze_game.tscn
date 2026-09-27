@@ -7,6 +7,9 @@
 [ext_resource type="PackedScene" path="res://scenes/answer_popup.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://scenes/help_alert.tscn" id="6"]
 [ext_resource type="PackedScene" path="res://scenes/answering_notice.tscn" id="7"]
+[ext_resource type="Script" path="res://scenes/png_button.gd" id="8"]
+[ext_resource type="Texture2D" path="res://assets/ui/button_settings.png" id="9"]
+[ext_resource type="PackedScene" path="res://scenes/settings_panel.tscn" id="10"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_e"]
 bg_color = Color(0.1, 0.12, 0.18, 0.97)
@@ -83,14 +86,31 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -276.0
+offset_left = -316.0
 offset_top = 9.0
-offset_right = -16.0
+offset_right = -54.0
 offset_bottom = 33.0
 grow_horizontal = 0
 theme_override_font_sizes/font_size = 14
 text = "1 Player"
 horizontal_alignment = 2
+
+[node name="SettingsButton" type="TextureButton" parent="HUD/TopBar"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -44.0
+offset_top = 3.0
+offset_right = -12.0
+offset_bottom = 35.0
+grow_horizontal = 0
+focus_mode = 0
+tooltip_text = "Settings"
+texture_normal = ExtResource("9")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("8")
 
 [node name="WarningLabel" type="Label" parent="HUD" unique_id=591897249]
 anchors_preset = 5
@@ -263,5 +283,8 @@ text = "Play Again"
 custom_minimum_size = Vector2(150, 44)
 layout_mode = 2
 text = "Main Menu"
+
+[node name="SettingsPanel" parent="HUD" instance=ExtResource("10")]
+visible = false
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=673616158]

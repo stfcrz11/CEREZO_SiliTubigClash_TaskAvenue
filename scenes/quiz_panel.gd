@@ -58,6 +58,8 @@ func show_question(q: Dictionary, shown_order: Array, header: String, answerer_i
 	time_left = answer_time
 	waiting = true
 	visible = answerer_is_me
+	if answerer_is_me:
+		Sound.start_loop("answering")   # plays while you answer
 
 
 func _process(delta: float) -> void:
@@ -144,3 +146,4 @@ func show_result(chosen: int, correct: bool) -> void:
 func close() -> void:
 	waiting = false
 	visible = false
+	Sound.stop_loop()

@@ -27,6 +27,7 @@ func set_player_name(value: String) -> void:
 	var cleaned := value.strip_edges()
 	player_name = cleaned if not cleaned.is_empty() else "Player"
 	var settings := ConfigFile.new()
+	settings.load(SETTINGS_PATH)   # keep the other saved settings (e.g. audio)
 	settings.set_value("player", "name", player_name)
 	settings.save(SETTINGS_PATH)
 

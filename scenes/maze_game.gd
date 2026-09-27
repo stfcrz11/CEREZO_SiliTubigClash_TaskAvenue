@@ -72,6 +72,8 @@ var correct_answers: int = 0
 var questions_asked: int = 0
 var time_left: float = 0.0
 var message_time: float = 0.0
+var _last_warn_level: int = 0        # for the "Sili nearby" sound
+var _last_warn_sound: int = -100000
 var local_player: Node2D             # the camera follows only this device's player
 var questions: Dictionary = {}       # open questions (every device): qid -> info
 var my_question: int = -1            # the question THIS device is answering (-1 = none)
@@ -92,6 +94,7 @@ var _next_question_id: int = 0
 
 func _ready() -> void:
 	randomize()
+	Sound.stop_music()
 	# The HUD is hidden in the editor so it doesn't cover the map while you
 	# edit (click the eye next to "HUD" to see it); the game shows it here.
 	$HUD.visible = true
@@ -101,6 +104,7 @@ func _ready() -> void:
 	GameState.round_state = GameState.RoundState.READY
 	quiz_panel.choice_made.connect(_on_local_choice)
 	quiz_panel.help_requested.connect(_on_help_pressed)
+	$HUD/TopBar/SettingsButton.pressed.connect(func(): $HUD/SettingsPanel.open())
 	help_alert.answered.connect(_on_help_answer)
 	play_again_button.pressed.connect(_on_play_again)
 	menu_button.pressed.connect(_on_leave)
@@ -276,6 +280,7 @@ func _spawn_all(roster: Array) -> void:
 
 @rpc("authority", "call_local", "reliable")
 func _start_round(seconds: float) -> void:
+	Sound.play("start")
 	time_left = seconds
 	correct_answers = 0
 	GameState.round_state = GameState.RoundState.PLAYING
@@ -439,6 +444,7 @@ func _question_result(qid: int, position: int, correct: bool, total: int) -> voi
 		quiz_panel.show_result(position, correct)
 		quiz_panel.close()
 		my_question = -1
+		Sound.play("correct" if correct else "wrong")
 	if q["full_stop"]:
 		answering_notice.close()
 	if mine:
@@ -573,6 +579,8 @@ func _show_next_help_request() -> void:
 		if q.is_empty() or q["picker"] != q["asker"] or not me or me.frozen or me.answering:
 			_help_queue.pop_front()
 			continue
+		if not help_alert.visible or _help_showing != qid:
+			Sound.play("help")
 		_help_showing = qid
 		help_alert.open(Network.player_name_of(q["asker"]))
 		return
@@ -793,6 +801,11 @@ func _update_warning() -> void:
 			my_level = level
 	var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 90.0)
 	var me = player_by_id.get(multiplayer.get_unique_id())
+	# warning sound when the danger level goes up (at most every 3 s)
+	if me and me.is_tubig() and my_level > _last_warn_level and Time.get_ticks_msec() - _last_warn_sound > 3000:
+		Sound.play("sili_near")
+		_last_warn_sound = Time.get_ticks_msec()
+	_last_warn_level = my_level
 	if me and not me.is_tubig():
 		warning_label.text = ""        # Silis don't get the warning
 		warning_glow.modulate.a = 0.0
@@ -879,6 +892,11 @@ func _end_round(team_won: bool, title: String, stats: String, results: Array) ->
 	if me:
 		verdict = "You win!" if me.is_tubig() == team_won else "You lose!"
 	$HUD/EndPanel/Margin/VBox/StatsLabel.text = verdict + "\n" + stats
+	# "game over" for everyone, then win or lose for this player
+	var over_len := Sound.play("game_over")
+	if me:
+		var result_sound := "win" if me.is_tubig() == team_won else "lose"
+		get_tree().create_timer(over_len).timeout.connect(func(): Sound.play(result_sound))
 	if not results.is_empty():
 		Leaderboard.record(results)   # saved on this device; shown on the title screen
 		for r in results:

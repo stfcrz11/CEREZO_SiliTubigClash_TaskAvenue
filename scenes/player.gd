@@ -5,6 +5,8 @@ extends CharacterBody2D
 ## it; it sends its position to everyone else, who smoothly follow it.
 ## Catches, rescues and scroll pickups are decided by the host
 ## (maze_game.gd), never by this script.
+## SOLO VS BOT: the computer Sili is a normal player whose keys come from
+## scenes/bot_sili.gd (bot_move / bot_sprint) instead of the keyboard.
 
 # light tints so teammates using the same picture still look a bit different
 const TUBIG_TINTS := [Color(1, 1, 1), Color(0.8, 1.0, 1.0), Color(0.9, 0.85, 1.0), Color(1.0, 1.0, 0.8)]
@@ -41,6 +43,9 @@ var _net_target: Vector2
 var _send_timer: float = 0.0
 var _last_position: Vector2
 var _walk_time: float = 0.0
+var is_bot: bool = false            # driven by bot_sili.gd, not the keyboard
+var bot_move: Vector2 = Vector2.ZERO
+var bot_sprint: bool = false
 
 @onready var body: Sprite2D = $Body
 @onready var name_label: Label = $NameLabel
@@ -51,7 +56,8 @@ func setup(id: int, player_slot: int, player_role: String, color_index: int, sta
 	peer_id = id
 	slot = player_slot
 	role = player_role
-	set_multiplayer_authority(id)
+	is_bot = Network.is_bot(id)
+	set_multiplayer_authority(1 if is_bot else id)   # the host runs the bot
 	# Tubig and Sili pass through each other (tag = touch); both hit walls
 	collision_layer = 2 if is_tubig() else 4
 	collision_mask = 1
@@ -101,8 +107,9 @@ func _physics_process(delta: float) -> void:
 	if not playing or frozen or answering:
 		velocity = Vector2.ZERO
 	else:
-		var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-		var sprinting := Input.is_action_pressed("sprint") and stamina > 0.0 and input_vector != Vector2.ZERO
+		var input_vector := bot_move if is_bot else Input.get_vector("move_left", "move_right", "move_up", "move_down")
+		var wants_sprint := bot_sprint if is_bot else Input.is_action_pressed("sprint")
+		var sprinting := wants_sprint and stamina > 0.0 and input_vector != Vector2.ZERO
 		var current_speed := tubig_speed if is_tubig() else sili_speed
 		if sprinting:
 			current_speed *= tubig_sprint if is_tubig() else sili_sprint

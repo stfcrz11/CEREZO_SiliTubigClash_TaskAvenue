@@ -31,6 +31,13 @@ Tubigs can answer at the same time and can pass a question to a teammate.
   joins is disconnected by the host.
 - **Role rotation:** the first Sili is random (`round_number = randi() % MAX_PLAYERS`).
   After that the role moves down the player list every round (`assign_roles()`).
+- **Solo vs Bot:** title screen → **PLAY** → **SOLO VS BOT** calls
+  `Network.play_solo(true)`: you are the only Tubig and a computer **Bot Sili**
+  (`Network.BOT_ID`) chases you. The bot (`scenes/bot_sili.gd`) follows the roads with
+  `AStarGrid2D`, chases a Tubig within 260 px (sprints within 130 px), goes to where it
+  last saw you, and otherwise waits near a scroll. It moves at 0.95 × Sili speed
+  (≈142 px/s). Normal solo rules apply (the chase stops while you answer). Not added to
+  the leaderboard.
 - **Solo test mode:** if `maze_game.tscn` is run directly, `Network.play_solo()` makes a
   1-player game with no Sili. The message "Test mode: no Sili" is shown, and the round is
   not added to the leaderboard.
@@ -154,7 +161,8 @@ other keys are read directly.
 
 | Screen | Buttons / fields |
 |---|---|
-| Title | PLAYER NAME field (saved to `user://player_settings.cfg`), HOST GAME, JOIN GAME, HOW TO PLAY, LEADERBOARD, QUIT |
+| Title | PLAYER NAME field (saved to `user://player_settings.cfg`), PLAY, HOW TO PLAY, LEADERBOARD, QUIT |
+| PLAY window | SOLO VS BOT, HOST GAME, JOIN GAME; ✕ (or Esc / click outside) |
 | Leaderboard window | ✕ (or Esc / click outside) |
 | Settings (gear, top right of title screen and game) | Music on/off + volume, Sound effects on/off + volume, controls list; ✕ / Esc / click outside |
 | Phone (touch controls on) | joystick: drag on the right half; RUN button (bottom left) to sprint; Android Back = Esc |
@@ -482,6 +490,7 @@ the game's own viewport.
 | 09-27 | Android debug export | `build/SiliTubig_TaskAvenue.apk`, 58 MB; apksigner verify OK; package, version, label, permissions and ARM libraries checked with aapt. **Not installed on a device** |
 | 09-27 | Scroll dots (solo, Tubig) | 3 yellow dots at the scroll cells; after a pickup the dot moved to the new scroll's cell |
 | 09-27 | Joystick on the right (simulated touches, solo) | Drag on the right half → input (-1,0); RUN at bottom left → sprint on; tap on the help alert's YES → alert closed, joystick not started. APK rebuilt |
+| 10-02 | Solo vs Bot (headless) | PLAY → window opens; SOLO VS BOT → 1 Tubig vs "Bot Sili"; bot reached a standing Tubig 456 px away and tagged it in 5.4 s → "SILI WINS! ALL TUBIG FROZEN". Untaggable Tubig teleported to 20 random cells: bot reached all 20, never stuck |
 | 09-27 | Freeze all (3 players, 2 Tubigs) | 1st Tubig frozen → round continues, all devices show "Frozen: 1 / 2" and "1 Tubig still free"; 2nd frozen → "SILI WINS! ALL TUBIG FROZEN" on all devices. Save files restored after the test |
 
 **Not tested:** see §4 "Not re-tested".

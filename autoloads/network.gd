@@ -14,6 +14,8 @@ const DISCOVERY_PORT := 7778
 const MAX_PLAYERS := 6
 const MIN_PLAYERS := 2
 const BEACON := "SILITUBIG_TASKAVENUE"
+const BOT_ID := 999                 # SOLO VS BOT: the computer Sili's player id
+const BOT_NAME := "Bot Sili"
 
 var players: Dictionary = {}        # peer_id -> slot (0..5)
 var player_names: Dictionary = {}   # peer_id -> chosen display name
@@ -24,6 +26,7 @@ var found_hosts: Dictionary = {}    # host id -> {"ip", "ips", "players", "name"
 var host_id: int = 0                # random id of the game this device hosts
 var ready_peers: Dictionary = {}    # host: peers whose maze scene has loaded
 var round_number: int = 0           # host: used to rotate the Sili role
+var solo_bot: bool = false          # SOLO VS BOT: you are Tubig, the computer is Sili
 
 signal peer_ready(id: int)
 
@@ -41,11 +44,21 @@ func _ready() -> void:
 
 
 # ------------------------------------------------------------ modes
-func play_solo() -> void:
+## with_bot = false: test mode with no Sili (maze_game.tscn run directly).
+## with_bot = true: SOLO VS BOT from the title screen's PLAY window.
+func play_solo(with_bot: bool = false) -> void:
 	leave()
 	players = {1: 0}
 	player_names = {1: GameState.player_name}
+	if with_bot:
+		players[BOT_ID] = 1
+		player_names[BOT_ID] = BOT_NAME
+	solo_bot = with_bot
 	online = false
+
+
+func is_bot(peer_id: int) -> bool:
+	return solo_bot and peer_id == BOT_ID
 
 
 func host_game() -> Error:
@@ -86,6 +99,7 @@ func leave() -> void:
 	players.clear()
 	player_names.clear()
 	online = false
+	solo_bot = false
 	game_started = false
 
 
@@ -118,6 +132,8 @@ static func sili_count_for(player_count: int) -> int:
 ## Host only. Picks who is Sili this round; the role moves down the
 ## player list every round so everyone gets a turn.
 func assign_roles() -> Dictionary:
+	if solo_bot:
+		return {1: "tubig", BOT_ID: "sili"}   # you always run from the bot
 	var ids := sorted_ids()
 	var roles := {}
 	for id in ids:
@@ -258,7 +274,7 @@ func _mark_ready(id: int) -> void:
 
 func everyone_ready() -> bool:
 	for id in players:
-		if not ready_peers.has(id):
+		if not ready_peers.has(id) and not is_bot(id):
 			return false
 	return true
 

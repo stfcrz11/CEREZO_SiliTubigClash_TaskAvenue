@@ -98,11 +98,14 @@ answers directly.
 ## Setup and run
 
 1. Open Godot 4.7 and import this folder.
-2. Type your name on the title screen, then press Run (F5) on one PC →
-   **HOST GAME**.
-3. On other devices on the same network → **JOIN GAME** → press **JOIN** next
-   to the game in the list (or type the IP shown in the host's window).
-4. Host presses **START GAME** (needs at least 2 players).
+2. Type your name on the title screen, then press Run (F5) and **PLAY**. The
+   PLAY window has three choices:
+   - **SOLO VS BOT** — you are the Tubig and a computer Sili chases you
+	 (`scenes/bot_sili.gd`). Solo rounds don't go on the leaderboard.
+   - **HOST GAME** — host a LAN game on one PC.
+   - **JOIN GAME** — on other devices on the same network, press **JOIN** next
+	 to the game in the list (or type the IP shown in the host's window).
+3. Host presses **START GAME** (needs at least 2 players).
 
 To test on one PC: Debug → Customize Run Instances → Enable Multiple
 Instances → 2 or more, then Run. Host in one window, join from the others.

@@ -3,6 +3,8 @@ extends Node2D
 ## 2-6 players over LAN. Silis (1 for 2-4 players, 2 for 5-6) chase; the
 ## Tubig team picks up "?" scrolls and must answer 10 Filipino-culture
 ## questions correctly before time runs out.
+## SOLO VS BOT: you are the only Tubig and a computer Sili (bot_sili.gd)
+## chases you. Bot rounds don't go on the leaderboard.
 ## Round states: READY -> PLAYING <-> PAUSED, PLAYING <-> QUESTION, -> ENDED.
 ##
 ## Networking rule: the HOST decides everything that matters (roles, tags,
@@ -15,6 +17,7 @@ const Leaderboard := preload("res://data/leaderboard.gd")
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const SCROLL_SCENE := preload("res://scenes/question_scroll.tscn")
 const ButtonStyle := preload("res://scenes/ui_button_style.gd")
+const BotSili := preload("res://scenes/bot_sili.gd")
 
 ## The maze is NOT written here any more: open scenes/city_map.tscn and
 ## paint it on the "Maze" TileMapLayer (tiles come from
@@ -125,7 +128,10 @@ func _ready() -> void:
 	minimap.set_scrolls(scrolls)   # yellow scroll dots for Tubig players
 	_setup_camera()
 	_add_vignette()
-	mode_label.text = "Host (LAN)" if Network.is_host() else "LAN"
+	if not Network.online:
+		mode_label.text = "Solo"
+	else:
+		mode_label.text = "Host (LAN)" if Network.is_host() else "LAN"
 	_update_hud()
 	_show_message("Waiting for players...", 30.0)
 
@@ -275,9 +281,16 @@ func _spawn_all(roster: Array) -> void:
 			p.setup(id, slot, role, silis.size(), cell_to_world(sili_starts[silis.size()]))
 			silis.append(p)
 		player_by_id[id] = p
+		if p.is_bot:
+			var bot := BotSili.new()
+			bot.name = "BotSili"
+			add_child(bot)
+			bot.setup(self, p)
 	var me = player_by_id.get(multiplayer.get_unique_id())
 	if me:
 		mode_label.text = "You: %s (%s)" % ["TUBIG" if me.is_tubig() else "SILI", Network.player_name_of(me.peer_id)]
+		if Network.solo_bot:
+			mode_label.text += "  vs  " + Network.BOT_NAME
 		minimap.set_local_player(me)
 		local_player = me
 		_follow_local_player()
@@ -295,6 +308,8 @@ func _start_round(seconds: float) -> void:
 	var clock := "  (%s for %d Tubig%s)" % [_format_time(seconds), tubigs.size(), "" if tubigs.size() == 1 else "s"]
 	if silis.is_empty():
 		_show_message("Test mode: no Sili (needs 2+ players over LAN).", 4.0)
+	elif Network.solo_bot:
+		_show_message("SOLO VS BOT: run from the %s! Find ? scrolls and answer %d questions!%s" % [Network.BOT_NAME, questions_to_win, clock], 5.0)
 	elif me and not me.is_tubig():
 		_show_message("You are SILI! Freeze ALL Tubig at the same time before they answer %d questions!%s" % [questions_to_win, clock], 5.0)
 	else:
@@ -882,9 +897,9 @@ func _host_end(team_won: bool, title: String) -> void:
 	_help_active = -1
 	var stats := "Correct answers: %d / %d\nScrolls opened: %d\nTime left: %s" % \
 		[correct_answers, questions_to_win, questions_asked, _format_time(time_left)]
-	# leaderboard results for everyone still in the game (not for solo test rounds)
+	# leaderboard results for everyone still in the game (not for solo rounds)
 	var results := []
-	if not silis.is_empty():
+	if not silis.is_empty() and not Network.solo_bot:
 		for id in player_by_id:
 			var s: Dictionary = _stats.get(id, {"correct": 0, "tags": 0, "rescues": 0})
 			results.append({"id": id, "name": Network.player_name_of(id), "won": player_by_id[id].is_tubig() == team_won,

@@ -1,7 +1,9 @@
 extends Control
-## Title screen: Host Game / Join Game (LAN), How to Play, Quit.
-## Host Game opens HostModal (host_modal.tscn) and Join Game opens JoinModal
-## (join_modal.tscn) on top of this screen.
+## Title screen: Play, How to Play, Leaderboard, Quit.
+## PLAY opens the PLAY window (close: X, Esc, or click outside) with:
+##   SOLO VS BOT  -> starts a round right away: you (Tubig) vs a Bot Sili
+##   HOST GAME    -> opens HostModal (host_modal.tscn)
+##   JOIN GAME    -> opens JoinModal (join_modal.tscn)
 ## The title and the buttons are PNG pictures in assets/ui/ — replace those
 ## files (or drag new ones into the Inspector) to change how they look.
 ## LEADERBOARD opens the TOP PLAYERS window (close: X, Esc, or click outside).
@@ -18,8 +20,12 @@ func _ready() -> void:
 	$Menu/PlayerNameRow/PlayerNameInput.text = GameState.player_name
 	$Menu/PlayerNameRow/PlayerNameInput.text_changed.connect(_on_player_name_changed)
 	$Menu/PlayerNameRow/PlayerNameInput.focus_exited.connect(_normalize_player_name)
-	$Menu/HostButton.pressed.connect(func(): $HostModal.open())
-	$Menu/JoinButton.pressed.connect(func(): $JoinModal.open())
+	$Menu/PlayButton.pressed.connect(_show_play.bind(true))
+	$PlayPanel/Margin/VBox/Header/CloseButton.pressed.connect(_show_play.bind(false))
+	$PlayDim.gui_input.connect(_on_play_dim_input)
+	$PlayPanel/Margin/VBox/SoloButton.pressed.connect(_start_solo)
+	$PlayPanel/Margin/VBox/HostButton.pressed.connect(_open_lan_window.bind($HostModal))
+	$PlayPanel/Margin/VBox/JoinButton.pressed.connect(_open_lan_window.bind($JoinModal))
 	$Menu/HowToButton.pressed.connect(_show_how_to.bind(true))
 	$Menu/QuitButton.pressed.connect(func(): get_tree().quit())
 	$HowToPanel/Margin/VBox/CloseButton.pressed.connect(_show_how_to.bind(false))
@@ -29,6 +35,7 @@ func _ready() -> void:
 	$SettingsButton.pressed.connect(func(): $SettingsPanel.open())
 	_show_how_to(false)
 	_show_leaderboard(false)
+	_show_play(false)
 	Sound.play_music("title")   # keeps playing if it already is
 	get_tree().paused = false
 	# show why we came back here (e.g. the host left)
@@ -43,6 +50,27 @@ func _on_player_name_changed(value: String) -> void:
 
 func _normalize_player_name() -> void:
 	$Menu/PlayerNameRow/PlayerNameInput.text = GameState.player_name
+
+
+func _show_play(open: bool) -> void:
+	$PlayPanel.visible = open
+	$PlayDim.visible = open
+
+
+func _on_play_dim_input(event: InputEvent) -> void:
+	# a click outside the window closes it
+	if event is InputEventMouseButton and event.pressed:
+		_show_play(false)
+
+
+func _start_solo() -> void:
+	Network.play_solo(true)   # you (Tubig) vs the Bot Sili
+	get_tree().change_scene_to_file(GameState.GAME_SCENE)
+
+
+func _open_lan_window(window: Control) -> void:
+	_show_play(false)
+	window.open()
 
 
 func _show_leaderboard(open: bool) -> void:
@@ -91,7 +119,10 @@ func _show_how_to(open: bool) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_pressed("ui_cancel"):
 		return
-	if $HowToPanel.visible:
+	if $PlayPanel.visible:
+		_show_play(false)
+		get_viewport().set_input_as_handled()
+	elif $HowToPanel.visible:
 		_show_how_to(false)
 		get_viewport().set_input_as_handled()
 	elif $Leaderboard.visible:

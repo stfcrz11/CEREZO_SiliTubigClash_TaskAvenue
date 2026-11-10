@@ -270,8 +270,9 @@ Result (success / documented error): **Success** (2026-09-27, Godot 4.7.2).
   Android export"; fixed by enabling Import ETC2 ASTC in Project Settings.
 - Playable on a phone: on-screen joystick + RUN button, tap for answers and
   buttons, Back button = Esc. Not yet installed on a real phone (touch was
-  tested with simulated touches on PC). No custom app icon yet (Godot's
-  default icon).
+  tested with simulated touches on PC). App icon: the title logo
+  (`assets/icon/`, made by `tools/art/make_icon.py`), also used as the Android
+  launcher icon and the Windows .ico.
 
 ## Authorized assets
 
@@ -313,7 +314,7 @@ documentation.
 
 ## Next development steps
 
-- Custom app icon; test on real phones
+- Test on real phones
 - Reconnect support
 - Filipino voice callouts from the group game; key rebinding
 - More mazes and questions (e.g. Cagayan Valley culture)

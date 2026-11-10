@@ -6,7 +6,8 @@
    title background: `assets/backgrounds/title_city_pixel.png`)
 2. **Eris Esra's character template v4.1** (16x32)
    (Sili and Tubig characters: `assets/characters/sili_sheet.png`, `tubig_sheet.png`)
-3. **Title logo:** Stefane Cerezo.
+3. **Title logo and app icon:** Stefane Cerezo (icon sizes made from the logo by
+   `tools/art/make_icon.py`).
 4. **UI art** (buttons, window frames, store windows, 5x7 pixel font) and station props:
    drawn for this game by `tools/art/make_ui.py` and `tools/art/make_props.py`, using the
    tileset's colours.

@@ -197,15 +197,84 @@ theme_override_constants/line_separation = 6
 theme_override_font_sizes/normal_font_size = 15
 theme_override_font_sizes/bold_font_size = 15
 bbcode_enabled = true
-text = "[bgcolor=#33405e][color=#ffffff][b] W A S D [/b][/color][/bgcolor] or arrow keys — move
-[bgcolor=#33405e][color=#ffffff][b] Shift [/b][/color][/bgcolor] or [bgcolor=#33405e][color=#ffffff][b] Space [/b][/color][/bgcolor] — sprint (uses stamina)
-[bgcolor=#33405e][color=#ffffff][b] 1 [/b][/color][/bgcolor] [bgcolor=#33405e][color=#ffffff][b] 2 [/b][/color][/bgcolor] [bgcolor=#33405e][color=#ffffff][b] 3 [/b][/color][/bgcolor] [bgcolor=#33405e][color=#ffffff][b] 4 [/b][/color][/bgcolor] — answer a question (or click / tap)
-[bgcolor=#33405e][color=#ffffff][b] H [/b][/color][/bgcolor] — ask a teammate for help
-[bgcolor=#33405e][color=#ffffff][b] Y [/b][/color][/bgcolor] / [bgcolor=#33405e][color=#ffffff][b] N [/b][/color][/bgcolor] — accept / refuse a help request
-[bgcolor=#33405e][color=#ffffff][b] Esc [/b][/color][/bgcolor] — close a window; pause the game (host only)
-[color=#9aa4b8]Phone: joystick on the right half, hold RUN (bottom left) to sprint, tap answers / HELP / YES / NO, Back button = Esc.[/color]"
+text = "[bgcolor=#33405e][color=#ffffff][b] W A S D [/b][/color][/bgcolor] move   [bgcolor=#33405e][color=#ffffff][b] Shift [/b][/color][/bgcolor] sprint   [bgcolor=#33405e][color=#ffffff][b] E [/b][/color][/bgcolor] use a station
+[bgcolor=#33405e][color=#ffffff][b] 1-4 [/b][/color][/bgcolor] answer   [bgcolor=#33405e][color=#ffffff][b] H [/b][/color][/bgcolor] help   [bgcolor=#33405e][color=#ffffff][b] Y [/b][/color][/bgcolor]/[bgcolor=#33405e][color=#ffffff][b] N [/b][/color][/bgcolor] help request   [bgcolor=#33405e][color=#ffffff][b] Esc [/b][/color][/bgcolor] pause
+[color=#9aa4b8]Full list: HOW TO PLAY on the title screen.[/color]"
 fit_content = true
 scroll_active = false
+autowrap_mode = 3
+
+[node name="Divider3" type="ColorRect" parent="Center/Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(1, 0.82, 0.3, 0.3)
+
+[node name="OtherTitle" type="Label" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.3, 1)
+theme_override_font_sizes/font_size = 17
+text = "OTHER"
+
+[node name="VibrationRow" type="HBoxContainer" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="Center/Panel/Margin/VBox/VibrationRow"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Vibration"
+
+[node name="On" type="CheckButton" parent="Center/Panel/Margin/VBox/VibrationRow"]
+layout_mode = 2
+focus_mode = 0
+
+[node name="Hint" type="Label" parent="Center/Panel/Margin/VBox/VibrationRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.62, 0.66, 0.76, 1)
+theme_override_font_sizes/font_size = 12
+text = "phone buzzes when you are tagged or answer"
+autowrap_mode = 3
+
+[node name="FpsRow" type="HBoxContainer" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="Center/Panel/Margin/VBox/FpsRow"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Show FPS"
+
+[node name="On" type="CheckButton" parent="Center/Panel/Margin/VBox/FpsRow"]
+layout_mode = 2
+focus_mode = 0
+
+[node name="Hint" type="Label" parent="Center/Panel/Margin/VBox/FpsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.62, 0.66, 0.76, 1)
+theme_override_font_sizes/font_size = 12
+text = "frame rate, frame time and memory in the game (for testing)"
+autowrap_mode = 3
+
+[node name="ResetRow" type="HBoxContainer" parent="Center/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ResetButton" type="Button" parent="Center/Panel/Margin/VBox/ResetRow"]
+custom_minimum_size = Vector2(170, 36)
+layout_mode = 2
+focus_mode = 0
+text = "Reset my data"
+
+[node name="Hint" type="Label" parent="Center/Panel/Margin/VBox/ResetRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.62, 0.66, 0.76, 1)
+theme_override_font_sizes/font_size = 12
+text = "clears your name, settings, solo progress and this device's leaderboard"
 autowrap_mode = 3
 
 [node name="Saved" type="Label" parent="Center/Panel/Margin/VBox"]

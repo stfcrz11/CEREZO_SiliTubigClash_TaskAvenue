@@ -12,6 +12,10 @@ extends Control
 @onready var sfx_slider: HSlider = $Center/Panel/Margin/VBox/SfxRow/Slider
 @onready var sfx_value: Label = $Center/Panel/Margin/VBox/SfxRow/Value
 @onready var touch_on: CheckButton = $Center/Panel/Margin/VBox/TouchRow/On
+@onready var vibration_on: CheckButton = $Center/Panel/Margin/VBox/VibrationRow/On
+@onready var fps_on: CheckButton = $Center/Panel/Margin/VBox/FpsRow/On
+@onready var reset_button: Button = $Center/Panel/Margin/VBox/ResetRow/ResetButton
+var _reset_armed := false   # Reset needs two taps, so it can't happen by accident
 
 
 func _ready() -> void:
@@ -23,6 +27,10 @@ func _ready() -> void:
 	sfx_on.toggled.connect(func(_on): _sfx_changed())
 	sfx_slider.value_changed.connect(func(_v): _sfx_changed())
 	touch_on.toggled.connect(func(on): GameState.set_touch_controls(on))
+	vibration_on.toggled.connect(func(on): GameState.set_vibration(on))
+	fps_on.toggled.connect(func(on): GameState.set_show_fps(on))
+	reset_button.pressed.connect(_on_reset)
+	preload("res://scenes/ui_button_style.gd").style_secondary(reset_button, Color(0.72, 0.22, 0.18))
 
 
 func open() -> void:
@@ -32,12 +40,31 @@ func open() -> void:
 	sfx_on.set_pressed_no_signal(Sound.sfx_on)
 	sfx_slider.set_value_no_signal(Sound.sfx_percent)
 	touch_on.set_pressed_no_signal(GameState.touch_controls)
+	vibration_on.set_pressed_no_signal(GameState.vibration)
+	fps_on.set_pressed_no_signal(GameState.show_fps)
+	_reset_armed = false
+	reset_button.text = "Reset my data"
+	# no resetting in the middle of a round
+	reset_button.disabled = GameState.round_state != GameState.RoundState.READY \
+		and get_tree().current_scene.name == "MazeGame"
 	_update_labels()
 	visible = true
 
 
 func close() -> void:
 	visible = false
+
+
+func _on_reset() -> void:
+	if not _reset_armed:
+		_reset_armed = true
+		reset_button.text = "Tap again to confirm"
+		return
+	GameState.reset_all_data()
+	open()   # show the default values
+	reset_button.text = "Data cleared"
+	if get_tree().current_scene.has_method("_normalize_player_name"):
+		get_tree().current_scene._normalize_player_name()
 
 
 func _music_changed() -> void:

@@ -253,8 +253,8 @@ func _sync_players(new_players: Dictionary) -> void:
 func _register_player_name(value: String) -> void:
 	if not is_host():
 		return
-	var name := value.strip_edges()
-	player_names[multiplayer.get_remote_sender_id()] = name if not name.is_empty() else "Player"
+	# never trust what a client sends: same rules as the name box
+	player_names[multiplayer.get_remote_sender_id()] = GameState.clean_name(value)
 	_sync_player_names.rpc(player_names)
 	players_changed.emit()
 

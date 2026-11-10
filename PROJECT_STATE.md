@@ -8,6 +8,36 @@ Everything below comes from the actual files in this folder: `.gd`, `.tscn`,
 `project.godot`, `README.md` and `assets/`. Anything I could not confirm from the files is
 marked **[CHECK]**.
 
+> **Update 2026-11-10 (not yet committed).** Sections below describe the
+> 09-27 state; these changes come on top:
+> - **Quiz mechanics** (`maze_game.gd`, every quiz is a question "kind"):
+>   Buhos-Tubig rescue quiz (touch a frozen teammate + 1 question), Huling
+>   Hirit self-thaw (2 hard questions in a row; 2 per round solo, 1 per Tubig
+>   in teams after 5 s with no teammate within 6 tiles), Halo-Halo coolers
+>   (Yelo Shield 10 s; tagging Sili extinguished 5 s; cooler rests 20 s),
+>   Bicol Express peppers (Sili bugtong → 6 s ×1.35 speed, ×1.6 tag reach),
+>   Kalamansi gates (4 thin walls with ≥10-cell detours; correct = moved to
+>   the other side, wrong = slowed 3 s). Stations are used by pushing into
+>   them; wrong answers have a 6 s retry wait.
+> - **Questions:** `QUESTIONS` 49 (17 new food/places), `HARD` 16, `BUGTONG` 14.
+> - **Solo vs Bot:** 4 rounds (`Network.SOLO_ROUNDS`): Easy 1 bot/6 Q,
+>   Medium 1/8, Hard 2/8, Labuyo 3/10. Win → Next Round, lose → Retry.
+>   `bot_sili.gd` ported from the group project's BotBrain (sight blocked by
+>   buildings, memory, tag reaction delay, target leading, unstick, lurking
+>   near untaggable Tubig, team chaser/flanker/guard with shared sightings,
+>   pepper use).
+> - **Art:** maze re-skinned with the Simple 32x32 City Tileset
+>   (`assets/walls/city_atlas.png`, 32 px tiles, map layers scaled 1.25 so a
+>   cell is still 40 px); old 40 px tile PNGs removed. Characters from Eris
+>   Esra's 16x32 template (`assets/characters/*_sheet.png`, 5 directions,
+>   idle/walk/run/answering). Props: coolers, pepper, ice block. Generators
+>   in `tools/art/`. Credits in `CREDITS.md` and README.
+> - **Tested headless:** solo rounds 3 and 4 (bots tag, self-thaw ×2, loss →
+>   "Retry Round 4"), cooler shield + shield block, gate pass, rescue quiz
+>   and pepper turbo with 3 local players, end panel "Next Round". **Not
+>   tested:** real LAN across devices with the new stations; the APK in
+>   `build/` is from before this update.
+
 ---
 
 ## 1. Game summary

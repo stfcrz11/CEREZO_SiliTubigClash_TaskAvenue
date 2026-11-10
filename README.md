@@ -67,7 +67,8 @@ autoloads/
   network.gd          Host / join, LAN discovery, player list, roles
   sound.gd            Music and sound effects (assets/audio/)
 data/
-  questions.gd        32 Filipino-culture questions (edit to add more)
+  questions.gd        Question lists: 49 general (culture, food, places),
+                      16 hard (self-thaw), 14 bugtong riddles (peppers)
   leaderboard.gd      Points and rankings, saved on this device
 scenes/
   title_screen.*      Menu, How to Play, Leaderboard pop-up
@@ -76,9 +77,11 @@ scenes/
   store_modal.gd      Shared parts of both windows (slots, status, close)
   png_button.gd       Buttons made from PNG pictures (hover glow, press)
   city_map.tscn       The maze, painted with tiles (edit it in the editor)
-  maze_game.*         The round: camera, scrolls, questions, help requests,
-                      tags, rescues, timer, win/lose (host decides)
-  player.*            One character (walk animation, name above the head)
+  maze_game.*         The round: camera, scrolls, quizzes (scroll, rescue,
+                      self-thaw, cooler, pepper, gate), help requests,
+                      tags, effects, timer, win/lose, solo rounds (host decides)
+  bot_sili.gd         Computer Sili for SOLO VS BOT (easy/medium/hard/labuyo)
+  player.*            One character (5-direction animations, effects, trails)
   minimap.gd          The MAPA in the corner (your dot, scroll dots)
   question_scroll.*   The "?" pickup
   quiz_panel.*        4-choice question window with the help button
@@ -86,6 +89,8 @@ scenes/
   help_alert.*        "<name> needs help" YES/NO alert
   answering_notice.*  "Tubig is answering" notice for the Sili
   settings_panel.*    Settings window (audio on/off + volume, controls)
+tools/art/           Python scripts that made the character sheets, city
+                     atlas and station props (not used by the game)
 ```
 
 **Networking model:** the host is the only one who decides roles, round
@@ -100,8 +105,10 @@ answers directly.
 1. Open Godot 4.7 and import this folder.
 2. Type your name on the title screen, then press Run (F5) and **PLAY**. The
    PLAY window has three choices:
-   - **SOLO VS BOT** — you are the Tubig and a computer Sili chases you
-	 (`scenes/bot_sili.gd`). Solo rounds don't go on the leaderboard.
+   - **SOLO VS BOT** — you are the Tubig in 4 rounds, easy to difficult:
+	 Round 1 Easy (1 bot), 2 Medium (1 bot), 3 Hard (2 bots), 4 Labuyo
+	 (3 bots). Win to go to the next round, lose to retry. Solo rounds don't
+	 go on the leaderboard.
    - **HOST GAME** — host a LAN game on one PC.
    - **JOIN GAME** — on other devices on the same network, press **JOIN** next
 	 to the game in the list (or type the IP shown in the host's window).
@@ -147,8 +154,24 @@ Instances → 2 or more, then Run. Host in one window, join from the others.
 - Question scrolls: several Tubigs can answer at once, the answerer is safe,
   one help request at a time, first YES takes the question
 - Result popup with the correct answer and a fact; 10 correct = win
-- Sili tag → freeze; teammate rescue with 1 s minimum freeze, immunity and
-  speed burst; Sili-nearby warning
+- Sili tag → freeze (ice block); **Buhos-Tubig** rescue: touch a frozen
+  teammate and answer 1 question; **Huling Hirit** self-thaw: 2 hard
+  questions in a row when no teammate can help (2 per round in solo);
+  Sili-nearby warning
+- Quiz stations (push into them): **Halo-Halo coolers** (Yelo Shield 10 s;
+  a Sili who tags a shielded Tubig is extinguished 5 s), **Bicol Express
+  peppers** (Sili solves a bugtong: faster + wider tag reach 6 s),
+  **Kalamansi gates** (answer to squeeze through a shortcut; wrong = slowed
+  3 s). Stations show on the MAPA and rest after use
+- SOLO VS BOT: 4 rounds with 1-3 bots. Bot AI adapted from the group
+  project's BotBrain: sight with buildings blocking view, memory of the
+  last sighting, human-like tag reaction delay, leading a running Tubig,
+  unstick logic, waiting a few steps away from a frozen Tubig; team bots
+  share sightings and split into chaser / flanker / scroll guard; bots use
+  peppers
+- City re-skinned with the Simple 32x32 City Tileset; new Sili / Tubig
+  characters from Eris Esra's 16x32 template (idle, walk, run and answering
+  animations in 5 directions); red ember / blue water trails
 - Round time based on the number of Tubigs; win/lose screen with "You
   win/lose" and points earned; leaderboard saved per device
 - Host pause for everyone; Play Again (next Sili); Leave
@@ -177,9 +200,8 @@ Instances → 2 or more, then Run. Host in one window, join from the others.
 ## Incomplete / not attempted (honestly declared)
 
 - No reconnect if a player drops
-- Most art is simple starter art made for this project; no Filipino voice
-  callouts yet
-- Walking animation is side-view only (no up/down animation)
+- No Filipino voice callouts yet
+- Bots only play Sili (no bot Tubig teammates)
 - One maze only
 - Leaderboard is saved per device and matches players by name
 
@@ -234,8 +256,16 @@ Result (success / documented error): **Success** (2026-09-27, Godot 4.7.2).
   http://www.freepik.com/terms_of_use). The personal license certificate is
   available from the Freepik profile (https://profile.freepik.com/my_downloads).
   Credit: image by inbevel13 on Freepik.
-- **Maze tiles, characters, props, scroll, buttons and store windows** were
-  made for this project with Python scripts.
+- **City tiles:** "Simple 32x32 City Tileset" by **Acxa Rmz**
+  (https://acxaonpixelia.itch.io/simple-32x32-city-tileset). The maze tiles in
+  `assets/walls/city_atlas.png` are cut and combined from it (curbs, roof
+  edges, shop/apartment fronts, hedges) by `tools/art/reskin_city.py`.
+- **Characters:** **Eris Esra's character template v4.1** (16x32). The Sili
+  and Tubig outfits in `assets/characters/*_sheet.png` were painted onto the
+  template by `tools/art/make_characters.py`.
+- **Props, scroll, buttons and store windows** (jeepney, tricycle, post,
+  Halo-Halo coolers, Bicol Express pepper, ice block) were made for this
+  project with Python scripts (`tools/art/make_props.py` for the new ones).
 - **Audio** (`assets/audio/`, 11 MP3 files: title music, answering loop,
   button click, game start, correct, wrong, help alert, Sili nearby,
   game over, win, lose): [add source / author / license].
@@ -257,7 +287,6 @@ documentation.
 ## Next development steps
 
 - Custom app icon; test on real phones
-- Up/down walking animations and final art (tiles, characters, props)
 - Reconnect support
 - Filipino voice callouts from the group game; key rebinding
 - More mazes and questions (e.g. Cagayan Valley culture)

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://6lvw5rhmibg6"
-path="res://.godot/imported/house_front_pink.png-3a5f5f9ba86707448f1345bc2ac20d80.ctex"
+uid="uid://bva1kfkd1gbad"
+path="res://.godot/imported/city_atlas.png-932b1efd0ba79fc6cc131436cba5e563.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/walls/house_front_pink.png"
-dest_files=["res://.godot/imported/house_front_pink.png-3a5f5f9ba86707448f1345bc2ac20d80.ctex"]
+source_file="res://assets/walls/city_atlas.png"
+dest_files=["res://.godot/imported/city_atlas.png-932b1efd0ba79fc6cc131436cba5e563.ctex"]
 
 [params]
 

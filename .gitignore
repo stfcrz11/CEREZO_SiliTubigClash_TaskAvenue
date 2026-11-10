@@ -3,3 +3,6 @@
 
 # Android export templates
 /android/
+
+# Python cache from the art scripts
+__pycache__/

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://fh3ot1xyc7wh"
-path="res://.godot/imported/title_city.png-2e2d383a0a4452b5de1fb28199c13265.ctex"
+uid="uid://cv3xn1u3hwugb"
+path="res://.godot/imported/button_credits.png-8df1d026d0588738dfe2eb2e10e64ca6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/backgrounds/title_city.png"
-dest_files=["res://.godot/imported/title_city.png-2e2d383a0a4452b5de1fb28199c13265.ctex"]
+source_file="res://assets/ui/button_credits.png"
+dest_files=["res://.godot/imported/button_credits.png-8df1d026d0588738dfe2eb2e10e64ca6.ctex"]
 
 [params]
 

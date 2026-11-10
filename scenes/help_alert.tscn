@@ -9,12 +9,13 @@ border_width_top = 4
 border_width_right = 4
 border_width_bottom = 4
 border_color = Color(0.3, 0.7, 1, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
 shadow_color = Color(0, 0, 0, 0.45)
-shadow_size = 8
+shadow_size = 0
+anti_aliasing = false
 
 [node name="HelpAlert" type="Control" unique_id=583692742]
 layout_mode = 3

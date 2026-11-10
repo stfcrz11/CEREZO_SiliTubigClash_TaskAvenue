@@ -1,5 +1,6 @@
 extends Control
-## Title screen: Play, How to Play, Leaderboard, Quit.
+## Title screen: Play, How to Play, Leaderboard, Credits, Quit.
+## The background is the pixel city (title_runners.gd animates the kids).
 ## PLAY opens the PLAY window (close: X, Esc, or click outside) with:
 ##   SOLO VS BOT  -> starts a round right away: you (Tubig) vs a Bot Sili
 ##   HOST GAME    -> opens HostModal (host_modal.tscn)
@@ -28,6 +29,10 @@ func _ready() -> void:
 	$PlayPanel/Margin/VBox/JoinButton.pressed.connect(_open_lan_window.bind($JoinModal))
 	$Menu/HowToButton.pressed.connect(_show_how_to.bind(true))
 	$Menu/QuitButton.pressed.connect(func(): get_tree().quit())
+	$Menu/CreditsButton.pressed.connect(_show_credits.bind(true))
+	$CreditsPanel/Margin/VBox/CloseButton.pressed.connect(_show_credits.bind(false))
+	$CreditsDim.gui_input.connect(func(e): if e is InputEventMouseButton and e.pressed: _show_credits(false))
+	$VersionLabel.text = "v%s" % ProjectSettings.get_setting("application/config/version", "1.0")
 	$HowToPanel/Margin/VBox/CloseButton.pressed.connect(_show_how_to.bind(false))
 	$Menu/LeaderboardButton.pressed.connect(_show_leaderboard.bind(true))
 	$Leaderboard/Margin/VBox/Header/CloseButton.pressed.connect(_show_leaderboard.bind(false))
@@ -36,6 +41,7 @@ func _ready() -> void:
 	_show_how_to(false)
 	_show_leaderboard(false)
 	_show_play(false)
+	_show_credits(false)
 	Sound.play_music("title")   # keeps playing if it already is
 	get_tree().paused = false
 	# show why we came back here (e.g. the host left)
@@ -44,17 +50,25 @@ func _ready() -> void:
 
 
 func _on_player_name_changed(value: String) -> void:
-	if not value.strip_edges().is_empty():
+	# only valid names are saved; the reason is shown under the menu
+	var problem := GameState.name_problem(value)
+	$Menu/ErrorLabel.text = problem
+	if problem.is_empty():
 		GameState.set_player_name(value)
 
 
 func _normalize_player_name() -> void:
+	# an invalid name is replaced by the last saved one
 	$Menu/PlayerNameRow/PlayerNameInput.text = GameState.player_name
+	$Menu/ErrorLabel.text = ""
 
 
 func _show_play(open: bool) -> void:
 	$PlayPanel.visible = open
 	$PlayDim.visible = open
+	var best := GameState.best_solo_round
+	$PlayPanel/Margin/VBox/SoloHint.text = "You are Tubig. 4 rounds, easy to hard: run from 1-3 Bot Silis!" + \
+		("" if best == 0 else ("\nBest: cleared Round %d%s" % [best, " — all rounds!" if best >= 4 else ""]))
 
 
 func _on_play_dim_input(event: InputEvent) -> void:
@@ -94,6 +108,9 @@ func _fill_leaderboard() -> void:
 		if old != template:
 			old.queue_free()
 	var ranking := Leaderboard.rankings()
+	if not Leaderboard.last_problem.is_empty():
+		$Menu/ErrorLabel.text = Leaderboard.last_problem
+		Leaderboard.last_problem = ""
 	$Leaderboard/Margin/VBox/Empty.visible = ranking.is_empty()
 	for i in min(ranking.size(), MAX_ROWS):
 		var r: Dictionary = ranking[i]
@@ -109,6 +126,11 @@ func _fill_leaderboard() -> void:
 			row.get_node("HBox/Name").add_theme_color_override("font_color", Color(1, 0.88, 0.35))   # you
 		row.tooltip_text = "%s — %d games, %d wins, %d points" % [r["name"], r["games"], r["wins"], r["points"]]
 		rows.add_child(row)
+
+
+func _show_credits(open: bool) -> void:
+	$CreditsPanel.visible = open
+	$CreditsDim.visible = open
 
 
 func _show_how_to(open: bool) -> void:
@@ -127,4 +149,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif $Leaderboard.visible:
 		_show_leaderboard(false)
+		get_viewport().set_input_as_handled()
+	elif $CreditsPanel.visible:
+		_show_credits(false)
 		get_viewport().set_input_as_handled()

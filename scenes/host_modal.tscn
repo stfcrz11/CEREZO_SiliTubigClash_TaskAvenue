@@ -49,10 +49,11 @@ content_margin_top = 1.0
 content_margin_right = 8.0
 content_margin_bottom = 1.0
 bg_color = Color(0.86, 0.24, 0.2, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
+anti_aliasing = false
 
 [sub_resource type="StyleBoxFlat" id="ChipTubig"]
 content_margin_left = 8.0
@@ -60,10 +61,11 @@ content_margin_top = 1.0
 content_margin_right = 8.0
 content_margin_bottom = 1.0
 bg_color = Color(0.2, 0.5, 0.9, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
+anti_aliasing = false
 
 [sub_resource type="StyleBoxTexture" id="SlotCard"]
 content_margin_left = 12.0
@@ -82,10 +84,11 @@ content_margin_top = 1.0
 content_margin_right = 8.0
 content_margin_bottom = 1.0
 bg_color = Color(0.75, 0.55, 0.1, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
+anti_aliasing = false
 
 [sub_resource type="StyleBoxFlat" id="ChipYou"]
 content_margin_left = 8.0
@@ -93,10 +96,11 @@ content_margin_top = 1.0
 content_margin_right = 8.0
 content_margin_bottom = 1.0
 bg_color = Color(0.2, 0.6, 0.35, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
+anti_aliasing = false
 
 [sub_resource type="StyleBoxTexture" id="Counter"]
 content_margin_left = 20.0

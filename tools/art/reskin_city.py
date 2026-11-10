@@ -20,8 +20,8 @@ import sys
 
 from PIL import Image
 
-PROJECT = sys.argv[1]
-SRC = Image.open(sys.argv[2]).convert("RGBA")
+PROJECT = sys.argv[1] if len(sys.argv) > 1 else "."
+SRC = Image.open(sys.argv[2]).convert("RGBA") if len(sys.argv) > 2 else None
 T = 32
 
 ROAD_KINDS = {"road", "road_lines_h", "road_lines_v", "road_crossing"}
@@ -247,6 +247,12 @@ def main():
         layer_cells[lname] = {k: names[v] for k, v in decode_layer(b64).items()}
     kind = dict(layer_cells.get("Surroundings", {}))
     kind.update(layer_cells["Maze"])
+    pieces, cell_key = skin(kind)
+    _write(pieces, cell_key, layers, layer_cells, scene, scene_path)
+
+
+def skin(kind):
+    """kind: {(x, y): old tile name} -> (pieces {key: 32x32 image}, cell_key {(x, y): key})"""
 
     def is_wall(c):
         return kind.get(c) in WALL_KINDS
@@ -339,6 +345,10 @@ def main():
 
     # the Kalamansi gate is placed by the game at runtime
     use(("gate",), gate_tile)
+    return pieces, cell_key
+
+
+def _write(pieces, cell_key, layers, layer_cells, scene, scene_path):
 
     keys = sorted(pieces, key=repr)
     cols = 16
@@ -387,4 +397,5 @@ def main():
     print("map rewritten")
 
 
-main()
+if __name__ == "__main__":
+    main()

@@ -9,7 +9,7 @@ using the same file name**, then go back to Godot (it re-imports by itself).
 | Tubig kid (blue team) | `characters/tubig_kid.png` | Square frames side by side, e.g. 4 frames of 24x24 = 96x24. One single image also works. |
 | Sili kid (red team) | `characters/sili_kid.png` | Same as above |
 | "?" scroll | `ui/scroll.png` | Any size (it is scaled to fit) |
-| Title screen background | `backgrounds/title_city.png` | 960x640 is best (it is stretched to cover the screen) |
+| Title screen background | `backgrounds/title_city_pixel.png` | 960x640 pixel city, made by `tools/art/make_title_bg.py` (the kids running on it are drawn by `scenes/title_runners.gd`) |
 | Game title (logo) | `ui/title_logo.png` | Any size, wide shape (now 900x300); fitted into the top of the menu |
 | Host / Join window buttons | `ui/button_start.png`, `button_cancel.png`, `button_connect.png`, `button_join_small.png`, `button_close.png` | Any size; text drawn into the picture |
 | Host a game window (sari-sari store) | `ui/host_store/store_top.png`, `store_body.png`, `store_counter.png`, `chalkboard.png` | Keep the same names and sizes. See the templates below |

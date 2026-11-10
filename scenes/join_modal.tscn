@@ -45,47 +45,51 @@ content_margin_bottom = 9.0
 
 [sub_resource type="StyleBoxFlat" id="ChipSili"]
 bg_color = Color(0.86, 0.24, 0.2, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
 content_margin_left = 8.0
 content_margin_top = 1.0
 content_margin_right = 8.0
 content_margin_bottom = 1.0
+anti_aliasing = false
 
 [sub_resource type="StyleBoxFlat" id="ChipTubig"]
 bg_color = Color(0.2, 0.5, 0.9, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
 content_margin_left = 8.0
 content_margin_top = 1.0
 content_margin_right = 8.0
 content_margin_bottom = 1.0
+anti_aliasing = false
 
 [sub_resource type="StyleBoxFlat" id="ChipHost"]
 bg_color = Color(0.75, 0.55, 0.1, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
 content_margin_left = 8.0
 content_margin_top = 1.0
 content_margin_right = 8.0
 content_margin_bottom = 1.0
+anti_aliasing = false
 
 [sub_resource type="StyleBoxFlat" id="ChipYou"]
 bg_color = Color(0.2, 0.6, 0.35, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
 content_margin_left = 8.0
 content_margin_top = 1.0
 content_margin_right = 8.0
 content_margin_bottom = 1.0
+anti_aliasing = false
 
 [sub_resource type="StyleBoxTexture" id="SlotCard"]
 texture = ExtResource("3")
@@ -117,12 +121,13 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.4, 0.46, 0.6, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
 content_margin_left = 12.0
 content_margin_right = 12.0
+anti_aliasing = false
 
 [sub_resource type="StyleBoxFlat" id="FieldFocus"]
 bg_color = Color(0.08, 0.1, 0.16, 1)
@@ -131,12 +136,13 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.98, 0.82, 0.3, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_right = 0
+corner_radius_bottom_left = 0
 content_margin_left = 12.0
 content_margin_right = 12.0
+anti_aliasing = false
 
 [node name="JoinModal" type="Control"]
 layout_mode = 3

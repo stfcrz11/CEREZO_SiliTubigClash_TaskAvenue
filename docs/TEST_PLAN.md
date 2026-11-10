@@ -28,7 +28,7 @@ defect that loses data, blocks finishing a round, shows another player's data, o
 | R10 | Bot behaviour by difficulty | TC-20 |
 | R11 | Pause (Esc / button), settings saved, pause on app background | TC-21, TC-22, TC-23 |
 | R12 | Player data: name rules, leaderboard, tamper check, reset | DT-01 … DT-10 (`DATA_AND_SECURITY.md`) |
-| R13 | Error handling: host leaves, wrong IP, player leaves | TC-24, TC-25 |
+| R13 | Error handling: host leaves, wrong IP, player leaves; Leave button rules | TC-24, TC-25, TC-27, TC-28 |
 | R14 | Performance: steady 60 FPS on the target phone | TC-26 (`PERFORMANCE.md`) |
 
 ## 3. Test cases and results
@@ -64,6 +64,8 @@ these results are real but are **not** phone tests. Repeat them yourself and add
 | TC-23 | Phone: go to home screen mid-round | Round paused on return | Not run | Phone test needed |
 | TC-24 | Host closes the game mid-round | Clients return to title with "The host left the game." | Tested in an earlier version | Re-test |
 | TC-25 | Join with a wrong IP | "Could not connect…" message | Not re-tested | Not run |
+| TC-27 | Solo: tap LEAVE twice | 1st tap: "Tap LEAVE again…"; 2nd tap: title screen | As expected (`test_leave.gd`, ROLE=solo) | Executed (AI): Pass |
+| TC-28 | LAN, 2 instances on one PC: client taps LEAVE mid-round; host leaves mid-round | Client button locked with message; host warned that the game ends for everyone; client sees "GAME OVER — THE HOST LEFT" with Main Menu | As expected (`test_leave.gd`, ROLE=host + ROLE=client, real time) | Executed (AI): Pass |
 | TC-26 | 60 s Solo Round 4 performance scenario | ≥ 55 FPS average on the phone | PC: 59–60 FPS (see `PERFORMANCE.md`) | Phone test needed |
 
 ## 4. Defect log

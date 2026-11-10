@@ -374,3 +374,22 @@ def icon_pause(px, w, h):
 
 button("", SLATE_HI, (96, 96), icon=icon_pause).save(f"{UI}/button_pause.png")
 print("pause icon saved")
+
+
+def icon_leave(px, w, h):
+    # a door with an arrow pointing out of it
+    cy = (h - 3) // 2
+    for y in range(cy - 4, cy + 5):
+        put(px, 3, y, WHITE)
+    for x in range(3, 7):
+        put(px, x, cy - 4, WHITE)
+        put(px, x, cy + 4, WHITE)
+    for x in range(5, 10):
+        put(px, x, cy, GOLD_HI)
+    for d in (1, 2):
+        put(px, 9 - d, cy - d, GOLD_HI)
+        put(px, 9 - d, cy + d, GOLD_HI)
+
+
+button("", RED, (96, 96), icon=icon_leave).save(f"{UI}/button_leave.png")
+print("leave icon saved")

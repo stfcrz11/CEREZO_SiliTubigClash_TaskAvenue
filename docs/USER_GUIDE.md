@@ -27,6 +27,13 @@
 | Answer | 1–4 or click | Tap |
 | Ask a teammate for help | H | Tap the button |
 | Pause (host) | Esc | Pause button (top right) or Back |
+| Leave the game | Door button, tap twice | Door button, tap twice |
+
+## Leaving
+- **Solo:** leave any time (door button, top right, tap twice).
+- **LAN host:** you can leave any time, but it **ends the game for everyone**.
+- **LAN players:** the door button unlocks when the round is over. If the host leaves,
+  you see "GAME OVER — THE HOST LEFT" and can go back to the main menu.
 
 ## Power-ups (new spots every round)
 - **Halo-Halo coolers** (Tubig): Yelo Shield for 10 s. A Sili who tags you is extinguished.

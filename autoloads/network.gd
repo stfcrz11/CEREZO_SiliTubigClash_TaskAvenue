@@ -8,6 +8,7 @@ signal players_changed
 signal connected_to_host
 signal connection_failed(reason: String)
 signal hosts_found_changed
+signal host_left            # the host closed the game (clients only)
 
 const GAME_PORT := 7777
 const DISCOVERY_PORT := 7778
@@ -240,6 +241,12 @@ func _on_server_disconnected() -> void:
 	last_error = "Could not join: the game is full or already started." if players.is_empty() \
 		else "The host left the game."
 	leave()
+	host_left.emit()
+	# on the end screen (round over, or the host just ended it) stay there so
+	# the player can read it and press Main Menu; anywhere else go to the title
+	var scene := get_tree().current_scene
+	if scene and scene.name == "MazeGame" and GameState.round_state == GameState.RoundState.ENDED:
+		return
 	get_tree().change_scene_to_file(GameState.TITLE_SCENE)
 
 

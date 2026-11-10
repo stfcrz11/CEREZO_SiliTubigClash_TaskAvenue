@@ -158,6 +158,7 @@ Instances → 2 or more, then Run. Host in one window, join from the others.
 | Ask a teammate for help | H (or the button) |
 | Accept / refuse a help request | Y / N (or the buttons) |
 | Pause / Resume | Esc or the pause button, top right (host only; pauses everyone). The game also pauses when the phone app goes to the background |
+| Leave the game | Door button, top right (tap twice). Solo: any time. LAN host: any time, ends the game for everyone. LAN players: only after the round is over |
 | Close a window | Esc |
 | Settings (audio, controls) | Gear button, top right |
 | **Phone:** move | Drag on the right half of the screen (joystick) |

@@ -135,6 +135,7 @@ var _maze_cell_offset := Vector2i.ZERO   # maze grid (0,0) = this Maze layer cel
 var _interact_cooldown: float = 0.0  # local: don't send a station request every frame
 var _effect_label: Label
 var _fps_label: Label
+var _leave_armed_until: int = 0   # msec: a 2nd tap on LEAVE before this leaves
 var _fps_timer: float = 0.0
 var _solo_won: bool = false
 
@@ -169,6 +170,7 @@ func _ready() -> void:
 	quiz_panel.help_requested.connect(_on_help_pressed)
 	$HUD/TopBar/SettingsButton.pressed.connect(func(): $HUD/SettingsPanel.open())
 	$HUD/TopBar/PauseButton.pressed.connect(_toggle_pause)
+	$HUD/TopBar/LeaveButton.pressed.connect(_on_leave_pressed)
 	# phone joystick + RUN button: off while a window covers the game
 	$HUD/TouchControls.is_blocked = func(): return quiz_panel.visible or answer_popup.visible \
 		or end_panel.visible or pause_label.visible or $HUD/SettingsPanel.visible
@@ -198,6 +200,7 @@ func _ready() -> void:
 	_update_hud()
 	_show_message("Waiting for players...", 30.0)
 
+	Network.host_left.connect(_on_host_left)
 	if multiplayer.is_server():
 		Network.peer_ready.connect(_on_peer_ready)
 		multiplayer.peer_disconnected.connect(_host_on_peer_left)
@@ -1521,6 +1524,7 @@ func _process(delta: float) -> void:
 	_update_stations(delta)
 	_check_local_interact(delta)
 	_update_fps_label(delta)
+	_update_leave_button()
 	if is_instance_valid(local_player):
 		_effect_label.text = local_player.effect_text()
 	if message_time > 0.0:
@@ -1695,6 +1699,74 @@ func _on_play_again() -> void:
 func _on_leave() -> void:
 	Network.leave()
 	get_tree().change_scene_to_file(GameState.TITLE_SCENE)
+
+
+## Clients: the host pressed LEAVE mid-round, so the game is over.
+@rpc("authority", "call_remote", "reliable")
+func _round_ended_by_host() -> void:
+	GameState.round_state = GameState.RoundState.ENDED
+	quiz_panel.close()
+	answer_popup.close()
+	help_alert.close()
+	answering_notice.close()
+	pause_label.visible = false
+	var result: Label = $HUD/EndPanel/Margin/VBox/ResultLabel
+	result.text = "GAME OVER — THE HOST LEFT"
+	result.modulate = Color(1.0, 0.75, 0.35)
+	$HUD/EndPanel/Margin/VBox/StatsLabel.text = "No winner this round.\nCorrect answers: %d / %d" % [correct_answers, questions_to_win]
+	play_again_button.visible = false
+	menu_button.text = "Main Menu"
+	end_panel.visible = true
+
+
+## Clients: the connection to the host is gone (it may come after the end screen).
+func _on_host_left() -> void:
+	if not end_panel.visible:
+		return   # Network sends us to the title screen
+	play_again_button.visible = false
+	menu_button.text = "Main Menu"
+	var stats: Label = $HUD/EndPanel/Margin/VBox/StatsLabel
+	stats.text = stats.text.replace("\n\nWaiting for the host to play again...", "")
+	if not stats.text.ends_with("The host left the game."):
+		stats.text += "\n\nThe host left the game."
+
+
+## LEAVE button (top bar). Who may leave during a round:
+##   solo / test mode  - any time
+##   LAN host          - any time, but it ends the game for everyone (the
+##                       host runs the rules), so it asks first
+##   LAN player        - only when the round is over (the end screen)
+## Leaving always takes two taps, so nobody quits by accident.
+func _can_leave_now() -> bool:
+	return not Network.online or multiplayer.is_server() \
+		or GameState.round_state == GameState.RoundState.ENDED
+
+
+func _update_leave_button() -> void:
+	var button: TextureButton = $HUD/TopBar/LeaveButton
+	button.disabled = not _can_leave_now()
+	button.tooltip_text = "Leave the game" if _can_leave_now() \
+		else "You can leave when the round is over"
+
+
+func _on_leave_pressed() -> void:
+	if not _can_leave_now():
+		_show_message("You can leave when the round is over.", 2.0)
+		return
+	if Time.get_ticks_msec() < _leave_armed_until:
+		if Network.online and multiplayer.is_server() and GameState.round_state != GameState.RoundState.ENDED:
+			# tell everyone the game is over before closing the connection
+			_round_ended_by_host.rpc()
+			get_tree().create_timer(0.4).timeout.connect(_on_leave)
+			$HUD/TopBar/LeaveButton.disabled = true
+		else:
+			_on_leave()
+		return
+	_leave_armed_until = Time.get_ticks_msec() + 3000
+	if Network.online and multiplayer.is_server() and GameState.round_state != GameState.RoundState.ENDED:
+		_show_message("Tap LEAVE again to quit — this ENDS the game for everyone.", 3.0)
+	else:
+		_show_message("Tap LEAVE again to quit to the title screen.", 3.0)
 
 
 func _show_message(text: String, seconds: float) -> void:

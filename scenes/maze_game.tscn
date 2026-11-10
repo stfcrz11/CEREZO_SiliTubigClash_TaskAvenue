@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scenes/png_button.gd" id="8"]
 [ext_resource type="Texture2D" path="res://assets/ui/button_settings.png" id="9"]
 [ext_resource type="Texture2D" path="res://assets/ui/button_pause.png" id="pause_png"]
+[ext_resource type="Texture2D" path="res://assets/ui/button_leave.png" id="leave_png"]
 [ext_resource type="PackedScene" path="res://scenes/settings_panel.tscn" id="10"]
 [ext_resource type="Script" path="res://scenes/touch_controls.gd" id="11"]
 [ext_resource type="Texture2D" path="res://assets/ui/panel.png" id="panel_png"]
@@ -94,9 +95,9 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -356.0
+offset_left = -396.0
 offset_top = 9.0
-offset_right = -94.0
+offset_right = -134.0
 offset_bottom = 33.0
 grow_horizontal = 0
 theme_override_font_sizes/font_size = 14
@@ -133,6 +134,23 @@ grow_horizontal = 0
 focus_mode = 0
 tooltip_text = "Pause (Esc)"
 texture_normal = ExtResource("pause_png")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("8")
+
+[node name="LeaveButton" type="TextureButton" parent="HUD/TopBar"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -124.0
+offset_top = 3.0
+offset_right = -92.0
+offset_bottom = 35.0
+grow_horizontal = 0
+focus_mode = 0
+tooltip_text = "Leave the game"
+texture_normal = ExtResource("leave_png")
 ignore_texture_size = true
 stretch_mode = 5
 script = ExtResource("8")

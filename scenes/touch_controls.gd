@@ -3,6 +3,8 @@ extends Control
 ## is on in Settings; on by default on touch screens).
 ##  - Joystick: touch anywhere on the RIGHT half of the screen and drag.
 ##  - RUN button (bottom left): hold to sprint.
+##  - USE button (above RUN): appears next to a power-up station; tap it
+##    to answer the station's question (same as the E key).
 ## They press the same input actions as the keyboard (move_left/right/up/
 ## down, sprint), so player.gd needs no changes.
 ## They only work while you can move (round playing, no window open).
@@ -13,6 +15,10 @@ extends Control
 @export var base_color: Color = Color(1, 1, 1, 0.16)
 @export var knob_color: Color = Color(1, 1, 1, 0.45)
 @export var run_color: Color = Color(0.29, 0.64, 0.91, 0.55)
+@export var use_color: Color = Color(0.93, 0.7, 0.2, 0.75)
+
+## Set by maze_game.gd every frame: true when a station is in reach.
+var use_available: bool = false
 
 ## Set by maze_game.gd: returns true while a window covers the game.
 var is_blocked: Callable = func(): return false
@@ -44,6 +50,10 @@ func _run_center() -> Vector2:
 	return Vector2(110, size.y - 120)
 
 
+func _use_center() -> Vector2:
+	return Vector2(110, size.y - 250)
+
+
 func _is_excluded(pos: Vector2) -> bool:
 	for r in excluded_rects.call():
 		if r.has_point(pos):
@@ -72,7 +82,12 @@ func _input(event: InputEvent) -> void:
 		if event.pressed and Time.get_ticks_msec() < _blocked_until:
 			return
 		if event.pressed:
-			if _run_touch == -1 and event.position.distance_to(_run_center()) <= run_radius * 1.4:
+			if use_available and event.position.distance_to(_use_center()) <= run_radius * 1.3:
+				# a tap = one key press of "interact"
+				Input.action_press("interact")
+				_release_use.call_deferred()
+				get_viewport().set_input_as_handled()
+			elif _run_touch == -1 and event.position.distance_to(_run_center()) <= run_radius * 1.4:
 				_run_touch = event.index
 				Input.action_press("sprint")
 				get_viewport().set_input_as_handled()
@@ -90,6 +105,11 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventScreenDrag and event.index == _stick_touch:
 		_move_stick(event.position)
 		get_viewport().set_input_as_handled()
+
+
+func _release_use() -> void:
+	await get_tree().process_frame
+	Input.action_release("interact")
 
 
 func _move_stick(pos: Vector2) -> void:
@@ -137,3 +157,10 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	var w := font.get_string_size("RUN", HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
 	draw_string(font, r + Vector2(-w / 2.0, 7), "RUN", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)
+	if use_available:
+		var u := _use_center()
+		var pulse := 0.85 + 0.15 * sin(Time.get_ticks_msec() / 150.0)
+		draw_circle(u, run_radius * pulse, use_color)
+		draw_arc(u, run_radius * pulse, 0, TAU, 48, Color(1, 1, 1, 0.8), 3.0)
+		var uw := font.get_string_size("USE", HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
+		draw_string(font, u + Vector2(-uw / 2.0, 7), "USE", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(0.15, 0.1, 0.05))

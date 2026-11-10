@@ -21,7 +21,7 @@ extends Node2D
 ##           Extra Anghang — faster and a wider tag reach for 6 s
 ##   gate    Kalamansi gate (thin walls): answer to squeeze through; a wrong
 ##           answer sprays sour kalamansi and slows you for 3 s
-## Stations are used by pushing into them (walk into the stall or gate).
+## Stations are placed at random each round; press E (USE on phones) at one.
 ##
 ## Networking rule: the HOST decides everything that matters (roles, tags,
 ## rescues, scroll pickups, questions, answers, timer, win/lose) and tells
@@ -134,6 +134,8 @@ var help_locked_by: int = 0          # the answerer who is asking for help now (
 var _maze_cell_offset := Vector2i.ZERO   # maze grid (0,0) = this Maze layer cell
 var _interact_cooldown: float = 0.0  # local: don't send a station request every frame
 var _effect_label: Label
+var _fps_label: Label
+var _fps_timer: float = 0.0
 var _solo_won: bool = false
 
 # host-only bookkeeping
@@ -166,6 +168,7 @@ func _ready() -> void:
 	quiz_panel.choice_made.connect(_on_local_choice)
 	quiz_panel.help_requested.connect(_on_help_pressed)
 	$HUD/TopBar/SettingsButton.pressed.connect(func(): $HUD/SettingsPanel.open())
+	$HUD/TopBar/PauseButton.pressed.connect(_toggle_pause)
 	# phone joystick + RUN button: off while a window covers the game
 	$HUD/TouchControls.is_blocked = func(): return quiz_panel.visible or answer_popup.visible \
 		or end_panel.visible or pause_label.visible or $HUD/SettingsPanel.visible
@@ -187,6 +190,7 @@ func _ready() -> void:
 	_setup_camera()
 	_add_vignette()
 	_add_effect_label()
+	_add_fps_label()
 	if not Network.online:
 		mode_label.text = "Solo"
 	else:
@@ -284,6 +288,41 @@ func _add_effect_label() -> void:
 	$HUD.move_child(_effect_label, $HUD/MessageLabel.get_index())
 
 
+func _add_fps_label() -> void:
+	# Settings -> Show FPS: live numbers for performance testing
+	_fps_label = Label.new()
+	_fps_label.name = "FpsLabel"
+	_fps_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_fps_label.position = Vector2(12, -60)
+	_fps_label.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_fps_label.add_theme_font_size_override("font_size", 13)
+	_fps_label.add_theme_color_override("font_color", Color(0.7, 1.0, 0.7))
+	_fps_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_fps_label.add_theme_constant_override("outline_size", 5)
+	_fps_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$HUD.add_child(_fps_label)
+	_fps_label.anchor_top = 1.0
+	_fps_label.anchor_bottom = 1.0
+	_fps_label.offset_top = -70.0
+	_fps_label.offset_bottom = -52.0
+
+
+func _update_fps_label(delta: float) -> void:
+	_fps_label.visible = GameState.show_fps
+	if not GameState.show_fps:
+		return
+	_fps_timer -= delta
+	if _fps_timer > 0.0:
+		return
+	_fps_timer = 0.25
+	_fps_label.text = "FPS %d  |  %.1f ms  |  mem %.0f MB  |  draws %d  |  nodes %d" % [
+		Performance.get_monitor(Performance.TIME_FPS),
+		Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
+		Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0,
+		Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
+		Performance.get_monitor(Performance.OBJECT_NODE_COUNT)]
+
+
 func world_to_cell(pos: Vector2) -> Vector2i:
 	var c := Vector2i(((pos - maze_origin) / TILE).floor())
 	return c.clamp(Vector2i.ZERO, Vector2i(maze[0].length() - 1, maze.size() - 1))
@@ -354,9 +393,9 @@ func _host_try_begin() -> void:
 		roster.append([id, Network.slot_of(id), roles[id], start])
 		_stats[id] = {"correct": 0, "tags": 0, "rescues": 0}
 	_spawn_all.rpc(roster)
+	_setup_stations.rpc(_host_place_stations())
 	for i in scrolls_on_map:
 		_host_spawn_scroll()
-	_setup_stations.rpc(_host_place_stations())
 	_start_round.rpc(_round_seconds(tubig_n))
 	round_timer.start()
 
@@ -444,6 +483,8 @@ func _host_spawn_scroll() -> void:
 	var taken: Array[Vector2i] = []
 	for s in scrolls.values():
 		taken.append(world_to_cell(s.position))
+	for st in stations:
+		taken.append(st["cell"])   # never on top of a power-up
 	var candidates: Array[Vector2i] = []
 	for cell in floor_cells:
 		if cell in taken or maze[cell.y][cell.x] != ".":
@@ -471,30 +512,42 @@ func _spawn_scroll(id: int, cell: Vector2i) -> void:
 
 
 # ======================================================== quiz stations
-# Stations sit on wall cells next to a road, so nobody walks into one by
-# accident: you push into it (like opening a door) to answer its question.
-#   stall  - Halo-Halo coolers near the 4 corners (Tubig only)
-#   pepper - Bicol Express peppers near the center (Sili only)
+# Power-up stations are placed at random every round, always inside the
+# maze (never on its outer edge) and away from the start spots:
+#   stall  - Halo-Halo coolers, one in each quarter of the maze (Tubig only)
+#   pepper - Bicol Express peppers near the middle (Sili only)
 #   gate   - Kalamansi gates on thin walls between two streets (anyone)
+# Coolers and peppers stand on the road; walk up to one and press E (or
+# tap USE on a phone) to answer its question. Gates: stand next to one.
+const STATION_EDGE := 2          # cells kept free along the maze's outer edge
+const STATION_SPACING := 4.0     # min cells between two stations
+
+
 func _host_place_stations() -> Array:
 	var w: int = maze[0].length()
 	var h: int = maze.size()
 	var chosen: Array[Vector2i] = []
 	var out := []
-	# --- coolers: the stall-able wall cell nearest each corner
-	var corners := [Vector2i(0, 0), Vector2i(w - 1, 0), Vector2i(0, h - 1), Vector2i(w - 1, h - 1)]
-	for i in corners.size():
-		var best := _best_station_cell(func(c): return -Vector2(c - corners[i]).length(), chosen)
-		if best.x >= 0:
-			chosen.append(best)
-			out.append(["stall", best, [_station_road(best)], i])
-	# --- peppers: the 2 nearest the center
-	var center := Vector2(w - 1, h - 1) / 2.0
+	# --- coolers: a random road cell in each quarter of the maze
+	var mid := Vector2i(w / 2, h / 2)
+	var quarters := [Rect2i(0, 0, mid.x, mid.y), Rect2i(mid.x, 0, w - mid.x, mid.y),
+		Rect2i(0, mid.y, mid.x, h - mid.y), Rect2i(mid.x, mid.y, w - mid.x, h - mid.y)]
+	var flavors := [0, 1, 2, 3]
+	flavors.shuffle()
+	for i in quarters.size():
+		var c := _random_station_cell(quarters[i], chosen)
+		if c.x >= 0:
+			chosen.append(c)
+			out.append(["stall", c, [c], flavors[i]])
+	# --- peppers: random road cells in the middle half of the maze
+	var middle := Rect2i(w / 4, h / 4, w / 2, h / 2)
 	for i in 2:
-		var best := _best_station_cell(func(c): return -Vector2(c).distance_to(center), chosen)
-		if best.x >= 0:
-			chosen.append(best)
-			out.append(["pepper", best, [_station_road(best)], i])
+		var c := _random_station_cell(middle, chosen)
+		if c.x < 0:
+			c = _random_station_cell(Rect2i(0, 0, w, h), chosen)
+		if c.x >= 0:
+			chosen.append(c)
+			out.append(["pepper", c, [c], i])
 	# --- gates: thin walls whose detour is long, spread over the map
 	var gate_cells := _gate_candidates(chosen)
 	gate_cells.shuffle()
@@ -504,7 +557,7 @@ func _host_place_stations() -> Array:
 			break
 		var ok := true
 		for g in gates:
-			if Vector2(c - g).length() < 6.0:
+			if Vector2(c - g).length() < 5.0:
 				ok = false
 		if ok:
 			gates.append(c)
@@ -515,34 +568,30 @@ func _host_place_stations() -> Array:
 	return out
 
 
-func _best_station_cell(score: Callable, taken: Array[Vector2i]) -> Vector2i:
-	var best := Vector2i(-1, -1)
-	var best_score := -INF
-	for y in range(1, maze.size() - 1):
-		for x in range(1, maze[0].length() - 1):
-			var c := Vector2i(x, y)
-			if maze[y][x] != "#" or _station_road(c).x < 0:
-				continue
-			var near_taken := false
-			for t in taken:
-				if Vector2(c - t).length() < 4.0:
-					near_taken = true
-			if near_taken:
-				continue
-			var s: float = score.call(c)
-			if s > best_score:
-				best_score = s
-				best = c
-	return best
+## Inside the maze (not on its outer edge), not near a start spot.
+func _inside_maze(c: Vector2i) -> bool:
+	if c.x < STATION_EDGE or c.y < STATION_EDGE or c.x >= maze[0].length() - STATION_EDGE \
+			or c.y >= maze.size() - STATION_EDGE:
+		return false
+	for start in _cells_with("P") + _cells_with("S"):
+		if Vector2(c - start).length() < 3.0:
+			return false
+	return true
 
 
-## The plain road cell next to a wall cell (not a start spot), or (-1, -1).
-func _station_road(wall: Vector2i) -> Vector2i:
-	for d in [Vector2i.DOWN, Vector2i.UP, Vector2i.LEFT, Vector2i.RIGHT]:
-		var c: Vector2i = wall + d
-		if is_floor(c) and maze[c.y][c.x] == ".":
-			return c
-	return Vector2i(-1, -1)
+## A random plain road cell inside `area` that is far enough from `taken`.
+func _random_station_cell(area: Rect2i, taken: Array[Vector2i]) -> Vector2i:
+	var options: Array[Vector2i] = []
+	for c in floor_cells:
+		if not area.has_point(c) or maze[c.y][c.x] != "." or not _inside_maze(c):
+			continue
+		var ok := true
+		for t in taken:
+			if Vector2(c - t).length() < STATION_SPACING:
+				ok = false
+		if ok:
+			options.append(c)
+	return options.pick_random() if not options.is_empty() else Vector2i(-1, -1)
 
 
 func _gate_candidates(taken: Array[Vector2i]) -> Array[Vector2i]:
@@ -570,9 +619,9 @@ func _gate_candidates(taken: Array[Vector2i]) -> Array[Vector2i]:
 				b = c + Vector2i.DOWN
 			else:
 				continue
-			var near_taken := false
+			var near_taken := not _inside_maze(c)
 			for t in taken:
-				if Vector2(c - t).length() < 4.0:
+				if Vector2(c - t).length() < 3.0:
 					near_taken = true
 			# a real shortcut: walking around is at least 10 cells
 			if not near_taken and astar.get_id_path(a, b).size() >= 11:
@@ -591,7 +640,6 @@ func _setup_stations(data: Array) -> void:
 		var variant: int = entry[3]
 		var st := {"id": i, "kind": kind, "cell": cell, "approach": approach, "cooldown": 0.0, "busy": false,
 			"name": "", "node": null, "label": null}
-		var toward_road := Vector2(approach[0] - cell).normalized()
 		var node: Node2D
 		match kind:
 			"stall":
@@ -601,13 +649,13 @@ func _setup_stations(data: Array) -> void:
 				spr.hframes = 4
 				spr.frame = variant % 4
 				node = spr
-				node.position = cell_to_world(cell) + toward_road * 14.0
+				node.position = cell_to_world(cell)
 			"pepper":
 				st["name"] = "Bicol Express pepper"
 				var spr2 := Sprite2D.new()
 				spr2.texture = PEPPER_TEXTURE
 				node = spr2
-				node.position = cell_to_world(cell) + toward_road * 14.0
+				node.position = cell_to_world(cell)
 			"gate":
 				st["name"] = "Kalamansi gate"
 				if gate_coords.x >= 0:
@@ -621,7 +669,7 @@ func _setup_stations(data: Array) -> void:
 		label.text = st["name"]
 		label.scale = Vector2(0.4, 0.4)
 		label.size = Vector2(300, 30)
-		label.position = Vector2(-60, -30)
+		label.position = Vector2(-60, -44)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 15)
 		label.add_theme_color_override("font_outline_color", Color.BLACK)
@@ -656,34 +704,52 @@ func _can_use_station(st: Dictionary, p: Node2D) -> bool:
 	return true
 
 
-## Local player: pushing into a station's wall asks the host to open its quiz.
+## The station the local player could use right now (-1 = none):
+## standing on a cooler / pepper, or right next to a gate.
+func _station_in_reach(p: Node2D) -> int:
+	var here := world_to_cell(p.global_position)
+	var best := -1
+	var best_d := INF
+	for st in stations:
+		if not _can_use_station(st, p):
+			continue
+		var d: float = p.global_position.distance_to(cell_to_world(st["cell"]))
+		var in_reach: bool = (d <= 44.0 and here in st["approach"]) if st["kind"] == "gate" else d <= 30.0
+		if in_reach and d < best_d:
+			best_d = d
+			best = st["id"]
+	return best
+
+
+## Local player: E (or USE on a phone) at a station asks the host for its quiz.
 func _check_local_interact(delta: float) -> void:
 	_interact_cooldown -= delta
 	var me = local_player
+	var touch: Control = $HUD/TouchControls
 	if not is_instance_valid(me) or GameState.round_state != GameState.RoundState.PLAYING:
+		touch.use_available = false
 		return
-	var here := world_to_cell(me.global_position)
+	var key := "tap USE" if GameState.touch_controls else "press E"
+	var reach := _station_in_reach(me) if not (me.frozen or me.answering or me.stun_time > 0.0) else -1
 	for st in stations:
 		var near: bool = me.global_position.distance_to(cell_to_world(st["cell"])) < 75.0
 		st["label"].visible = near and _can_use_station(st, me)
 		if near:
-			st["label"].text = st["name"] + (("  (rest %ds)" % ceili(st["cooldown"])) if st["cooldown"] > 0.0 else "  - push to answer")
-	if _interact_cooldown > 0.0 or me.frozen or me.answering or me.stun_time > 0.0:
-		return
-	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	if input == Vector2.ZERO:
-		return
-	for st in stations:
-		if st["cooldown"] > 0.0 or not _can_use_station(st, me) or not here in st["approach"]:
-			continue
-		var into := Vector2(st["cell"] - here).normalized()
-		if input.normalized().dot(into) > 0.6 and me.global_position.distance_to(cell_to_world(st["cell"])) < 34.0:
-			_interact_cooldown = 1.0
-			if multiplayer.is_server():
-				_host_try_interact(multiplayer.get_unique_id(), st["id"])
+			if st["cooldown"] > 0.0:
+				st["label"].text = "%s  (rest %ds)" % [st["name"], ceili(st["cooldown"])]
+			elif st["id"] == reach:
+				st["label"].text = "%s - %s!" % [st["name"], key]
 			else:
-				_request_interact.rpc_id(1, st["id"])
-			return
+				st["label"].text = st["name"]
+	touch.use_available = reach >= 0 and stations[reach]["cooldown"] <= 0.0
+	if reach < 0 or _interact_cooldown > 0.0 or stations[reach]["cooldown"] > 0.0:
+		return
+	if Input.is_action_just_pressed("interact"):
+		_interact_cooldown = 0.5
+		if multiplayer.is_server():
+			_host_try_interact(multiplayer.get_unique_id(), reach)
+		else:
+			_request_interact.rpc_id(1, reach)
 
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -700,8 +766,9 @@ func _host_try_interact(peer: int, station_id: int) -> void:
 	var p = player_by_id[peer]
 	if not station_ready(station_id, p) or p.frozen or p.answering or p.stun_time > 0.0:
 		return
-	if p.global_position.distance_to(cell_to_world(st["cell"])) > 42.0:
-		return
+	var d: float = p.global_position.distance_to(cell_to_world(st["cell"]))
+	if d > (52.0 if st["kind"] == "gate" else 36.0):
+		return   # too far (a little slack for network delay)
 	st["busy"] = true
 	match st["kind"]:
 		"stall":
@@ -928,6 +995,7 @@ func _question_result(qid: int, position: int, correct: bool, total: int) -> voi
 		quiz_panel.close()
 		my_question = -1
 		Sound.play("correct" if correct else "wrong")
+		GameState.buzz(40 if correct else 140)
 	if q["full_stop"]:
 		answering_notice.close()
 	if mine:
@@ -1263,6 +1331,8 @@ func _shield_block(tubig_id: int, sili_id: int) -> void:
 	if s:
 		s.apply_effect("stun", sili_stun_time)
 	Sound.play("correct")
+	if (t and t.is_local()) or (s and s.is_local()):
+		GameState.buzz(80)
 	_show_message("YELO SHIELD! %s's tag was blocked — %s is extinguished for %d s!" % [
 		Network.player_name_of(tubig_id), Network.player_name_of(sili_id), int(sili_stun_time)], 3.0)
 
@@ -1275,6 +1345,7 @@ func _tubig_caught(id: int) -> void:
 	t.set_caught()
 	if t.is_local():
 		help_alert.close()
+		GameState.buzz(250)
 	var free := _free_tubig_count()
 	if free > 0:
 		_show_message("%s was caught! %d Tubig still free — touch them and answer to splash them free!" % [Network.player_name_of(t.peer_id), free], 3.0)
@@ -1449,6 +1520,7 @@ func _process(delta: float) -> void:
 	_follow_local_player()
 	_update_stations(delta)
 	_check_local_interact(delta)
+	_update_fps_label(delta)
 	if is_instance_valid(local_player):
 		_effect_label.text = local_player.effect_text()
 	if message_time > 0.0:
@@ -1587,6 +1659,8 @@ func _end_round(team_won: bool, title: String, stats: String, results: Array) ->
 	menu_button.text = "Main Menu" if not Network.online else "Leave"
 	if Network.solo_bot:
 		_solo_won = team_won
+		if team_won:
+			GameState.record_solo_clear(Network.solo_round)
 		var info := Network.solo_round_info()
 		if team_won and Network.is_last_solo_round():
 			$HUD/EndPanel/Margin/VBox/StatsLabel.text += "\n\nALL %d ROUNDS CLEARED! Kampeon ka!" % Network.SOLO_ROUNDS.size()
@@ -1637,8 +1711,19 @@ func _update_hud() -> void:
 
 # ================================================================ pause
 func _unhandled_input(event: InputEvent) -> void:
-	if not event.is_action_pressed("ui_cancel"):
-		return
+	if event.is_action_pressed("ui_cancel"):
+		_toggle_pause()
+
+
+func _notification(what: int) -> void:
+	# the phone went to the home screen / another app: pause the round so
+	# the player doesn't get caught while away (host decides, as always)
+	if what == NOTIFICATION_APPLICATION_PAUSED or (what == NOTIFICATION_APPLICATION_FOCUS_OUT and OS.has_feature("mobile")):
+		if is_inside_tree() and multiplayer.is_server() and GameState.round_state == GameState.RoundState.PLAYING:
+			_set_paused.rpc(true)
+
+
+func _toggle_pause() -> void:
 	if not multiplayer.is_server():
 		_show_message("Only the host can pause.", 1.5)
 		return

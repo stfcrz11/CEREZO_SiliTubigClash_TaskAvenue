@@ -8,7 +8,16 @@ Everything below comes from the actual files in this folder: `.gd`, `.tscn`,
 `project.godot`, `README.md` and `assets/`. Anything I could not confirm from the files is
 marked **[CHECK]**.
 
-> **Update 2026-11-10 (not yet committed).** Sections below describe the
+> **v1.1.0 (2026-11-10, second update).** Pixel-art title screen and windows
+> (`tools/art/make_ui.py`, `make_title_bg.py`, `scenes/title_runners.gd`), CREDITS
+> window, version label. Power-up stations now stand on road cells at random spots
+> inside the maze each round and are used with **E** (phone: USE button). Pause
+> button, auto-pause on app background, vibration (Android VIBRATE permission),
+> Show FPS readout, name validation, leaderboard checksum, Reset my data, best solo
+> round saved. Freepik title background removed. Course documents in `docs/`;
+> test scripts in `tools/tests/`. The APK in `build/` is still v1.0.
+>
+> **Update 2026-11-10 (first).** Sections below describe the
 > 09-27 state; these changes come on top:
 > - **Quiz mechanics** (`maze_game.gd`, every quiz is a question "kind"):
 >   Buhos-Tubig rescue quiz (touch a frozen teammate + 1 question), Huling

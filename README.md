@@ -9,6 +9,22 @@ entry), where I served as tester and support developer.
 **Naming convention:** PEBSIT004_Prelim_Cerezo_TaskAvenue
 **Category:** Board Games or Brain Games (trivia chase)
 
+| Project information | |
+|---|---|
+| Game title | Sili-Tubig: Task Avenue |
+| Version | **1.1.0** (Android version code 2) — `application/config/version` in `project.godot` |
+| Theme | Board Games or Brain Games (trivia chase), built on the Filipino street game *sili-tubig* — see `docs/THEME_AND_DESIGN.md` |
+| Platform | Android phones (landscape, touch controls); Windows for development and LAN testing |
+| Engine | Godot 4.7.2-stable, GDScript |
+| Repository | https://github.com/stfcrz11/CEREZO_SiliTubigClash_TaskAvenue |
+| Current commit | run `git log -1 --format=%h` and record it here for each weekly submission |
+| Install | Android: copy `build/SiliTubig_TaskAvenue.apk` to the phone and open it (allow "install unknown apps"). PC: open the folder in Godot 4.7 and press F5 |
+| Known limitations | see "Incomplete / not attempted" and "Known issues" below |
+
+Course documents (MOBILE DEV 002, Weeks 13-18) are in [`docs/`](docs/): theme and
+design, data and security, test plan, performance, usability test kit,
+responsible development (AI and asset disclosure), user guide, release checklist.
+
 ## Concept
 
 A LAN multiplayer chase game based on the Filipino street game sili-tubig,
@@ -39,9 +55,17 @@ Filipino culture (mythology, epics, traditions, dances, games).
   free to run.
 - **Result:** the player who answered gets a big **TAMA! / MALI! / TIME'S UP!**
   popup with the answer and a fun fact; everyone else sees a short line like
-  "Stef answered correctly". Questions come at random from a bank of 32.
-- A Sili touching a Tubig freezes it. A teammate touching a frozen Tubig
-  rescues it (after 1 s) and gives 1.5 s of safety plus a speed burst.
+  "Stef answered correctly". Questions come at random from 49 general
+  questions, 16 hard ones (self-thaw) and 14 bugtong riddles (peppers).
+- A Sili touching a Tubig freezes it (an ice block). **Buhos-Tubig:** a
+  teammate who touches a frozen Tubig must answer 1 question to splash them
+  free (1.5 s of safety plus a speed burst). **Huling Hirit:** a Tubig with no
+  one to save them can thaw themselves with 2 hard questions in a row.
+- **Power-up stations**, in new random spots inside the maze every round
+  (press **E** / tap **USE**): Halo-Halo coolers give a Tubig a Yelo Shield,
+  Bicol Express peppers give a Sili Extra Anghang (bugtong riddles), and
+  Kalamansi gates let anyone squeeze through a shortcut.
+- **Solo vs Bot:** 4 rounds from Easy (1 bot) to Labuyo (3 bots).
 - Tubigs get a warning when a Sili is close: "!! SILI NEARBY !!", then
   "RUN! SILI IS RIGHT THERE!", with a flashing red screen edge.
 - **Leaderboard:** points per round (win 3, correct answer 1, tag 1,
@@ -129,10 +153,11 @@ Instances → 2 or more, then Run. Host in one window, join from the others.
 |---|---|
 | Move | W A S D or arrow keys |
 | Sprint | Shift or Space (drains stamina) |
+| Use a power-up station | E (phone: USE button, appears next to a station) |
 | Answer | Click / tap a choice, or keys 1–4 |
 | Ask a teammate for help | H (or the button) |
 | Accept / refuse a help request | Y / N (or the buttons) |
-| Pause / Resume | Esc (host only; pauses everyone) |
+| Pause / Resume | Esc or the pause button, top right (host only; pauses everyone). The game also pauses when the phone app goes to the background |
 | Close a window | Esc |
 | Settings (audio, controls) | Gear button, top right |
 | **Phone:** move | Drag on the right half of the screen (joystick) |
@@ -158,7 +183,8 @@ Instances → 2 or more, then Run. Host in one window, join from the others.
   teammate and answer 1 question; **Huling Hirit** self-thaw: 2 hard
   questions in a row when no teammate can help (2 per round in solo);
   Sili-nearby warning
-- Quiz stations (push into them): **Halo-Halo coolers** (Yelo Shield 10 s;
+- Quiz stations, in new random spots inside the maze every round (press **E**,
+  or tap **USE** on a phone): **Halo-Halo coolers** (Yelo Shield 10 s;
   a Sili who tags a shielded Tubig is extinguished 5 s), **Bicol Express
   peppers** (Sili solves a bugtong: faster + wider tag reach 6 s),
   **Kalamansi gates** (answer to squeeze through a shortcut; wrong = slowed
@@ -248,7 +274,7 @@ Result (success / documented error): **Success** (2026-09-27, Godot 4.7.2).
 
 ## Authorized assets
 
-- **Title background:** "Sunset in the city background" by **inbevel13**,
+- **Title background (until v1.0; no longer in the game):** "Sunset in the city background" by **inbevel13**,
   downloaded from Freepik under the **Freepik Premium license**: free to use
   in personal and commercial projects and to modify; it may not be
   sub-licensed, resold, rented, or included in an online/offline archive or

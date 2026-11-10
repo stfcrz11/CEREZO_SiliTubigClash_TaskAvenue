@@ -38,8 +38,9 @@ func _ready() -> void:
 	help_button.pressed.connect(_ask_help)
 
 
+## seconds < 0 = the default answer_time (scrolls); quiz stations pass their own.
 func show_question(q: Dictionary, shown_order: Array, header: String, answerer_is_me: bool,
-		answerer_name: String, can_ask_help: bool = false) -> void:
+		answerer_name: String, can_ask_help: bool = false, seconds: float = -1.0) -> void:
 	entry = q
 	order = shown_order
 	header_label.text = header
@@ -55,7 +56,7 @@ func show_question(q: Dictionary, shown_order: Array, header: String, answerer_i
 	help_button.disabled = false
 	help_button.text = "ASK A TEAMMATE FOR HELP (H)"
 	_help_used = false
-	time_left = answer_time
+	time_left = answer_time if seconds < 0.0 else seconds
 	waiting = true
 	visible = answerer_is_me
 	if answerer_is_me:

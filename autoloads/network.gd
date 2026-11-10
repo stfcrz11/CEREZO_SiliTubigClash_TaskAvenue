@@ -14,8 +14,19 @@ const DISCOVERY_PORT := 7778
 const MAX_PLAYERS := 6
 const MIN_PLAYERS := 2
 const BEACON := "SILITUBIG_TASKAVENUE"
-const BOT_ID := 999                 # SOLO VS BOT: the computer Sili's player id
-const BOT_NAME := "Bot Sili"
+## SOLO VS BOT: the computer Silis' player ids and names (up to 3 bots).
+const BOT_IDS := [991, 992, 993]
+const BOT_NAMES := ["Bot Labuyo", "Bot Siling Haba", "Bot Bicol"]
+
+## SOLO VS BOT rounds, easy to difficult. Win a round to unlock the next;
+## lose and you retry the same round. "difficulty" tunes the bots
+## (scenes/bot_sili.gd); "team" bots share what they see and split up.
+const SOLO_ROUNDS := [
+	{"name": "Round 1 - Easy", "difficulty": "easy", "bots": 1, "questions": 6},
+	{"name": "Round 2 - Medium", "difficulty": "medium", "bots": 1, "questions": 8},
+	{"name": "Round 3 - Hard", "difficulty": "hard", "bots": 2, "questions": 8},
+	{"name": "Round 4 - Labuyo", "difficulty": "labuyo", "bots": 3, "questions": 10},
+]
 
 var players: Dictionary = {}        # peer_id -> slot (0..5)
 var player_names: Dictionary = {}   # peer_id -> chosen display name
@@ -27,6 +38,7 @@ var host_id: int = 0                # random id of the game this device hosts
 var ready_peers: Dictionary = {}    # host: peers whose maze scene has loaded
 var round_number: int = 0           # host: used to rotate the Sili role
 var solo_bot: bool = false          # SOLO VS BOT: you are Tubig, the computer is Sili
+var solo_round: int = 1             # SOLO VS BOT: which round of SOLO_ROUNDS (1-4)
 
 signal peer_ready(id: int)
 
@@ -45,20 +57,31 @@ func _ready() -> void:
 
 # ------------------------------------------------------------ modes
 ## with_bot = false: test mode with no Sili (maze_game.tscn run directly).
-## with_bot = true: SOLO VS BOT from the title screen's PLAY window.
-func play_solo(with_bot: bool = false) -> void:
+## with_bot = true: SOLO VS BOT from the title screen's PLAY window;
+## round = 1-4 picks how many bots there are and how smart they are.
+func play_solo(with_bot: bool = false, round: int = 1) -> void:
 	leave()
 	players = {1: 0}
 	player_names = {1: GameState.player_name}
+	solo_round = clampi(round, 1, SOLO_ROUNDS.size())
 	if with_bot:
-		players[BOT_ID] = 1
-		player_names[BOT_ID] = BOT_NAME
+		for i in solo_round_info()["bots"]:
+			players[BOT_IDS[i]] = i + 1
+			player_names[BOT_IDS[i]] = BOT_NAMES[i]
 	solo_bot = with_bot
 	online = false
 
 
 func is_bot(peer_id: int) -> bool:
-	return solo_bot and peer_id == BOT_ID
+	return solo_bot and peer_id in BOT_IDS
+
+
+func solo_round_info() -> Dictionary:
+	return SOLO_ROUNDS[clampi(solo_round, 1, SOLO_ROUNDS.size()) - 1]
+
+
+func is_last_solo_round() -> bool:
+	return solo_round >= SOLO_ROUNDS.size()
 
 
 func host_game() -> Error:
@@ -133,7 +156,11 @@ static func sili_count_for(player_count: int) -> int:
 ## player list every round so everyone gets a turn.
 func assign_roles() -> Dictionary:
 	if solo_bot:
-		return {1: "tubig", BOT_ID: "sili"}   # you always run from the bot
+		var solo_roles := {1: "tubig"}   # you always run from the bots
+		for id in players:
+			if is_bot(id):
+				solo_roles[id] = "sili"
+		return solo_roles
 	var ids := sorted_ids()
 	var roles := {}
 	for id in ids:

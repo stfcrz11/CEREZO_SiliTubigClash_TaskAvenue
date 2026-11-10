@@ -31,8 +31,9 @@ func _ready() -> void:
 	visible = false
 
 
+## result_line: replaces the "Correct answers" line (quiz stations, rescues).
 func open(correct: bool, timed_out: bool, picker_name: String, right_answer: String,
-		fact: String, score: int, goal: int) -> void:
+		fact: String, score: int, goal: int, result_line: String = "") -> void:
 	var color := correct_color if correct else (timeout_color if timed_out else wrong_color)
 	big_word.text = correct_word if correct else (timeout_word if timed_out else wrong_word)
 	big_word.add_theme_color_override("font_color", color)
@@ -40,7 +41,7 @@ func open(correct: bool, timed_out: bool, picker_name: String, right_answer: Str
 	answer_label.text = answer_text % right_answer
 	fact_label.text = fact
 	fact_label.visible = not fact.is_empty()
-	score_label.text = score_text % [score, goal]
+	score_label.text = result_line if not result_line.is_empty() else score_text % [score, goal]
 	# border takes the result color
 	var style := panel.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
 	if style:

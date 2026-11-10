@@ -11,6 +11,7 @@ var tile := 40.0
 var local_player: Node2D
 var camera: Camera2D
 var scrolls: Dictionary = {}        # the game's scroll list (id -> scroll node), shared
+var stations: Array = []            # the game's quiz stations (coolers, peppers, gates), shared
 
 const BUILDING_COLOR := Color(0.62, 0.3, 0.24)
 const ROAD_COLOR := Color(0.3, 0.31, 0.34)
@@ -20,6 +21,7 @@ const TUBIG_DOT := Color(0.3, 0.7, 1.0)
 const SILI_DOT := Color(1.0, 0.35, 0.3)
 const SCROLL_DOT := Color(1.0, 0.85, 0.2)
 const SCROLL_EDGE := Color(0.35, 0.22, 0.05)
+const STATION_COLORS := {"stall": Color(0.55, 0.9, 1.0), "pepper": Color(1.0, 0.3, 0.2), "gate": Color(0.75, 0.95, 0.25)}
 
 
 func set_maze(layout: Array, origin: Vector2, tile_size: float) -> void:
@@ -40,6 +42,10 @@ func set_camera(view_camera: Camera2D) -> void:
 
 func set_scrolls(scroll_list: Dictionary) -> void:
 	scrolls = scroll_list   # the same Dictionary the game updates, so it stays current
+
+
+func set_stations(station_list: Array) -> void:
+	stations = station_list   # Halo-Halo coolers, Bicol Express peppers, Kalamansi gates
 
 
 func _process(_delta: float) -> void:
@@ -63,6 +69,15 @@ func _draw() -> void:
 		for x in columns:
 			var cell_rect: Rect2 = Rect2(origin + Vector2(x, y) * cell_size, Vector2.ONE * cell_size)
 			draw_rect(cell_rect, BUILDING_COLOR if maze[y][x] == "#" else ROAD_COLOR)
+
+	for st in stations:
+		# small squares: cyan = Halo-Halo cooler, red = Bicol Express pepper, green = Kalamansi gate
+		var c: Vector2i = st["cell"]
+		var col: Color = STATION_COLORS.get(st["kind"], Color.WHITE)
+		if st["cooldown"] > 0.0:
+			col = col.darkened(0.55)
+		var r := Rect2(origin + Vector2(c) * cell_size, Vector2.ONE * cell_size).grow(-cell_size * 0.15)
+		draw_rect(r, col)
 
 	if is_instance_valid(camera):
 		# what the camera sees, clipped to the map

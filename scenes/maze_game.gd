@@ -3,9 +3,25 @@ extends Node2D
 ## 2-6 players over LAN. Silis (1 for 2-4 players, 2 for 5-6) chase; the
 ## Tubig team picks up "?" scrolls and must answer 10 Filipino-culture
 ## questions correctly before time runs out.
-## SOLO VS BOT: you are the only Tubig and a computer Sili (bot_sili.gd)
-## chases you. Bot rounds don't go on the leaderboard.
+## SOLO VS BOT: you are the only Tubig and 1-3 computer Silis (bot_sili.gd)
+## chase you, over 4 rounds from easy to difficult (Network.SOLO_ROUNDS).
+## Bot rounds don't go on the leaderboard.
 ## Round states: READY -> PLAYING <-> PAUSED, PLAYING <-> QUESTION, -> ENDED.
+##
+## Quizzes control freezing, rescuing and power-ups (every one of them is a
+## "question" with a kind — see KINDS):
+##   scroll  "?" scroll: a correct answer counts toward the Tubig goal
+##   rescue  Buhos-Tubig: touch a frozen teammate and answer 1 question to
+##           splash them free
+##   thaw    Huling Hirit: a frozen Tubig with no teammate to save them can
+##           thaw themselves with 2 harder questions in a row
+##   shield  Halo-Halo cooler (4 corner stalls): Yelo Shield for 10 s. A Sili
+##           who tags a shielded Tubig is extinguished for 5 s instead
+##   turbo   Bicol Express pepper (center, Sili only): solve a bugtong for
+##           Extra Anghang — faster and a wider tag reach for 6 s
+##   gate    Kalamansi gate (thin walls): answer to squeeze through; a wrong
+##           answer sprays sour kalamansi and slows you for 3 s
+## Stations are used by pushing into them (walk into the stall or gate).
 ##
 ## Networking rule: the HOST decides everything that matters (roles, tags,
 ## rescues, scroll pickups, questions, answers, timer, win/lose) and tells
@@ -18,14 +34,27 @@ const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const SCROLL_SCENE := preload("res://scenes/question_scroll.tscn")
 const ButtonStyle := preload("res://scenes/ui_button_style.gd")
 const BotSili := preload("res://scenes/bot_sili.gd")
+const COOLER_TEXTURE := preload("res://assets/props/cooler_stalls.png")
+const PEPPER_TEXTURE := preload("res://assets/props/bicol_pepper.png")
 
 ## The maze is NOT written here any more: open scenes/city_map.tscn and
 ## paint it on the "Maze" TileMapLayer (tiles come from
 ## assets/walls/city_tileset.tres). Any tile with a collision shape is a
 ## wall, every other tile is road. Start spots are the Marker2D nodes under
 ## "Starts" (TubigStart1-4, SiliStart1-2) — drag them in the editor.
-const TILE := 40                  # must match the TileSet's tile size (40 x 40 px)
+const TILE := 40                  # one maze cell in world pixels (32 px tiles, layer scale 1.25)
 const CAMERA_MARGIN := 3          # tiles of city the camera may show past the maze edge
+
+## Question kinds: which question list they use and how long you have.
+const KINDS := {
+	"scroll": {"pool": "normal", "time": 15.0},
+	"rescue": {"pool": "normal", "time": 12.0},
+	"thaw": {"pool": "hard", "time": 12.0},
+	"shield": {"pool": "normal", "time": 10.0},
+	"turbo": {"pool": "bugtong", "time": 12.0},
+	"gate": {"pool": "normal", "time": 10.0},
+}
+const STALL_NAMES := ["Halo-Halo", "Mais Con Yelo", "Sago't Gulaman", "Buko Pandan"]
 
 @export var questions_to_win: int = 10
 @export var round_time: float = 180.0          # round length with 1 Tubig (3:00)
@@ -41,6 +70,21 @@ const CAMERA_MARGIN := 3          # tiles of city the camera may show past the m
 @export var grace_after_question: float = 1.0
 @export var feedback_time: float = 1.5        # how long the TAMA!/MALI! popup stays (the answerer waits this long)
 @export var camera_zoom: float = 2.5          # higher = closer; 2.5 shows about 10 x 6 tiles
+@export_group("Quiz stations")
+@export var shield_time: float = 10.0          # Halo-Halo cooler: Yelo Shield
+@export var sili_stun_time: float = 5.0        # Sili who tags a shielded Tubig
+@export var turbo_time: float = 6.0            # Bicol Express: Extra Anghang
+@export var turbo_tag_scale: float = 1.6       # wider tag reach while Extra Anghang
+@export var slow_time: float = 3.0             # wrong answer at a Kalamansi gate
+@export var stall_cooldown: float = 20.0       # a cooler rests after giving a shield
+@export var pepper_cooldown: float = 15.0
+@export var retry_cooldown: float = 6.0        # after a wrong answer at a station
+@export var gates_on_map: int = 4
+@export_group("Self-thaw (Huling Hirit)")
+@export var solo_self_thaws: int = 2           # when you are the only Tubig
+@export var team_self_thaws: int = 1           # per Tubig, when teammates are too far
+@export var self_thaw_wait: float = 5.0        # frozen this long with no teammate near
+@export var self_thaw_far: float = 240.0       # "no teammate near" = none within 6 tiles
 
 @onready var maze_layer: TileMapLayer = $Map/Maze
 @onready var starts_root: Node2D = $Map/Starts
@@ -72,6 +116,8 @@ var tubigs: Array = []
 var silis: Array = []
 var player_by_id: Dictionary = {}
 var scrolls: Dictionary = {}        # scroll id -> node
+var stations: Array = []            # quiz stations: {id, kind, cell, approach, name, node, label, cooldown}
+var bot_intel: Dictionary = {}      # SOLO team bots: where a Tubig was last seen {pos, time}
 var correct_answers: int = 0
 var questions_asked: int = 0
 var time_left: float = 0.0
@@ -85,15 +131,24 @@ var popup_question: int = -1         # the question the TAMA!/MALI! popup is abo
 var _help_queue: Array = []          # help requests waiting to be shown to me
 var _help_showing: int = -1          # the help request in the alert right now
 var help_locked_by: int = 0          # the answerer who is asking for help now (0 = nobody)
+var _maze_cell_offset := Vector2i.ZERO   # maze grid (0,0) = this Maze layer cell
+var _interact_cooldown: float = 0.0  # local: don't send a station request every frame
+var _effect_label: Label
+var _solo_won: bool = false
 
 # host-only bookkeeping
 var _begun: bool = false
 var _next_scroll_id: int = 0
-var _question_deck: Array = []
+var _decks: Dictionary = {}         # question list name -> shuffled indexes left
 var _questions: Dictionary = {}     # open questions (host): qid -> info
 var _help_active: int = -1          # host: the ONE question with an open help request
 var _stats: Dictionary = {}         # host: peer id -> {correct, tags, rescues} this round
 var _next_question_id: int = 0
+var _rescuing: Dictionary = {}      # host: frozen Tubig id -> rescue question id
+var _thawing: Dictionary = {}       # host: frozen Tubig id -> self-thaw question id
+var _thaw_uses: Dictionary = {}     # host: Tubig id -> self-thaws used this round
+var _retry_at: Dictionary = {}      # host: "peer:what" -> msec when they may try again
+var _bots: Dictionary = {}          # host: bot peer id -> bot_sili.gd controller
 
 
 func _ready() -> void:
@@ -104,6 +159,8 @@ func _ready() -> void:
 	$HUD.visible = true
 	if Network.players.is_empty():
 		Network.play_solo()   # scene started directly (e.g. from the editor)
+	if Network.solo_bot:
+		questions_to_win = Network.solo_round_info()["questions"]
 	_build_maze()
 	GameState.round_state = GameState.RoundState.READY
 	quiz_panel.choice_made.connect(_on_local_choice)
@@ -126,8 +183,10 @@ func _ready() -> void:
 	minimap.set_maze(maze, maze_origin, TILE)
 	minimap.set_camera(camera)
 	minimap.set_scrolls(scrolls)   # yellow scroll dots for Tubig players
+	minimap.set_stations(stations)
 	_setup_camera()
 	_add_vignette()
+	_add_effect_label()
 	if not Network.online:
 		mode_label.text = "Solo"
 	else:
@@ -149,7 +208,8 @@ func _ready() -> void:
 func _build_maze() -> void:
 	# Turn the painted TileMapLayer into a simple grid the game rules use.
 	var used := maze_layer.get_used_rect()
-	maze_origin = maze_layer.global_position + Vector2(used.position * TILE)
+	_maze_cell_offset = used.position
+	maze_origin = maze_layer.to_global(maze_layer.map_to_local(used.position)) - Vector2(TILE, TILE) / 2.0
 	for y in used.size.y:
 		var row := ""
 		for x in used.size.x:
@@ -210,6 +270,20 @@ func _add_vignette() -> void:
 	$HUD.move_child(vignette, 0)   # under the minimap and the rest of the HUD
 
 
+func _add_effect_label() -> void:
+	# your power-ups / penalties, under the top bar (e.g. "YELO SHIELD 7s")
+	_effect_label = Label.new()
+	_effect_label.name = "EffectLabel"
+	_effect_label.position = Vector2(16, 44)
+	_effect_label.add_theme_font_size_override("font_size", 16)
+	_effect_label.add_theme_color_override("font_color", Color(0.75, 0.95, 1.0))
+	_effect_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_effect_label.add_theme_constant_override("outline_size", 6)
+	_effect_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$HUD.add_child(_effect_label)
+	$HUD.move_child(_effect_label, $HUD/MessageLabel.get_index())
+
+
 func world_to_cell(pos: Vector2) -> Vector2i:
 	var c := Vector2i(((pos - maze_origin) / TILE).floor())
 	return c.clamp(Vector2i.ZERO, Vector2i(maze[0].length() - 1, maze.size() - 1))
@@ -223,6 +297,23 @@ func random_floor_cell() -> Vector2i:
 	return floor_cells.pick_random()
 
 
+func is_floor(cell: Vector2i) -> bool:
+	return cell.x >= 0 and cell.y >= 0 and cell.y < maze.size() and cell.x < maze[0].length() \
+		and maze[cell.y][cell.x] != "#"
+
+
+## The road cell closest to `cell` (itself if it is road).
+func nearest_floor_cell(cell: Vector2i) -> Vector2i:
+	if is_floor(cell):
+		return cell
+	for r in range(1, 6):
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				if max(absi(dx), absi(dy)) == r and is_floor(cell + Vector2i(dx, dy)):
+					return cell + Vector2i(dx, dy)
+	return cell
+
+
 func _cells_with(ch: String) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	for y in maze.size():
@@ -230,6 +321,11 @@ func _cells_with(ch: String) -> Array[Vector2i]:
 			if maze[y][x] == ch:
 				out.append(Vector2i(x, y))
 	return out
+
+
+## How far a Sili can tag from (wider with Extra Anghang).
+func tag_radius_of(sili: Node2D) -> float:
+	return tag_distance * (turbo_tag_scale if sili.turbo_time > 0.0 else 1.0)
 
 
 # ========================================================= round start
@@ -241,20 +337,41 @@ func _host_try_begin() -> void:
 	if _begun or not Network.everyone_ready():
 		return
 	_begun = true
-	var roles := Network.assign_roles()   # 2-4 players: 1 Sili, 5-6: 2 Silis
+	var roles := Network.assign_roles()   # 2-4 players: 1 Sili, 5-6: 2 Silis; solo: 1-3 bots
+	var tubig_starts := _cells_with("P")
+	var sili_starts := _cells_with("S")
 	var roster := []
+	var tubig_n := 0
+	var sili_n := 0
 	for id in Network.sorted_ids():
-		roster.append([id, Network.slot_of(id), roles[id]])
+		var start: Vector2i
+		if roles[id] == "tubig":
+			start = tubig_starts[tubig_n % tubig_starts.size()]
+			tubig_n += 1
+		else:
+			start = sili_starts[sili_n] if sili_n < sili_starts.size() else _far_cell_from(tubig_starts[0])
+			sili_n += 1
+		roster.append([id, Network.slot_of(id), roles[id], start])
 		_stats[id] = {"correct": 0, "tags": 0, "rescues": 0}
 	_spawn_all.rpc(roster)
 	for i in scrolls_on_map:
 		_host_spawn_scroll()
-	var tubig_count := 0
-	for id in roles:
-		if roles[id] == "tubig":
-			tubig_count += 1
-	_start_round.rpc(_round_seconds(tubig_count))
+	_setup_stations.rpc(_host_place_stations())
+	_start_round.rpc(_round_seconds(tubig_n))
 	round_timer.start()
+
+
+func _far_cell_from(from: Vector2i) -> Vector2i:
+	# a road cell far from the Tubig start, for a 3rd bot with no start marker
+	var best := floor_cells[0]
+	var best_d := -1.0
+	for i in 40:
+		var c: Vector2i = floor_cells.pick_random()
+		var d := Vector2(c - from).length()
+		if d > best_d and maze[c.y][c.x] == ".":
+			best = c
+			best_d = d
+	return best
 
 
 func _round_seconds(tubig_count: int) -> float:
@@ -265,32 +382,35 @@ func _round_seconds(tubig_count: int) -> float:
 
 @rpc("authority", "call_local", "reliable")
 func _spawn_all(roster: Array) -> void:
-	var tubig_starts := _cells_with("P")
-	var sili_starts := _cells_with("S")
+	var bot_index := 0
 	for entry in roster:
 		var id: int = entry[0]
 		var slot: int = entry[1]
 		var role: String = entry[2]
+		var start: Vector2i = entry[3]
 		var p := PLAYER_SCENE.instantiate()
 		p.name = "Player_%d" % id          # identical node path on every device
 		actors_root.add_child(p)
 		if role == "tubig":
-			p.setup(id, slot, role, tubigs.size(), cell_to_world(tubig_starts[tubigs.size()]))
+			p.setup(id, slot, role, tubigs.size(), cell_to_world(start))
 			tubigs.append(p)
 		else:
-			p.setup(id, slot, role, silis.size(), cell_to_world(sili_starts[silis.size()]))
+			p.setup(id, slot, role, silis.size(), cell_to_world(start))
 			silis.append(p)
 		player_by_id[id] = p
-		if p.is_bot:
+		if p.is_bot and multiplayer.is_server():
 			var bot := BotSili.new()
-			bot.name = "BotSili"
+			bot.name = "BotSili_%d" % id
 			add_child(bot)
-			bot.setup(self, p)
+			bot.setup(self, p, Network.solo_round_info()["difficulty"], bot_index)
+			_bots[id] = bot
+			bot_index += 1
 	var me = player_by_id.get(multiplayer.get_unique_id())
 	if me:
 		mode_label.text = "You: %s (%s)" % ["TUBIG" if me.is_tubig() else "SILI", Network.player_name_of(me.peer_id)]
 		if Network.solo_bot:
-			mode_label.text += "  vs  " + Network.BOT_NAME
+			var info := Network.solo_round_info()
+			mode_label.text = "%s  vs  %d bot%s" % [info["name"], info["bots"], "" if info["bots"] == 1 else "s"]
 		minimap.set_local_player(me)
 		local_player = me
 		_follow_local_player()
@@ -309,11 +429,13 @@ func _start_round(seconds: float) -> void:
 	if silis.is_empty():
 		_show_message("Test mode: no Sili (needs 2+ players over LAN).", 4.0)
 	elif Network.solo_bot:
-		_show_message("SOLO VS BOT: run from the %s! Find ? scrolls and answer %d questions!%s" % [Network.BOT_NAME, questions_to_win, clock], 5.0)
+		var info := Network.solo_round_info()
+		_show_message("%s: run from %d Siling Labuyo bot%s! Answer %d questions!%s" % [info["name"].to_upper(),
+			info["bots"], "" if info["bots"] == 1 else "s", questions_to_win, clock], 6.0)
 	elif me and not me.is_tubig():
-		_show_message("You are SILI! Freeze ALL Tubig at the same time before they answer %d questions!%s" % [questions_to_win, clock], 5.0)
+		_show_message("You are SILI! Freeze ALL Tubig before they answer %d questions! Bicol Express peppers = turbo.%s" % [questions_to_win, clock], 6.0)
 	else:
-		_show_message("You are TUBIG! Find ? scrolls and answer %d questions!%s" % [questions_to_win, clock], 5.0)
+		_show_message("You are TUBIG! Find ? scrolls and answer %d questions! Coolers = Yelo Shield.%s" % [questions_to_win, clock], 6.0)
 
 
 # ============================================================= scrolls
@@ -348,79 +470,413 @@ func _spawn_scroll(id: int, cell: Vector2i) -> void:
 	scrolls[id] = scroll
 
 
+# ======================================================== quiz stations
+# Stations sit on wall cells next to a road, so nobody walks into one by
+# accident: you push into it (like opening a door) to answer its question.
+#   stall  - Halo-Halo coolers near the 4 corners (Tubig only)
+#   pepper - Bicol Express peppers near the center (Sili only)
+#   gate   - Kalamansi gates on thin walls between two streets (anyone)
+func _host_place_stations() -> Array:
+	var w: int = maze[0].length()
+	var h: int = maze.size()
+	var chosen: Array[Vector2i] = []
+	var out := []
+	# --- coolers: the stall-able wall cell nearest each corner
+	var corners := [Vector2i(0, 0), Vector2i(w - 1, 0), Vector2i(0, h - 1), Vector2i(w - 1, h - 1)]
+	for i in corners.size():
+		var best := _best_station_cell(func(c): return -Vector2(c - corners[i]).length(), chosen)
+		if best.x >= 0:
+			chosen.append(best)
+			out.append(["stall", best, [_station_road(best)], i])
+	# --- peppers: the 2 nearest the center
+	var center := Vector2(w - 1, h - 1) / 2.0
+	for i in 2:
+		var best := _best_station_cell(func(c): return -Vector2(c).distance_to(center), chosen)
+		if best.x >= 0:
+			chosen.append(best)
+			out.append(["pepper", best, [_station_road(best)], i])
+	# --- gates: thin walls whose detour is long, spread over the map
+	var gate_cells := _gate_candidates(chosen)
+	gate_cells.shuffle()
+	var gates: Array[Vector2i] = []
+	for c in gate_cells:
+		if gates.size() >= gates_on_map:
+			break
+		var ok := true
+		for g in gates:
+			if Vector2(c - g).length() < 6.0:
+				ok = false
+		if ok:
+			gates.append(c)
+	for g in gates:
+		var sides: Array = [g + Vector2i.LEFT, g + Vector2i.RIGHT] if is_floor(g + Vector2i.LEFT) and is_floor(g + Vector2i.RIGHT) \
+			else [g + Vector2i.UP, g + Vector2i.DOWN]
+		out.append(["gate", g, sides, 0])
+	return out
+
+
+func _best_station_cell(score: Callable, taken: Array[Vector2i]) -> Vector2i:
+	var best := Vector2i(-1, -1)
+	var best_score := -INF
+	for y in range(1, maze.size() - 1):
+		for x in range(1, maze[0].length() - 1):
+			var c := Vector2i(x, y)
+			if maze[y][x] != "#" or _station_road(c).x < 0:
+				continue
+			var near_taken := false
+			for t in taken:
+				if Vector2(c - t).length() < 4.0:
+					near_taken = true
+			if near_taken:
+				continue
+			var s: float = score.call(c)
+			if s > best_score:
+				best_score = s
+				best = c
+	return best
+
+
+## The plain road cell next to a wall cell (not a start spot), or (-1, -1).
+func _station_road(wall: Vector2i) -> Vector2i:
+	for d in [Vector2i.DOWN, Vector2i.UP, Vector2i.LEFT, Vector2i.RIGHT]:
+		var c: Vector2i = wall + d
+		if is_floor(c) and maze[c.y][c.x] == ".":
+			return c
+	return Vector2i(-1, -1)
+
+
+func _gate_candidates(taken: Array[Vector2i]) -> Array[Vector2i]:
+	var astar := AStarGrid2D.new()
+	astar.region = Rect2i(0, 0, maze[0].length(), maze.size())
+	astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
+	astar.update()
+	for y in maze.size():
+		for x in maze[y].length():
+			if maze[y][x] == "#":
+				astar.set_point_solid(Vector2i(x, y))
+	var out: Array[Vector2i] = []
+	for y in range(1, maze.size() - 1):
+		for x in range(1, maze[0].length() - 1):
+			var c := Vector2i(x, y)
+			if maze[y][x] != "#":
+				continue
+			var a: Vector2i
+			var b: Vector2i
+			if is_floor(c + Vector2i.LEFT) and is_floor(c + Vector2i.RIGHT) and not is_floor(c + Vector2i.UP) and not is_floor(c + Vector2i.DOWN):
+				a = c + Vector2i.LEFT
+				b = c + Vector2i.RIGHT
+			elif is_floor(c + Vector2i.UP) and is_floor(c + Vector2i.DOWN) and not is_floor(c + Vector2i.LEFT) and not is_floor(c + Vector2i.RIGHT):
+				a = c + Vector2i.UP
+				b = c + Vector2i.DOWN
+			else:
+				continue
+			var near_taken := false
+			for t in taken:
+				if Vector2(c - t).length() < 4.0:
+					near_taken = true
+			# a real shortcut: walking around is at least 10 cells
+			if not near_taken and astar.get_id_path(a, b).size() >= 11:
+				out.append(c)
+	return out
+
+
+@rpc("authority", "call_local", "reliable")
+func _setup_stations(data: Array) -> void:
+	var gate_coords := _gate_atlas_coords()
+	for i in data.size():
+		var entry: Array = data[i]
+		var kind: String = entry[0]
+		var cell: Vector2i = entry[1]
+		var approach: Array = entry[2]
+		var variant: int = entry[3]
+		var st := {"id": i, "kind": kind, "cell": cell, "approach": approach, "cooldown": 0.0, "busy": false,
+			"name": "", "node": null, "label": null}
+		var toward_road := Vector2(approach[0] - cell).normalized()
+		var node: Node2D
+		match kind:
+			"stall":
+				st["name"] = STALL_NAMES[variant % STALL_NAMES.size()] + " cooler"
+				var spr := Sprite2D.new()
+				spr.texture = COOLER_TEXTURE
+				spr.hframes = 4
+				spr.frame = variant % 4
+				node = spr
+				node.position = cell_to_world(cell) + toward_road * 14.0
+			"pepper":
+				st["name"] = "Bicol Express pepper"
+				var spr2 := Sprite2D.new()
+				spr2.texture = PEPPER_TEXTURE
+				node = spr2
+				node.position = cell_to_world(cell) + toward_road * 14.0
+			"gate":
+				st["name"] = "Kalamansi gate"
+				if gate_coords.x >= 0:
+					maze_layer.set_cell(cell + _maze_cell_offset, 0, gate_coords)
+				node = Node2D.new()
+				node.position = cell_to_world(cell)
+		node.name = "Station_%d" % i
+		node.z_index = 1
+		$Scrolls.add_child(node)
+		var label := Label.new()
+		label.text = st["name"]
+		label.scale = Vector2(0.4, 0.4)
+		label.size = Vector2(300, 30)
+		label.position = Vector2(-60, -30)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 15)
+		label.add_theme_color_override("font_outline_color", Color.BLACK)
+		label.add_theme_constant_override("outline_size", 5)
+		label.visible = false
+		node.add_child(label)
+		st["node"] = node
+		st["label"] = label
+		stations.append(st)
+
+
+func _gate_atlas_coords() -> Vector2i:
+	# the Kalamansi gate tile in city_tileset.tres (custom data "kind" = "gate")
+	var ts := maze_layer.tile_set
+	if ts == null or ts.get_source_count() == 0:
+		return Vector2i(-1, -1)
+	var src := ts.get_source(ts.get_source_id(0)) as TileSetAtlasSource
+	for i in src.get_tiles_count():
+		var coords := src.get_tile_id(i)
+		var data := src.get_tile_data(coords, 0)
+		if data and ts.get_custom_data_layers_count() > 0 and data.get_custom_data("kind") == "gate":
+			return coords
+	return Vector2i(-1, -1)
+
+
+func _can_use_station(st: Dictionary, p: Node2D) -> bool:
+	match st["kind"]:
+		"stall":
+			return p.is_tubig()
+		"pepper":
+			return not p.is_tubig()
+	return true
+
+
+## Local player: pushing into a station's wall asks the host to open its quiz.
+func _check_local_interact(delta: float) -> void:
+	_interact_cooldown -= delta
+	var me = local_player
+	if not is_instance_valid(me) or GameState.round_state != GameState.RoundState.PLAYING:
+		return
+	var here := world_to_cell(me.global_position)
+	for st in stations:
+		var near: bool = me.global_position.distance_to(cell_to_world(st["cell"])) < 75.0
+		st["label"].visible = near and _can_use_station(st, me)
+		if near:
+			st["label"].text = st["name"] + (("  (rest %ds)" % ceili(st["cooldown"])) if st["cooldown"] > 0.0 else "  - push to answer")
+	if _interact_cooldown > 0.0 or me.frozen or me.answering or me.stun_time > 0.0:
+		return
+	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if input == Vector2.ZERO:
+		return
+	for st in stations:
+		if st["cooldown"] > 0.0 or not _can_use_station(st, me) or not here in st["approach"]:
+			continue
+		var into := Vector2(st["cell"] - here).normalized()
+		if input.normalized().dot(into) > 0.6 and me.global_position.distance_to(cell_to_world(st["cell"])) < 34.0:
+			_interact_cooldown = 1.0
+			if multiplayer.is_server():
+				_host_try_interact(multiplayer.get_unique_id(), st["id"])
+			else:
+				_request_interact.rpc_id(1, st["id"])
+			return
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _request_interact(station_id: int) -> void:
+	_host_try_interact(multiplayer.get_remote_sender_id(), station_id)
+
+
+func _host_try_interact(peer: int, station_id: int) -> void:
+	if station_id < 0 or station_id >= stations.size() or not player_by_id.has(peer):
+		return
+	if GameState.round_state != GameState.RoundState.PLAYING:
+		return
+	var st: Dictionary = stations[station_id]
+	var p = player_by_id[peer]
+	if not station_ready(station_id, p) or p.frozen or p.answering or p.stun_time > 0.0:
+		return
+	if p.global_position.distance_to(cell_to_world(st["cell"])) > 42.0:
+		return
+	st["busy"] = true
+	match st["kind"]:
+		"stall":
+			_host_open_question("shield", peer, {"station": station_id})
+		"pepper":
+			_host_open_question("turbo", peer, {"station": station_id})
+		"gate":
+			var from := world_to_cell(p.global_position)
+			var to: Vector2i = st["approach"][1] if from == st["approach"][0] else st["approach"][0]
+			_host_open_question("gate", peer, {"station": station_id, "to": to})
+
+
+func station_ready(station_id: int, p: Node2D) -> bool:
+	var st: Dictionary = stations[station_id]
+	return st["cooldown"] <= 0.0 and not st["busy"] and _can_use_station(st, p) \
+		and Time.get_ticks_msec() >= int(_retry_at.get("%d:st%d" % [p.peer_id, station_id], 0))
+
+
+## For bots: the closest usable station of a kind (-1 = none).
+func nearest_ready_station(p: Node2D, kind: String) -> int:
+	var best := -1
+	var best_d := INF
+	for st in stations:
+		if st["kind"] == kind and station_ready(st["id"], p):
+			var d: float = p.global_position.distance_to(cell_to_world(st["cell"]))
+			if d < best_d:
+				best_d = d
+				best = st["id"]
+	return best
+
+
+func station_approach_point(station_id: int) -> Vector2:
+	return cell_to_world(stations[station_id]["approach"][0])
+
+
+func station_world_pos(station_id: int) -> Vector2:
+	return cell_to_world(stations[station_id]["cell"])
+
+
+@rpc("authority", "call_local", "reliable")
+func _station_cooldown(station_id: int, seconds: float) -> void:
+	if station_id >= 0 and station_id < stations.size():
+		stations[station_id]["cooldown"] = seconds
+
+
+func _update_stations(delta: float) -> void:
+	var t := Time.get_ticks_msec() / 1000.0
+	for st in stations:
+		if GameState.round_state == GameState.RoundState.PLAYING:
+			st["cooldown"] = max(0.0, st["cooldown"] - delta)
+		var node: Node2D = st["node"]
+		if st["kind"] != "gate":
+			node.modulate = Color(0.45, 0.45, 0.5, 0.75) if st["cooldown"] > 0.0 else Color.WHITE
+			(node as Sprite2D).offset = Vector2(0, -1.5 + sin(t * 3.0 + st["id"]) * 1.5) if st["cooldown"] <= 0.0 else Vector2.ZERO
+
+
 # =========================================================== questions
-func _host_next_question_index() -> int:
-	if _question_deck.is_empty():
-		_question_deck = range(QuestionBank.QUESTIONS.size())
-		_question_deck.shuffle()
-	return _question_deck.pop_back()
+func _pool(name: String) -> Array:
+	match name:
+		"hard":
+			return QuestionBank.HARD
+		"bugtong":
+			return QuestionBank.BUGTONG
+	return QuestionBank.QUESTIONS
 
 
-# Several Tubigs can answer at the same time: every open question has its
-# own id, answerer, timer and (at most one) helper.
-#   host:     _questions[qid] = {picker, asker, index, order, answered,
-#             help_asked, passed, full_stop, deadline, result_timer}
-#   everyone: questions[qid]  = {picker, asker, index, order, asked, full_stop}
-func _host_open_question(scroll_id: int, picker_id: int) -> void:
-	questions_asked += 1
+func _host_next_question_index(pool: String) -> int:
+	var deck: Array = _decks.get(pool, [])
+	if deck.is_empty():
+		deck = range(_pool(pool).size())
+		deck.shuffle()
+		_decks[pool] = deck
+	return deck.pop_back()
+
+
+func _kind_time(kind: String) -> float:
+	return quiz_panel.answer_time if kind == "scroll" else KINDS[kind]["time"]
+
+
+# Several players can answer at the same time: every open question has its
+# own id, kind, answerer, timer and (scrolls only, at most one) helper.
+#   host:     _questions[qid] = {kind, picker, asker, pool, index, order, answered,
+#             help_asked, passed, full_stop, deadline, result_timer, correct, extra}
+#   everyone: questions[qid]  = {kind, picker, asker, pool, index, order, asked, full_stop, extra}
+func _host_open_question(kind: String, picker_id: int, extra: Dictionary = {}, scroll_id: int = -1) -> void:
+	if kind == "scroll":
+		questions_asked += 1
 	var qid := _next_question_id
 	_next_question_id += 1
 	var order := [0, 1, 2, 3]
 	order.shuffle()
-	# Only one Tubig in the game: nobody else can play, so the whole chase
-	# stops (the Sili sees "Tubig is answering"). Otherwise only the
-	# answerer stops and everyone else keeps playing.
-	var full_stop := tubigs.size() <= 1
-	var index := _host_next_question_index()
-	_questions[qid] = {"picker": picker_id, "asker": picker_id, "index": index, "order": order,
+	# Only one Tubig in the game and a scroll: nobody else can play, so the
+	# whole chase stops (the Sili sees "Tubig is answering"). Otherwise only
+	# the answerer stops and everyone else keeps playing.
+	var full_stop := kind == "scroll" and tubigs.size() <= 1
+	var pool: String = KINDS[kind]["pool"]
+	var index := _host_next_question_index(pool)
+	var q := {"kind": kind, "picker": picker_id, "asker": picker_id, "pool": pool, "index": index, "order": order,
 		"answered": false, "help_asked": false, "passed": false, "full_stop": full_stop,
-		"deadline": _question_deadline(), "result_timer": -1.0}
-	_open_question.rpc(qid, scroll_id, picker_id, index, order, questions_asked, full_stop)
+		"deadline": _question_deadline(kind), "result_timer": -1.0, "correct": false, "extra": extra}
+	if _bots.has(picker_id):
+		# a bot "thinks" for a few seconds, then answers (right or wrong by difficulty)
+		q["bot_at"] = Time.get_ticks_msec() + int(randf_range(2.0, 4.0) * 1000.0)
+		q["bot_correct"] = _bots[picker_id].answers_correctly()
+	_questions[qid] = q
+	_open_question.rpc(qid, kind, scroll_id, picker_id, pool, index, order, questions_asked, full_stop, extra)
 
 
-func _question_deadline() -> int:
+func _question_deadline(kind: String) -> int:
 	# the host's own time limit: the answer time plus a little network slack
-	return Time.get_ticks_msec() + int((quiz_panel.answer_time + 2.0) * 1000)
+	return Time.get_ticks_msec() + int((_kind_time(kind) + 2.0) * 1000)
 
 
 @rpc("authority", "call_local", "reliable")
-func _open_question(qid: int, scroll_id: int, picker_id: int, q_index: int, order: Array, asked: int, full_stop: bool) -> void:
+func _open_question(qid: int, kind: String, scroll_id: int, picker_id: int, pool: String, q_index: int,
+		order: Array, asked: int, full_stop: bool, extra: Dictionary) -> void:
 	if scrolls.has(scroll_id):
 		scrolls[scroll_id].queue_free()
 		scrolls.erase(scroll_id)
 	questions_asked = asked
-	questions[qid] = {"picker": picker_id, "asker": picker_id, "index": q_index, "order": order,
-		"asked": asked, "full_stop": full_stop}
+	questions[qid] = {"kind": kind, "picker": picker_id, "asker": picker_id, "pool": pool, "index": q_index,
+		"order": order, "asked": asked, "full_stop": full_stop, "extra": extra}
 	if full_stop:
 		GameState.round_state = GameState.RoundState.QUESTION   # everyone stops, clock stops
 	var picker = player_by_id.get(picker_id)
 	if picker:
 		picker.set_answering(true)
 	var picker_name := Network.player_name_of(picker_id)
+	var entry: Dictionary = _pool(pool)[q_index]
 	if picker_id == multiplayer.get_unique_id():
 		my_question = qid
 		_help_queue.clear()   # busy answering: no help alerts for me now
 		_help_showing = -1
 		help_alert.close()
-		quiz_panel.show_question(QuestionBank.QUESTIONS[q_index], order,
-			"Scroll #%d  —  picked by %s  —  Correct: %d / %d" % [asked, picker_name, correct_answers, questions_to_win],
-			true, picker_name, not full_stop)
-		if help_locked_by != 0:
+		quiz_panel.show_question(entry, order, _question_header(kind, picker_name, asked, extra),
+			true, picker_name, kind == "scroll" and not full_stop, _kind_time(kind))
+		if help_locked_by != 0 and kind == "scroll":
 			quiz_panel.set_help_locked(true, Network.player_name_of(help_locked_by))
 		return
 	var me = player_by_id.get(multiplayer.get_unique_id())
 	if full_stop:
 		if me and not me.is_tubig():
 			answering_notice.open()
-	else:
-		_show_message("%s is answering a question — can't be tagged!" % picker_name, 3.0)
+		return
+	match kind:
+		"scroll":
+			_show_message("%s is answering a question — can't be tagged!" % picker_name, 3.0)
+		"rescue":
+			_show_message("%s is splashing %s free — Buhos-Tubig!" % [picker_name, Network.player_name_of(extra.get("target", 0))], 3.0)
+		"thaw":
+			_show_message("%s is trying to thaw out — Huling Hirit!" % picker_name, 3.0)
+		"turbo":
+			_show_message("%s is solving a bugtong for EXTRA ANGHANG!" % picker_name, 3.0)
+
+
+func _question_header(kind: String, picker_name: String, asked: int, extra: Dictionary) -> String:
+	match kind:
+		"rescue":
+			return "BUHOS-TUBIG!  Answer to splash %s free" % Network.player_name_of(extra.get("target", 0))
+		"thaw":
+			return "HULING HIRIT  %d / 2  —  answer 2 in a row to thaw yourself!" % extra.get("step", 1)
+		"shield":
+			return "%s  —  answer for a %d s YELO SHIELD!" % [stations[extra["station"]]["name"].to_upper(), int(shield_time)]
+		"turbo":
+			return "BICOL EXPRESS  —  solve the bugtong for EXTRA ANGHANG!"
+		"gate":
+			return "KALAMANSI GATE  —  answer to squeeze through (wrong = sour spray!)"
+	return "Scroll #%d  —  picked by %s  —  Correct: %d / %d" % [asked, picker_name, correct_answers, questions_to_win]
 
 
 func _on_local_choice(position: int) -> void:
 	if my_question < 0:
 		return
 	if multiplayer.is_server():
-		_host_receive_answer(1, my_question, position)
+		_host_receive_answer(multiplayer.get_unique_id(), my_question, position)
 	else:
 		_submit_answer.rpc_id(1, my_question, position)
 
@@ -433,7 +889,7 @@ func _submit_answer(qid: int, position: int) -> void:
 func _host_receive_answer(sender: int, qid: int, position: int) -> void:
 	var q: Dictionary = _questions.get(qid, {})
 	if q.is_empty() or q["answered"] or sender != q["picker"]:
-		return   # only the Tubig who has this question may answer it
+		return   # only the player who has this question may answer it
 	_host_resolve(qid, position)
 
 
@@ -442,15 +898,17 @@ func _host_resolve(qid: int, position: int) -> void:
 	q["answered"] = true
 	if _help_active == qid:
 		_host_release_help()   # the question is over, so its help request is too
-	var entry: Dictionary = QuestionBank.QUESTIONS[q["index"]]
+	var entry: Dictionary = _pool(q["pool"])[q["index"]]
 	var correct: bool = position >= 0 and q["order"][position] == entry["answer"]
-	if correct:
+	q["correct"] = correct
+	var total := correct_answers
+	if q["kind"] == "scroll" and correct:
 		_count(q["picker"], "correct")   # whoever answered (the helper, if it was passed)
-	var total := correct_answers + (1 if correct else 0)
+		total += 1
 	_question_result.rpc(qid, position, correct, total)
 	q["result_timer"] = feedback_time
 	if total >= questions_to_win:
-		# the 10th correct answer wins at once: don't wait for the popup,
+		# the last correct answer wins at once: don't wait for the popup,
 		# or the round clock could run out first and give the Sili the win
 		_host_end(true, "TUBIG TEAM WINS!")
 
@@ -462,7 +920,7 @@ func _question_result(qid: int, position: int, correct: bool, total: int) -> voi
 	if q.is_empty():
 		return
 	_forget_help_request(qid)
-	var entry: Dictionary = QuestionBank.QUESTIONS[q["index"]]
+	var entry: Dictionary = _pool(q["pool"])[q["index"]]
 	var picker_name := Network.player_name_of(q["picker"])
 	var mine: bool = q["picker"] == multiplayer.get_unique_id()
 	if mine:
@@ -475,24 +933,89 @@ func _question_result(qid: int, position: int, correct: bool, total: int) -> voi
 	if mine:
 		# the big TAMA! / MALI! popup is only for the player who answered
 		popup_question = qid
-		answer_popup.open(correct, position < 0, picker_name,
-			entry["choices"][entry["answer"]], entry.get("fact", ""), total, questions_to_win)
-	else:
+		answer_popup.open(correct, position < 0, picker_name, entry["choices"][entry["answer"]],
+			entry.get("fact", ""), total, questions_to_win, _result_line(q, correct))
+	elif q["kind"] == "scroll":
 		# everyone else (other Tubigs and the Sili) just gets a short line
 		var what := "answered correctly" if correct else ("ran out of time" if position < 0 else "answered wrong")
 		_show_message("%s %s  (%d / %d)" % [picker_name, what, total, questions_to_win], 3.5)
 	_update_hud()
 
 
+func _result_line(q: Dictionary, correct: bool) -> String:
+	var extra: Dictionary = q["extra"]
+	match q["kind"]:
+		"rescue":
+			var who := Network.player_name_of(extra.get("target", 0))
+			return ("%s is splashed free!" % who) if correct else ("%s stays frozen... try again!" % who)
+		"thaw":
+			if not correct:
+				return "You stay frozen..."
+			return "1 of 2 — one more!" if extra.get("step", 1) == 1 else "You thawed yourself!"
+		"shield":
+			return ("YELO SHIELD for %d s!" % int(shield_time)) if correct else "No shield this time."
+		"turbo":
+			return ("EXTRA ANGHANG for %d s!" % int(turbo_time)) if correct else "Too mild... no turbo."
+		"gate":
+			return "You squeeze through the gate!" if correct else ("Sour spray! Slowed for %d s" % int(slow_time))
+	return ""
+
+
 func _host_after_question(qid: int) -> void:
+	var q: Dictionary = _questions[qid]
 	_questions.erase(qid)
 	if GameState.round_state == GameState.RoundState.ENDED:
 		return
 	if correct_answers >= questions_to_win:
 		_host_end(true, "TUBIG TEAM WINS!")
 		return
-	_host_spawn_scroll()
+	var picker_id: int = q["picker"]
+	var correct: bool = q["correct"]
+	var extra: Dictionary = q["extra"]
+	if extra.has("station"):
+		stations[extra["station"]]["busy"] = false
 	_resume_after_question.rpc(qid)
+	match q["kind"]:
+		"scroll":
+			_host_spawn_scroll()
+		"rescue":
+			var target: int = extra.get("target", 0)
+			_rescuing.erase(target)
+			var t = player_by_id.get(target)
+			if correct and t and t.frozen:
+				_count(picker_id, "rescues")
+				_tubig_rescued.rpc(target, false)
+			else:
+				_retry_at["%d:rescue%d" % [picker_id, target]] = Time.get_ticks_msec() + 2500
+		"thaw":
+			_thawing.erase(picker_id)
+			var me = player_by_id.get(picker_id)
+			if me == null or not me.frozen:
+				pass
+			elif correct and extra.get("step", 1) == 1:
+				_host_start_thaw(picker_id, 2)   # one more in a row
+			elif correct:
+				_tubig_rescued.rpc(picker_id, true)
+			else:
+				_host_check_team_out(true)
+		"shield":
+			if correct:
+				_apply_effect.rpc(picker_id, "shield", shield_time)
+				_station_cooldown.rpc(extra["station"], stall_cooldown)
+			else:
+				_retry_at["%d:st%d" % [picker_id, extra["station"]]] = Time.get_ticks_msec() + int(retry_cooldown * 1000)
+		"turbo":
+			if correct:
+				_apply_effect.rpc(picker_id, "turbo", turbo_time)
+				_station_cooldown.rpc(extra["station"], pepper_cooldown)
+			else:
+				_retry_at["%d:st%d" % [picker_id, extra["station"]]] = Time.get_ticks_msec() + int(retry_cooldown * 1000)
+		"gate":
+			if correct:
+				_move_player.rpc(picker_id, cell_to_world(extra["to"]))
+			else:
+				_apply_effect.rpc(picker_id, "slow", slow_time)
+				_retry_at["%d:st%d" % [picker_id, extra["station"]]] = Time.get_ticks_msec() + int(retry_cooldown * 1000)
 
 
 @rpc("authority", "call_local", "reliable")
@@ -507,7 +1030,8 @@ func _resume_after_question(qid: int) -> void:
 	var picker = player_by_id.get(q["picker"])
 	if picker:
 		picker.set_answering(false)
-		picker.give_grace(grace_after_question)   # a waiting Sili can't tag them at once
+		if not picker.frozen:
+			picker.give_grace(grace_after_question)   # a waiting Sili can't tag them at once
 	if q["full_stop"]:
 		for t in tubigs:
 			if not t.frozen:
@@ -515,16 +1039,43 @@ func _resume_after_question(qid: int) -> void:
 		GameState.round_state = GameState.RoundState.PLAYING
 
 
+@rpc("authority", "call_local", "reliable")
+func _apply_effect(peer: int, effect: String, seconds: float) -> void:
+	var p = player_by_id.get(peer)
+	if p == null:
+		return
+	p.apply_effect(effect, seconds)
+	var who := Network.player_name_of(peer)
+	match effect:
+		"shield":
+			_show_message("%s has a YELO SHIELD! A Sili who tags them gets extinguished." % who, 3.0)
+		"turbo":
+			_show_message("%s got EXTRA ANGHANG! Faster, with a wider reach!" % who, 3.0)
+		"slow":
+			if p.is_local():
+				_show_message("Maasim! Kalamansi spray — slowed for %d s" % int(seconds), 2.5)
+
+
+@rpc("authority", "call_local", "reliable")
+func _move_player(peer: int, pos: Vector2) -> void:
+	var p = player_by_id.get(peer)
+	if p:
+		p.force_position(pos)
+		p.give_grace(grace_after_question)
+		if p.is_local():
+			_show_message("You squeezed through the Kalamansi gate!", 2.0)
+
+
 # ============================================================ asking for help
-# The answerer presses ASK A TEAMMATE FOR HELP (once per question). Every
-# free teammate gets a bottom-right alert; the FIRST one who says YES gets
-# the question with a fresh timer, and the asker goes back to the chase.
+# The answerer presses ASK A TEAMMATE FOR HELP (once per scroll question).
+# Every free teammate gets a bottom-right alert; the FIRST one who says YES
+# gets the question with a fresh timer, and the asker goes back to the chase.
 # If several teammates ask at the same time, the alerts wait in a queue.
 func _on_help_pressed() -> void:
 	if my_question < 0:
 		return
 	if multiplayer.is_server():
-		_host_help_request(1, my_question)
+		_host_help_request(multiplayer.get_unique_id(), my_question)
 	else:
 		_request_help.rpc_id(1, my_question)
 
@@ -536,7 +1087,7 @@ func _request_help(qid: int) -> void:
 
 func _host_help_request(sender: int, qid: int) -> void:
 	var q: Dictionary = _questions.get(qid, {})
-	if q.is_empty() or q["answered"] or q["full_stop"] or q["help_asked"] or sender != q["picker"]:
+	if q.is_empty() or q["kind"] != "scroll" or q["answered"] or q["full_stop"] or q["help_asked"] or sender != q["picker"]:
 		return
 	if _help_active >= 0:
 		# someone else pressed first (same instant): this button waits too
@@ -571,7 +1122,8 @@ func _host_release_help() -> void:
 func _help_lock(asker_id: int) -> void:
 	# only ONE Tubig can ask for help at a time; the others' buttons wait
 	help_locked_by = asker_id
-	if my_question >= 0 and asker_id != multiplayer.get_unique_id():
+	if my_question >= 0 and asker_id != multiplayer.get_unique_id() \
+			and questions.get(my_question, {}).get("kind", "") == "scroll":
 		quiz_panel.set_help_locked(asker_id != 0, Network.player_name_of(asker_id))
 
 
@@ -627,7 +1179,7 @@ func _on_help_answer(yes: bool) -> void:
 	_help_showing = -1
 	if yes and qid >= 0:
 		if multiplayer.is_server():
-			_host_help_offer(1, qid)
+			_host_help_offer(multiplayer.get_unique_id(), qid)
 		else:
 			_offer_help.rpc_id(1, qid)
 	_show_next_help_request()
@@ -648,7 +1200,7 @@ func _host_help_offer(helper_id: int, qid: int) -> void:
 		return
 	q["passed"] = true
 	q["picker"] = helper_id
-	q["deadline"] = _question_deadline()   # the helper gets a fresh timer
+	q["deadline"] = _question_deadline(q["kind"])   # the helper gets a fresh timer
 	_question_passed.rpc(qid, helper_id)
 	if _help_active == qid:
 		_host_release_help()   # the request was answered: others may ask now
@@ -675,7 +1227,7 @@ func _question_passed(qid: int, helper_id: int) -> void:
 		my_question = qid
 		help_alert.close()
 		_help_queue.clear()   # busy answering now
-		quiz_panel.show_question(QuestionBank.QUESTIONS[q["index"]], q["order"],
+		quiz_panel.show_question(_pool(q["pool"])[q["index"]], q["order"],
 			"Helping %s  —  Scroll #%d  —  Correct: %d / %d" % [asker_name, q["asked"], correct_answers, questions_to_win],
 			true, helper_name, false)
 	elif asker_id == multiplayer.get_unique_id():
@@ -687,11 +1239,32 @@ func _question_passed(qid: int, helper_id: int) -> void:
 # ====================================================== catch / rescue
 func _host_check_tags() -> void:
 	for s in silis:
+		if not s.can_tag():
+			continue
+		var reach := tag_radius_of(s)
 		for t in tubigs:
-			if t.can_be_tagged() and s.global_position.distance_to(t.global_position) <= tag_distance:
-				_count(s.peer_id, "tags")
-				_tubig_caught.rpc(t.peer_id)
+			if t.can_be_tagged() and s.global_position.distance_to(t.global_position) <= reach:
+				if t.shield_time > 0.0:
+					_shield_block.rpc(t.peer_id, s.peer_id)   # Yelo Shield: the Sili gets extinguished
+				else:
+					_count(s.peer_id, "tags")
+					_tubig_caught.rpc(t.peer_id)
+				break
 	_host_check_team_out()
+
+
+@rpc("authority", "call_local", "reliable")
+func _shield_block(tubig_id: int, sili_id: int) -> void:
+	var t = player_by_id.get(tubig_id)
+	var s = player_by_id.get(sili_id)
+	if t:
+		t.shield_time = 0.0
+		t.give_grace(1.0)
+	if s:
+		s.apply_effect("stun", sili_stun_time)
+	Sound.play("correct")
+	_show_message("YELO SHIELD! %s's tag was blocked — %s is extinguished for %d s!" % [
+		Network.player_name_of(tubig_id), Network.player_name_of(sili_id), int(sili_stun_time)], 3.0)
 
 
 @rpc("authority", "call_local", "reliable")
@@ -704,17 +1277,21 @@ func _tubig_caught(id: int) -> void:
 		help_alert.close()
 	var free := _free_tubig_count()
 	if free > 0:
-		_show_message("%s was caught! %d Tubig still free — touch them to save them!" % [Network.player_name_of(t.peer_id), free], 3.0)
+		_show_message("%s was caught! %d Tubig still free — touch them and answer to splash them free!" % [Network.player_name_of(t.peer_id), free], 3.0)
 	_update_hud()
 
 
 @rpc("authority", "call_local", "reliable")
-func _tubig_rescued(id: int) -> void:
+func _tubig_rescued(id: int, self_thaw: bool) -> void:
 	if not player_by_id.has(id):
 		return
 	var t = player_by_id[id]
 	t.set_rescued()
-	_show_message("Tubig! %s is saved!" % Network.player_name_of(t.peer_id), 2.0)
+	if self_thaw:
+		t.give_grace(2.0)
+		_show_message("%s thawed out with a Huling Hirit!" % Network.player_name_of(t.peer_id), 2.5)
+	else:
+		_show_message("Buhos-Tubig! %s is saved!" % Network.player_name_of(t.peer_id), 2.0)
 	_update_hud()
 
 
@@ -728,23 +1305,71 @@ func _free_tubig_count() -> int:
 	return free
 
 
-func _host_check_team_out() -> void:
+func _thaws_left(t: Node2D) -> int:
+	var allowed := solo_self_thaws if tubigs.size() == 1 else team_self_thaws
+	return allowed - int(_thaw_uses.get(t.peer_id, 0))
+
+
+## after_failed_thaw: a Huling Hirit just failed, so don't wait for another.
+func _host_check_team_out(after_failed_thaw: bool = false) -> void:
 	if GameState.round_state != GameState.RoundState.PLAYING or silis.is_empty():
 		return
-	if _free_tubig_count() == 0:
-		_host_end(false, "SILI WINS! ALL TUBIG FROZEN")
+	if _free_tubig_count() > 0:
+		return
+	# the only Tubig in the game still has a Huling Hirit (self-thaw) left
+	if tubigs.size() == 1 and not after_failed_thaw:
+		var t = tubigs[0]
+		if _thawing.has(t.peer_id) or _thaws_left(t) > 0:
+			return
+	var title := "SILI WINS! ALL TUBIG FROZEN"
+	if tubigs.size() == 1:
+		title = "SILI WINS! %s STAYED FROZEN" % Network.player_name_of(tubigs[0].peer_id).to_upper()
+	_host_end(false, title)
 
 
 func _host_check_rescues() -> void:
+	# Buhos-Tubig: touching a frozen teammate opens a question for the helper;
+	# a correct answer splashes them free
 	for frozen_t in tubigs:
-		if not frozen_t.can_be_rescued(min_frozen_time):
+		if not frozen_t.can_be_rescued(min_frozen_time) or frozen_t.answering or _rescuing.has(frozen_t.peer_id):
 			continue
 		for helper in tubigs:
-			if helper != frozen_t and not helper.frozen and not helper.answering \
-					and helper.global_position.distance_to(frozen_t.global_position) <= rescue_distance:
-				_count(helper.peer_id, "rescues")
-				_tubig_rescued.rpc(frozen_t.peer_id)
-				break
+			if helper == frozen_t or helper.frozen or helper.answering:
+				continue
+			if helper.global_position.distance_to(frozen_t.global_position) > rescue_distance:
+				continue
+			if Time.get_ticks_msec() < int(_retry_at.get("%d:rescue%d" % [helper.peer_id, frozen_t.peer_id], 0)):
+				continue
+			_rescuing[frozen_t.peer_id] = _next_question_id
+			_host_open_question("rescue", helper.peer_id, {"target": frozen_t.peer_id})
+			break
+
+
+func _host_check_self_thaw() -> void:
+	# Huling Hirit: the only Tubig (solo), or a Tubig with no teammate near
+	# for a while, can thaw themselves by answering 2 hard questions in a row
+	for t in tubigs:
+		if not t.frozen or t.answering or _thawing.has(t.peer_id) or _rescuing.has(t.peer_id) or _thaws_left(t) <= 0:
+			continue
+		if tubigs.size() == 1:
+			if t.frozen_time >= min_frozen_time:
+				_thaw_uses[t.peer_id] = int(_thaw_uses.get(t.peer_id, 0)) + 1
+				_host_start_thaw(t.peer_id, 1)
+			continue
+		if t.frozen_time < self_thaw_wait or _free_tubig_count() == 0:
+			continue
+		var helper_near := false
+		for other in tubigs:
+			if other != t and not other.frozen and other.global_position.distance_to(t.global_position) <= self_thaw_far:
+				helper_near = true
+		if not helper_near:
+			_thaw_uses[t.peer_id] = int(_thaw_uses.get(t.peer_id, 0)) + 1
+			_host_start_thaw(t.peer_id, 1)
+
+
+func _host_start_thaw(peer: int, step: int) -> void:
+	_thawing[peer] = _next_question_id
+	_host_open_question("thaw", peer, {"step": step})
 
 
 func _host_check_pickups() -> void:
@@ -753,7 +1378,7 @@ func _host_check_pickups() -> void:
 		for t in tubigs:   # only Tubigs can open scrolls
 			if not t.frozen and not t.answering \
 					and t.global_position.distance_to(scrolls[id].position) <= pickup_distance:
-				_host_open_question(id, t.peer_id)
+				_host_open_question("scroll", t.peer_id, {}, id)
 				return   # the scroll list just changed; the next frame checks the rest
 
 
@@ -763,6 +1388,8 @@ func _host_on_peer_left(id: int) -> void:
 		for qid in _questions.keys():
 			if _questions[qid]["picker"] == id and not _questions[qid]["answered"]:
 				_host_resolve(qid, -1)
+		_rescuing.erase(id)
+		_thawing.erase(id)
 		if GameState.round_state in [GameState.RoundState.PLAYING, GameState.RoundState.QUESTION, GameState.RoundState.PAUSED]:
 			if silis.is_empty():
 				_host_end(true, "THE SILI LEFT — TUBIG WINS!")
@@ -789,6 +1416,7 @@ func _remove_player(id: int) -> void:
 func _physics_process(delta: float) -> void:
 	if not multiplayer.is_server():
 		return
+	var now := Time.get_ticks_msec()
 	for qid in _questions.keys():
 		if not _questions.has(qid):
 			continue   # already closed this frame (e.g. the round ended)
@@ -799,16 +1427,30 @@ func _physics_process(delta: float) -> void:
 				_host_after_question(qid)
 		elif GameState.round_state == GameState.RoundState.PAUSED:
 			q["deadline"] += int(delta * 1000.0)   # the answer clock waits while paused
-		elif Time.get_ticks_msec() > q["deadline"]:
+			if q.has("bot_at"):
+				q["bot_at"] += int(delta * 1000.0)
+		elif q.has("bot_at") and now >= q["bot_at"]:
+			var right: int = q["order"].find(_pool(q["pool"])[q["index"]]["answer"])
+			_host_resolve(qid, right if q["bot_correct"] else (right + 1) % 4)
+		elif now > q["deadline"]:
 			_host_resolve(qid, -1)   # answerer never answered (e.g. disconnected)
 	if GameState.round_state == GameState.RoundState.PLAYING:
+		for s in silis:
+			if s.is_bot and s.bot_interact >= 0:
+				_host_try_interact(s.peer_id, s.bot_interact)
+				s.bot_interact = -1
 		_host_check_tags()
 		_host_check_rescues()
+		_host_check_self_thaw()
 		_host_check_pickups()
 
 
 func _process(delta: float) -> void:
 	_follow_local_player()
+	_update_stations(delta)
+	_check_local_interact(delta)
+	if is_instance_valid(local_player):
+		_effect_label.text = local_player.effect_text()
 	if message_time > 0.0:
 		message_time -= delta
 		if message_time <= 0.0:
@@ -943,6 +1585,19 @@ func _end_round(team_won: bool, title: String, stats: String, results: Array) ->
 	play_again_button.visible = multiplayer.is_server()
 	play_again_button.text = "Play Again (next Sili)" if Network.online else "Play Again"
 	menu_button.text = "Main Menu" if not Network.online else "Leave"
+	if Network.solo_bot:
+		_solo_won = team_won
+		var info := Network.solo_round_info()
+		if team_won and Network.is_last_solo_round():
+			$HUD/EndPanel/Margin/VBox/StatsLabel.text += "\n\nALL %d ROUNDS CLEARED! Kampeon ka!" % Network.SOLO_ROUNDS.size()
+			play_again_button.text = "Play from Round 1"
+		elif team_won:
+			var next: Dictionary = Network.SOLO_ROUNDS[Network.solo_round]
+			$HUD/EndPanel/Margin/VBox/StatsLabel.text += "\n\n%s cleared! Next: %s (%d bot%s)" % [
+				info["name"], next["name"], next["bots"], "" if next["bots"] == 1 else "s"]
+			play_again_button.text = "Next Round"
+		else:
+			play_again_button.text = "Retry %s" % info["name"].get_slice(" - ", 0)
 	if not multiplayer.is_server():
 		$HUD/EndPanel/Margin/VBox/StatsLabel.text += "\n\nWaiting for the host to play again..."
 	end_panel.visible = true
@@ -953,6 +1608,12 @@ func _on_play_again() -> void:
 		return
 	if Network.online:
 		Network.restart_game()        # every device reloads the maze
+	elif Network.solo_bot:
+		var next_round := Network.solo_round
+		if _solo_won:
+			next_round = 1 if Network.is_last_solo_round() else Network.solo_round + 1
+		Network.play_solo(true, next_round)
+		get_tree().reload_current_scene()
 	else:
 		get_tree().reload_current_scene()
 

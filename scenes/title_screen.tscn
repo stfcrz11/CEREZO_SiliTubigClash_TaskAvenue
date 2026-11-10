@@ -430,7 +430,16 @@ text = "[center][color=#9aa4b8][i]A Filipino street chase game — with a quiz t
 • While you answer you [b]can't move[/b] and [b]can't be tagged[/b]. The others keep playing.
 • Wrong answer? Find another scroll.
 • A [color=#ff6155][b]Sili[/b][/color] is near? You get a warning: [color=#ffa53d][b]SILI NEARBY![/b][/color] then [color=#ff6155][b]RUN![/b][/color]
-• Caught Tubigs freeze. A teammate touches you to save you ([b]1.5 s[/b] safety + speed burst).
+• Caught Tubigs freeze into an [b]ice block[/b].
+• [color=#6be38a][b]Buhos-Tubig:[/b][/color] touch a frozen teammate and answer [b]1 question[/b] to splash them free ([b]1.5 s[/b] safety + speed burst).
+• [color=#6be38a][b]Huling Hirit:[/b][/color] no teammate can save you (or you're the only [color=#5aa8ff][b]Tubig[/b][/color])? Answer [b]2 hard questions in a row[/b] to thaw yourself.
+
+[font_size=19][b][color=#ffd24d]QUIZ STATIONS[/color][/b][/font_size]
+Walk [b]into[/b] a station (push against it) to get its question.
+• [color=#8fdcff][b]Halo-Halo coolers[/b][/color] (4 corners, [color=#5aa8ff][b]Tubig[/b][/color] only): [b]Yelo Shield[/b] for 10 s. A [color=#ff6155][b]Sili[/b][/color] who tags you is [b]extinguished[/b] for 5 s instead!
+• [color=#ff6155][b]Bicol Express peppers[/b][/color] (center, [color=#ff6155][b]Sili[/b][/color] only): solve a [b]bugtong[/b] for [b]Extra Anghang[/b] — faster and a wider tag reach for 6 s.
+• [color=#c4f040][b]Kalamansi gates[/b][/color] (anyone): answer to squeeze through the shortcut. Wrong = sour spray, slowed for 3 s.
+• Stations rest after use. They show as squares on the MAPA.
 
 [font_size=19][b][color=#6be38a]ASKING FOR HELP[/color][/b][/font_size]
 • Stuck? Press [bgcolor=#33405e][color=#ffffff][b] ASK A TEAMMATE FOR HELP [/b][/color][/bgcolor] or [bgcolor=#33405e][color=#ffffff][b] H [/b][/color][/bgcolor].
@@ -445,7 +454,7 @@ text = "[center][color=#9aa4b8][i]A Filipino street chase game — with a quiz t
 
 [font_size=19][b][color=#ffd24d]PLAYING[/color][/b][/font_size]
 • Press [b]PLAY[/b], then pick a mode.
-• [b]SOLO VS BOT[/b]: you are the [color=#5aa8ff][b]Tubig[/b][/color] and a computer [color=#ff6155][b]Sili[/b][/color] chases you. Solo rounds don't count for TOP PLAYERS.
+• [b]SOLO VS BOT[/b]: you are the [color=#5aa8ff][b]Tubig[/b][/color] in 4 rounds, easy to difficult: [b]1[/b] Easy (1 bot, 6 questions) · [b]2[/b] Medium (1 bot, 8) · [b]3[/b] Hard (2 bots, 8) · [b]4[/b] Labuyo (3 bots, 10). Win to unlock the next round; lose and retry. Harder bots see farther, react faster, cut you off and work as a team. Solo rounds don't count for TOP PLAYERS.
 • [b]LAN[/b]: one player picks [b]HOST GAME[/b]; the others pick [b]JOIN GAME[/b].
 • Everyone must be on the same Wi-Fi or phone hotspot.
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cq81o4u6lkk6"
-path="res://.godot/imported/sili_kid.png-86e97c42d1188ca49c5d7463e3c73b0a.ctex"
+uid="uid://c3jnl2glxg2si"
+path="res://.godot/imported/ice_block.png-11b7f671fa9dbf45b7f5d719dae01b91.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/sili_kid.png"
-dest_files=["res://.godot/imported/sili_kid.png-86e97c42d1188ca49c5d7463e3c73b0a.ctex"]
+source_file="res://assets/props/ice_block.png"
+dest_files=["res://.godot/imported/ice_block.png-11b7f671fa9dbf45b7f5d719dae01b91.ctex"]
 
 [params]
 

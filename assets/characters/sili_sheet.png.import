@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://yp6cmmik5gd5"
-path="res://.godot/imported/tubig_kid.png-367f6c1ac4f541eb7c9034a29e8a636d.ctex"
+uid="uid://cuob04kah1kwh"
+path="res://.godot/imported/sili_sheet.png-550e39c8e354b306527bdac14b9adac3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/tubig_kid.png"
-dest_files=["res://.godot/imported/tubig_kid.png-367f6c1ac4f541eb7c9034a29e8a636d.ctex"]
+source_file="res://assets/characters/sili_sheet.png"
+dest_files=["res://.godot/imported/sili_sheet.png-550e39c8e354b306527bdac14b9adac3.ctex"]
 
 [params]
 
